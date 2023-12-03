@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -38,10 +38,12 @@ END_LEGAL */
 /*! @file
  */
 
-#include "pin.H"
-#include <iostream>
-#include <fstream>
 #include <stdlib.h>
+
+#include <fstream>
+#include <iostream>
+
+#include "pin.H"
 
 using namespace std;
 
@@ -54,94 +56,81 @@ using namespace std;
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
-    "o", "probe_tool.outfile", "specify file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o",
+                            "probe_tool.outfile", "specify file name");
 
 ofstream TraceFile;
 /* ===================================================================== */
 
-INT32 Usage()
-{
-    cerr <<
-        "This pin tool tests probe replacement.\n"
-        "\n";
-    cerr << KNOB_BASE::StringKnobSummary();
-    cerr << endl;
-    return -1;
+INT32 Usage() {
+  cerr << "This pin tool tests probe replacement.\n"
+          "\n";
+  cerr << KNOB_BASE::StringKnobSummary();
+  cerr << endl;
+  return -1;
 }
 
-void Do_Nothing()
-{
-    int x = 0;
-    while(1)
-    {
-        x++;
-        --x;
-    }
-}
-        
-UINT32 threadCounter=0;
-
-VOID AttachedThreadStart( VOID *sigmask, VOID *v)
-{
-    TraceFile << "Thread counter is updated to " << dec <<  ++threadCounter << endl;
+void Do_Nothing() {
+  int x = 0;
+  while (1) {
+    x++;
+    --x;
+  }
 }
 
-int PinReady(unsigned int numOfThreads)
-{
-	return (threadCounter == numOfThreads)?1:0;
+UINT32 threadCounter = 0;
+
+VOID AttachedThreadStart(VOID *sigmask, VOID *v) {
+  TraceFile << "Thread counter is updated to " << dec << ++threadCounter
+            << endl;
+}
+
+int PinReady(unsigned int numOfThreads) {
+  return (threadCounter == numOfThreads) ? 1 : 0;
 }
 
 /* ===================================================================== */
 // Called every time a new image is loaded
 // Look for routines that we want to probe
-VOID ImageLoad(IMG img, VOID *v)
-{
-	RTN rtn = RTN_FindByName(img, "ShortFunc");
-    if (RTN_Valid(rtn))
-    {
-    	RTN_ReplaceProbed( rtn, AFUNPTR( Do_Nothing ) );
-    }
-	
-	rtn = RTN_FindByName(img, "ShortFunc2");
-    if (RTN_Valid(rtn))
-    {
-    	RTN_ReplaceProbed( rtn, AFUNPTR( Do_Nothing ) );
-    }
-    
-	rtn = RTN_FindByName(img, "ThreadsReady");
-	if (RTN_Valid(rtn))
-	{
-		if (!RTN_IsSafeForProbedReplacement(rtn))
-		{
-			fprintf(stderr, "Can't replace ThreadsReady\n");
-			exit(-1);
-		}
-		RTN_ReplaceProbed(rtn, AFUNPTR(PinReady));
-	}
+VOID ImageLoad(IMG img, VOID *v) {
+  RTN rtn = RTN_FindByName(img, "ShortFunc");
+  if (RTN_Valid(rtn)) {
+    RTN_ReplaceProbed(rtn, AFUNPTR(Do_Nothing));
+  }
 
+  rtn = RTN_FindByName(img, "ShortFunc2");
+  if (RTN_Valid(rtn)) {
+    RTN_ReplaceProbed(rtn, AFUNPTR(Do_Nothing));
+  }
+
+  rtn = RTN_FindByName(img, "ThreadsReady");
+  if (RTN_Valid(rtn)) {
+    if (!RTN_IsSafeForProbedReplacement(rtn)) {
+      fprintf(stderr, "Can't replace ThreadsReady\n");
+      exit(-1);
+    }
+    RTN_ReplaceProbed(rtn, AFUNPTR(PinReady));
+  }
 }
 
 /* ===================================================================== */
 
-int main(int argc, CHAR *argv[])
-{
-    PIN_InitSymbols();
+int main(int argc, CHAR *argv[]) {
+  PIN_InitSymbols();
 
-    if( PIN_Init(argc,argv) )
-    {
-        return Usage();
-    }
+  if (PIN_Init(argc, argv)) {
+    return Usage();
+  }
 
-    TraceFile.open(KnobOutputFile.Value().c_str());
-    TraceFile << hex;
-    TraceFile.setf(ios::showbase);
+  TraceFile.open(KnobOutputFile.Value().c_str());
+  TraceFile << hex;
+  TraceFile.setf(ios::showbase);
 
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-    PIN_AddThreadAttachProbedFunction(AttachedThreadStart, 0);
-    PIN_StartProgramProbed();
-    
-    return 0;
+  IMG_AddInstrumentFunction(ImageLoad, 0);
+  PIN_AddThreadAttachProbedFunction(AttachedThreadStart, 0);
+  PIN_StartProgramProbed();
+
+  return 0;
 }
 
 /* ===================================================================== */

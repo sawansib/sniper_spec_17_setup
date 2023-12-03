@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -39,41 +39,36 @@ END_LEGAL */
  * FreeBSD note: the FreeBSD sigset size is 128 bit.
  */
 
-#include <stdio.h>
 #include <signal.h>
 #include <stdint.h>
+#include <stdio.h>
 
 /*
  * This is an abbreviated signal set that matches the size really
  * accessed by the kernel.  It is SMALLER than libc's sigset_t.
  */
-struct kernel_sigset
-{
+struct kernel_sigset {
 #ifdef TARGET_BSD
-    uint32_t sig[4];
+  uint32_t sig[4];
 #else
-    uint32_t sig[2];
+  uint32_t sig[2];
 #endif
 };
 
+int main() {
+  struct {
+    kernel_sigset current;
+    unsigned long dummy;
+  } foo;
 
-int main()
-{
-    struct
-    {
-        kernel_sigset current;
-        unsigned long dummy;
-    } foo;
+  /* This sentinal checks whether Pin overwrites beyond the end of 'current'. */
+  foo.dummy = 0xdeadbeef;
 
-    /* This sentinal checks whether Pin overwrites beyond the end of 'current'. */
-    foo.dummy = 0xdeadbeef;
+  sigprocmask(SIG_SETMASK, 0, reinterpret_cast<sigset_t *>(&foo.current));
 
-    sigprocmask(SIG_SETMASK, 0, reinterpret_cast<sigset_t *>(&foo.current));
-
-    if (foo.dummy != 0xdeadbeef)
-    {
-        printf("The stack dummy is CORRUPTED!\n");
-        return 1;
-    }
-    return 0;
+  if (foo.dummy != 0xdeadbeef) {
+    printf("The stack dummy is CORRUPTED!\n");
+    return 1;
+  }
+  return 0;
 }

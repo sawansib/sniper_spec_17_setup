@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -37,26 +37,26 @@ END_LEGAL */
 // If __USE_GNU is defined, we don't need to do anything.
 // If we defined it ourselves, we need to undefine it later.
 #ifndef __USE_GNU
-    #define __USE_GNU
-    #define APP_UNDEF_USE_GNU
+#define __USE_GNU
+#define APP_UNDEF_USE_GNU
 #endif
 
 #include <sys/ucontext.h>
 
 // If we defined __USE_GNU ourselves, we need to undefine it here.
 #ifdef APP_UNDEF_USE_GNU
-    #undef __USE_GNU
-    #undef APP_UNDEF_USE_GNU
+#undef __USE_GNU
+#undef APP_UNDEF_USE_GNU
 #endif
 
-#include <stdlib.h>
-#include <signal.h>
 #include <assert.h>
-#include <setjmp.h>
-#include <string.h>
-#include <pthread.h>
-#include <stdio.h>
 #include <errno.h>
+#include <pthread.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_attr_t thread_attr;
@@ -78,15 +78,15 @@ void setup_signal_stack() {
 
   ss.ss_sp = malloc(SIGSTKSZ);
   assert(ss.ss_sp && "malloc failure");
-  
+
   ss.ss_size = SIGSTKSZ;
   ss.ss_flags = 0;
 
-  printf("ESP of alternate stack: %p, top: %p, size: %ld\n",
-         ss.ss_sp, (unsigned char *)ss.ss_sp + ss.ss_size, ss.ss_size);
+  printf("ESP of alternate stack: %p, top: %p, size: %ld\n", ss.ss_sp,
+         (unsigned char *)ss.ss_sp + ss.ss_size, ss.ss_size);
 
   ret_val = sigaltstack(&ss, &oss);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, sigaltstack failed");
     exit(1);
   }
@@ -101,7 +101,7 @@ void print_signal_stack() {
   stack_t oss;
 
   ret_val = sigaltstack(NULL, &oss);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, sigaltstack failed");
     exit(1);
   }
@@ -122,13 +122,13 @@ void install_signal_handler() {
 
   /* Mask all other signals */
   ret_val = sigfillset(&p_sigaction->sa_mask);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, sigfillset failed");
     exit(1);
   }
 
   ret_val = sigaction(SIGUSR1, p_sigaction, NULL);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, sigaction failed");
     exit(1);
   }
@@ -136,9 +136,9 @@ void install_signal_handler() {
 
 void lock() {
   int ret_val;
-  
+
   ret_val = pthread_mutex_lock(&mutex);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, pthread_mutex_lock failed");
   }
 
@@ -151,7 +151,7 @@ void unlock() {
   fflush(stdout);
 
   ret_val = pthread_mutex_unlock(&mutex);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, pthread_mutex_unlock failed");
   }
 }
@@ -180,13 +180,13 @@ void *thread_start(void *arg) {
   unlock();
 
   ret_val = sigfillset(&sigmask);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, sigfillset failed");
     exit(1);
   }
 
   ret_val = sigdelset(&sigmask, SIGUSR1);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, sigdelset failed");
     exit(1);
   }
@@ -203,25 +203,25 @@ void *thread_start(void *arg) {
   unlock();
 
   ret_val = sigfillset(&sigmask);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, sigfillset failed");
     exit(1);
   }
 
   ret_val = sigprocmask(SIG_BLOCK, &sigmask, NULL);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, sigprocmask failed");
     exit(1);
   }
 
   ret_val = sigemptyset(&sigmask);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, sigemptyset failed");
     exit(1);
   }
 
   ret_val = sigaddset(&sigmask, SIGUSR1);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, sigaddset failed");
     exit(1);
   }
@@ -249,40 +249,40 @@ int main(int argc, char **argv) {
   install_signal_handler();
 
   ret_val = pthread_create(&tid, NULL, thread_start, NULL);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, pthread_create failed");
     exit(1);
   }
 
   printf("created thread 0x%lx\n", (long)tid);
 
-  while(!cont) {
+  while (!cont) {
     lock();
-    if(thread_alive == 1) cont = 1;
+    if (thread_alive == 1) cont = 1;
     unlock();
   }
 
   ret_val = pthread_kill(tid, SIGUSR1);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR: pthread_kill failed");
     exit(1);
   }
 
   cont = 0;
-  while(!cont) {
+  while (!cont) {
     lock();
-    if(thread_alive == 2) cont = 1;
+    if (thread_alive == 2) cont = 1;
     unlock();
   }
 
   ret_val = pthread_kill(tid, SIGUSR1);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR: pthread_kill failed");
     exit(1);
   }
 
   ret_val = pthread_join(tid, NULL);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR: pthread_join failed");
     exit(1);
   }

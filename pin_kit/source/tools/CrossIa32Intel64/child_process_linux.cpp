@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -33,37 +33,36 @@ END_LEGAL */
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
 #include <iostream>
 #include <string>
 using namespace std;
 
-//Wait for a process completion
-//Verify it returned the expected exit code
+// Wait for a process completion
+// Verify it returned the expected exit code
 
-int main(int argc, char * argv[])
-{
-    char *childArgvArray[5];
-    childArgvArray[0] = argv[1];
-    childArgvArray[1] = argv[2];
-    childArgvArray[2] = argv[3];
-    childArgvArray[3] = argv[4];
-    childArgvArray[4] = argv[5];
+int main(int argc, char *argv[]) {
+  char *childArgvArray[5];
+  childArgvArray[0] = argv[1];
+  childArgvArray[1] = argv[2];
+  childArgvArray[2] = argv[3];
+  childArgvArray[3] = argv[4];
+  childArgvArray[4] = argv[5];
 
-    pid_t pid = fork();
-    if (pid == 0)
-    {
-        // child process
-        execv(childArgvArray[0], childArgvArray);
-        cout << "Execve failed "<< argv[1] << " " << argv[2] << " " << argv[3] << endl;
-    }
+  pid_t pid = fork();
+  if (pid == 0) {
+    // child process
+    execv(childArgvArray[0], childArgvArray);
+    cout << "Execve failed " << argv[1] << " " << argv[2] << " " << argv[3]
+         << endl;
+  } else {
+    int status;
+    waitpid(pid, &status, 0);
+    if (status != 0)
+      cout << "Child report: Grand child process failed with status "
+           << WEXITSTATUS(status) << endl;
     else
-    {
-        int status;
-        waitpid(pid, &status, 0);
-        if (status !=0)
-            cout << "Child report: Grand child process failed with status "<< WEXITSTATUS(status) << endl;
-        else
-            cout << "Child report: Grand child process exited successfully" << endl;
-    }
-    return 0;
+      cout << "Child report: Grand child process exited successfully" << endl;
+  }
+  return 0;
 }

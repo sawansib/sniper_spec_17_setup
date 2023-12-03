@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -34,44 +34,38 @@ END_LEGAL */
  * uses a signal number that is normally a synchronous signal.
  */
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <unistd.h>
 
 static void Handle(int, siginfo_t *, void *);
 
-
-int main()
-{
-    struct sigaction act;
-    act.sa_sigaction = Handle;
-    act.sa_flags = SA_SIGINFO;
-    sigemptyset(&act.sa_mask);
-    if (sigaction(SIGFPE, &act, 0) != 0)
-    {
-        printf("Unable to set up FPE handler\n");
-        return 1;
-    }
-
-    kill(getpid(), SIGFPE);
-    /* should not return */
-
-    printf("Should not return from signal handler\n");
+int main() {
+  struct sigaction act;
+  act.sa_sigaction = Handle;
+  act.sa_flags = SA_SIGINFO;
+  sigemptyset(&act.sa_mask);
+  if (sigaction(SIGFPE, &act, 0) != 0) {
+    printf("Unable to set up FPE handler\n");
     return 1;
+  }
+
+  kill(getpid(), SIGFPE);
+  /* should not return */
+
+  printf("Should not return from signal handler\n");
+  return 1;
 }
 
-static void Handle(int sig, siginfo_t *info, void *ctxt)
-{
-    if (sig != SIGFPE)
-    {
-        printf("Got unexpected signal %d\n", sig);
-        exit(1);
-    }
-    if (info->si_code != 0)
-    {
-        printf("Expected si_code to be zero, but got %d\n", (int)info->si_code);
-        exit(1);
-    }
-    exit(0);
+static void Handle(int sig, siginfo_t *info, void *ctxt) {
+  if (sig != SIGFPE) {
+    printf("Got unexpected signal %d\n", sig);
+    exit(1);
+  }
+  if (info->si_code != 0) {
+    printf("Expected si_code to be zero, but got %d\n", (int)info->si_code);
+    exit(1);
+  }
+  exit(0);
 }

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -31,76 +31,73 @@ END_LEGAL */
 #include <stdio.h>
 
 /*
- * Only run this on IA32, Linux (could also run on other gcc compatible platforms).
- * The code in Pin is all generic, but generating the test is simpler if we constrain things.
+ * Only run this on IA32, Linux (could also run on other gcc compatible
+ * platforms). The code in Pin is all generic, but generating the test is
+ * simpler if we constrain things.
  */
-int deleteMov () __attribute__((noinline));
-int deleteMov () 
-{
-    int res;
-    // The mov will be deleted by the tool
-    __asm__ volatile ("xor   %0,%0;"
-                      "mov   $-1,%0":"=r"(res));
-    return res;
+int deleteMov() __attribute__((noinline));
+int deleteMov() {
+  int res;
+  // The mov will be deleted by the tool
+  __asm__ volatile(
+      "xor   %0,%0;"
+      "mov   $-1,%0"
+      : "=r"(res));
+  return res;
 }
 
 int insertJump() __attribute__((noinline));
-int insertJump()
-{
-    int res;
-    // The mov will be branched over by the tool
-    __asm__ volatile ("xor   %0,%0;"
-                      "mov   $-1,%0":"=r"(res));
-    return res;
+int insertJump() {
+  int res;
+  // The mov will be branched over by the tool
+  __asm__ volatile(
+      "xor   %0,%0;"
+      "mov   $-1,%0"
+      : "=r"(res));
+  return res;
 }
 
 int insertIndirectJump() __attribute__((noinline));
-int insertIndirectJump()
-{
-    int res;
-    // The mov will be branched over by the tool
-    __asm__ volatile ("xor   %0,%0;"
-                      "mov   $-1,%0":"=r"(res));
-    return res;
+int insertIndirectJump() {
+  int res;
+  // The mov will be branched over by the tool
+  __asm__ volatile(
+      "xor   %0,%0;"
+      "mov   $-1,%0"
+      : "=r"(res));
+  return res;
 }
 
-static int values[] = {0,-1};
+static int values[] = {0, -1};
 
 int modifyAddressing(int) __attribute__((noinline));
-int modifyAddressing(int idx)
-{
-    int *base = &values[0];
-    int res   = 0;
-    // The addressing on this or will be modified...
-    __asm__ volatile ("or   (%1,%2,4),%0"
-                      :"+r"(res):"r"(base),"r"(idx));
+int modifyAddressing(int idx) {
+  int *base = &values[0];
+  int res = 0;
+  // The addressing on this or will be modified...
+  __asm__ volatile("or   (%1,%2,4),%0" : "+r"(res) : "r"(base), "r"(idx));
 
-    return res;
+  return res;
 }
 
-int main (int argc, char ** argv)
-{
-    int failed = 0;
-    if (deleteMov() != 0)
-    {
-        fprintf (stderr, "Mov instruction was not deleted\n");
-        failed++;
-    }
-    if (insertJump() != 0)
-    {
-        fprintf (stderr, "Mov instruction was not branched over\n");
-        failed++;
-    }
-    if (insertIndirectJump() != 0)
-    {
-        fprintf (stderr, "Mov instruction was not indirectly branched over\n");
-        failed++;
-    }
-    if (modifyAddressing(1) != 0)
-    {
-        fprintf (stderr, "Addressing was not modified\n");
-        failed++;
-    }
+int main(int argc, char **argv) {
+  int failed = 0;
+  if (deleteMov() != 0) {
+    fprintf(stderr, "Mov instruction was not deleted\n");
+    failed++;
+  }
+  if (insertJump() != 0) {
+    fprintf(stderr, "Mov instruction was not branched over\n");
+    failed++;
+  }
+  if (insertIndirectJump() != 0) {
+    fprintf(stderr, "Mov instruction was not indirectly branched over\n");
+    failed++;
+  }
+  if (modifyAddressing(1) != 0) {
+    fprintf(stderr, "Addressing was not modified\n");
+    failed++;
+  }
 
-    return failed;
+  return failed;
 }

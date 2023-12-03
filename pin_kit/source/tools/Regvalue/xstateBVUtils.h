@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -35,28 +35,23 @@ END_LEGAL */
 
 using std::string;
 
-
 /////////////////////
 // TYPE DEFINITIONS
 /////////////////////
 
-enum TEST_REG_CLASS
-{
-    TEST_REG_CLASS_X87 = 0,
-    TEST_REG_CLASS_SSE,
-    TEST_REG_CLASS_AVX,
-    TEST_REG_CLASS_SIZE,
-    TEST_REG_CLASS_INVALID = TEST_REG_CLASS_SIZE
+enum TEST_REG_CLASS {
+  TEST_REG_CLASS_X87 = 0,
+  TEST_REG_CLASS_SSE,
+  TEST_REG_CLASS_AVX,
+  TEST_REG_CLASS_SIZE,
+  TEST_REG_CLASS_INVALID = TEST_REG_CLASS_SIZE
 };
 
-
-extern "C"
-{
+extern "C" {
 
 /////////////////////
 // GLOBAL VARIABLES
 /////////////////////
-
 
 extern const unsigned int testRegSize[TEST_REG_CLASS_SIZE];
 extern const unsigned int testRegLocation[TEST_REG_CLASS_SIZE];
@@ -64,13 +59,12 @@ extern const unsigned char xstateBvMasks[TEST_REG_CLASS_SIZE];
 extern const string componentStrings[TEST_REG_CLASS_SIZE];
 extern const unsigned char* toolRegisterValues[TEST_REG_CLASS_SIZE];
 
-
 /////////////////////
 // UTILITY FUNCTIONS
 /////////////////////
 
 extern TEST_REG_CLASS GetTestReg(const string& arg);
 
-} // extern "C"
+}  // extern "C"
 
-#endif // XSTATE_BV_UTILS_H
+#endif  // XSTATE_BV_UTILS_H

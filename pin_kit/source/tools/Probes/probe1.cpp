@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -38,10 +38,12 @@ END_LEGAL */
 /*! @file
  */
 
-#include "pin.H"
-#include <iostream>
-#include <fstream>
 #include <stdlib.h>
+
+#include <fstream>
+#include <iostream>
+
+#include "pin.H"
 
 using namespace std;
 
@@ -57,100 +59,88 @@ static void (*pf_nd)();
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
-    "o", "probe1.outfile", "specify file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o",
+                            "probe1.outfile", "specify file name");
 
 /* ===================================================================== */
 
-INT32 Usage()
-{
-    cerr <<
-        "This pin tool tests probe replacement.\n"
-        "\n";
-    cerr << KNOB_BASE::StringKnobSummary();
-    cerr << endl;
-    return -1;
+INT32 Usage() {
+  cerr << "This pin tool tests probe replacement.\n"
+          "\n";
+  cerr << KNOB_BASE::StringKnobSummary();
+  cerr << endl;
+  return -1;
 }
 
+void Do_Nothing() {
+  if (pf_dn) {
+    (*pf_dn)();
 
-void Do_Nothing()
-{
-    if (pf_dn)
-    {
-        (*pf_dn)();
-        
-        TraceFile << "Doing nothing." << endl;
-    }
+    TraceFile << "Doing nothing." << endl;
+  }
 }
 
-void Nothing_Doing()
-{
-    if (pf_nd)
-    {
-        (*pf_nd)();
-        
-        TraceFile << "Nothing doing." << endl;
-    }
+void Nothing_Doing() {
+  if (pf_nd) {
+    (*pf_nd)();
+
+    TraceFile << "Nothing doing." << endl;
+  }
 }
 
 /* ===================================================================== */
 // Called every time a new image is loaded
 // Look for routines that we want to probe
-VOID ImageLoad(IMG img, VOID *v)
-{
-    cout << "Processing " << IMG_Name( img ) << endl;
-    
-    RTN rtn = RTN_FindByName(img, "do_nothing");
-    if (RTN_Valid(rtn))
-    {
-        if ( ! RTN_IsSafeForProbedReplacement( rtn ) )
-        {
-            TraceFile << "Cannot replace " << RTN_Name(rtn) << " in " << IMG_Name(img) << endl;
-            exit(1);
-        }
+VOID ImageLoad(IMG img, VOID *v) {
+  cout << "Processing " << IMG_Name(img) << endl;
 
-        pf_dn = (void (*)())RTN_ReplaceProbed( rtn, AFUNPTR( Do_Nothing ) );
-
-        TraceFile << "Inserted probe for do_nothing:" << IMG_Name(img) << endl;
+  RTN rtn = RTN_FindByName(img, "do_nothing");
+  if (RTN_Valid(rtn)) {
+    if (!RTN_IsSafeForProbedReplacement(rtn)) {
+      TraceFile << "Cannot replace " << RTN_Name(rtn) << " in " << IMG_Name(img)
+                << endl;
+      exit(1);
     }
 
-    rtn = RTN_FindByName(img, "nothing_doing");
-    if (RTN_Valid(rtn))
-    {
-        if ( ! RTN_IsSafeForProbedReplacement( rtn ) )
-        {
-            TraceFile << "Cannot replace " << RTN_Name(rtn) << " in " << IMG_Name(img) << endl;
-            exit(1);
-        }
+    pf_dn = (void (*)())RTN_ReplaceProbed(rtn, AFUNPTR(Do_Nothing));
 
-        pf_nd = (void (*)())RTN_ReplaceProbed( rtn, AFUNPTR( Nothing_Doing ) );
+    TraceFile << "Inserted probe for do_nothing:" << IMG_Name(img) << endl;
+  }
 
-        TraceFile << "Inserted probe for nothing_doing:" << IMG_Name(img) << endl;
+  rtn = RTN_FindByName(img, "nothing_doing");
+  if (RTN_Valid(rtn)) {
+    if (!RTN_IsSafeForProbedReplacement(rtn)) {
+      TraceFile << "Cannot replace " << RTN_Name(rtn) << " in " << IMG_Name(img)
+                << endl;
+      exit(1);
     }
 
-    cout << "Completed " << IMG_Name( img ) << endl;
+    pf_nd = (void (*)())RTN_ReplaceProbed(rtn, AFUNPTR(Nothing_Doing));
+
+    TraceFile << "Inserted probe for nothing_doing:" << IMG_Name(img) << endl;
+  }
+
+  cout << "Completed " << IMG_Name(img) << endl;
 }
 
 /* ===================================================================== */
 
-int main(int argc, CHAR *argv[])
-{
-    PIN_InitSymbolsAlt(EXPORT_SYMBOLS);
+int main(int argc, CHAR *argv[]) {
+  PIN_InitSymbolsAlt(EXPORT_SYMBOLS);
 
-    if( PIN_Init(argc,argv) )
-    {
-        return Usage();
-    }
+  if (PIN_Init(argc, argv)) {
+    return Usage();
+  }
 
-    TraceFile.open(KnobOutputFile.Value().c_str());
-    TraceFile << hex;
-    TraceFile.setf(ios::showbase);
+  TraceFile.open(KnobOutputFile.Value().c_str());
+  TraceFile << hex;
+  TraceFile.setf(ios::showbase);
 
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-    
-    PIN_StartProgramProbed();
-    
-    return 0;
+  IMG_AddInstrumentFunction(ImageLoad, 0);
+
+  PIN_StartProgramProbed();
+
+  return 0;
 }
 
 /* ===================================================================== */

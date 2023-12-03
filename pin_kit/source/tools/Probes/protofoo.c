@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -33,18 +33,12 @@ END_LEGAL */
 
 extern Bar(int, int, int, int);
 
+void Foo(int a, int b, int c, int d) { Bar(a, b, c, d); }
 
-void Foo( int a, int b, int c, int d)
-{
-    Bar( a, b, c, d );
-}
+int main() {
+  Foo(12, 345, 678, 90);
+  Foo(11, 22, 33, 44);
+  Foo(99, 88, 77, 66);
 
-int main()
-{
-    Foo( 12, 345, 678, 90 );
-    Foo( 11, 22, 33, 44 );
-    Foo( 99, 88, 77, 66 );
-
-    return 0;
-    
+  return 0;
 }

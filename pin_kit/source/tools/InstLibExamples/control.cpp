@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -30,25 +30,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 #include <iostream>
 
-#include "pin.H"
-#include "instlib.H"
 #include "control_manager.H"
+#include "instlib.H"
+#include "pin.H"
 
 using namespace INSTLIB;
 using namespace CONTROLLER;
 
-
 #if defined(__GNUC__)
-#  if defined(__APPLE__)
-#    define ALIGN_LOCK __attribute__ ((aligned(16))) /* apple only supports 16B alignment */
-#  else
-#    define ALIGN_LOCK __attribute__ ((aligned(64)))
-#  endif
+#if defined(__APPLE__)
+#define ALIGN_LOCK \
+  __attribute__((aligned(16))) /* apple only supports 16B alignment */
 #else
-# define ALIGN_LOCK __declspec(align(64))
+#define ALIGN_LOCK __attribute__((aligned(64)))
+#endif
+#else
+#define ALIGN_LOCK __declspec(align(64))
 #endif
 
-LOCALVAR PIN_LOCK  ALIGN_LOCK output_lock; 
+LOCALVAR PIN_LOCK ALIGN_LOCK output_lock;
 
 // Track the number of instructions executed
 ICOUNT icount;
@@ -56,64 +56,57 @@ ICOUNT icount;
 // Contains knobs and instrumentation to recognize start/stop points
 CONTROL_MANAGER control("controller_");
 
-VOID Handler(EVENT_TYPE ev, VOID * v, CONTEXT * ctxt, VOID * ip, THREADID tid, BOOL bcast)
-{
-    PIN_GetLock(&output_lock, tid+1);
+VOID Handler(EVENT_TYPE ev, VOID* v, CONTEXT* ctxt, VOID* ip, THREADID tid,
+             BOOL bcast) {
+  PIN_GetLock(&output_lock, tid + 1);
 
-    std::cout << "tid: " << tid << " ";
-    std::cout << "ip: "  << ip << " " << icount.Count() ;
+  std::cout << "tid: " << tid << " ";
+  std::cout << "ip: " << ip << " " << icount.Count();
 
-    switch(ev)
-    {
-      case EVENT_START:
-        std::cout << "Start" << endl;
-        break;
+  switch (ev) {
+    case EVENT_START:
+      std::cout << "Start" << endl;
+      break;
 
-      case EVENT_STOP:
-        std::cout << "Stop" << endl;
-        break;
+    case EVENT_STOP:
+      std::cout << "Stop" << endl;
+      break;
 
+    case EVENT_THREADID:
+      std::cout << "ThreadID" << endl;
+      break;
 
-      case EVENT_THREADID:
-        std::cout << "ThreadID" << endl;
-        break;
-
-      default:
-        ASSERTX(false);
-        break;
-    }
-    PIN_ReleaseLock(&output_lock);
+    default:
+      ASSERTX(false);
+      break;
+  }
+  PIN_ReleaseLock(&output_lock);
 }
-    
-INT32 Usage()
-{
-    cerr <<
-        "This pin tool demonstrates use of CONTROL to identify start/stop points in a program\n"
-        "\n";
 
-    cerr << KNOB_BASE::StringKnobSummary() << endl;
-    return -1;
+INT32 Usage() {
+  cerr << "This pin tool demonstrates use of CONTROL to identify start/stop "
+          "points in a program\n"
+          "\n";
+
+  cerr << KNOB_BASE::StringKnobSummary() << endl;
+  return -1;
 }
 
 // argc, argv are the entire command line, including pin -t <toolname> -- ...
-int main(int argc, char * argv[])
-{
-    if( PIN_Init(argc,argv) )
-    {
-        return Usage();
-    }
+int main(int argc, char* argv[]) {
+  if (PIN_Init(argc, argv)) {
+    return Usage();
+  }
 
-    PIN_InitLock(&output_lock);
-    icount.Activate();
-    
-    // Activate alarm, must be done before PIN_StartProgram
-    control.RegisterHandler(Handler, 0, FALSE);
-    control.Activate();
+  PIN_InitLock(&output_lock);
+  icount.Activate();
 
-    // Start the program, never returns
-    PIN_StartProgram();
-    
-    return 0;
+  // Activate alarm, must be done before PIN_StartProgram
+  control.RegisterHandler(Handler, 0, FALSE);
+  control.Activate();
+
+  // Start the program, never returns
+  PIN_StartProgram();
+
+  return 0;
 }
-
-

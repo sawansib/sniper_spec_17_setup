@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -30,46 +30,43 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 // This tests the alignment of the stack on Intel64
 
-#include "pin.H"
-#include <fstream>
 #include <stdio.h>
+
+#include <fstream>
+
+#include "pin.H"
 
 double fl;
 
-VOID sn()
-{
-    char a[100];
-    
-    // snprintf does a movaps, which needs the stack aligned correctly
+VOID sn() {
+  char a[100];
+
+  // snprintf does a movaps, which needs the stack aligned correctly
 #if defined(PIN_GNU_COMPATIBLE)
-    snprintf(a, 10, "a %f\n", fl);
+  snprintf(a, 10, "a %f\n", fl);
 #elif defined(PIN_MS_COMPATIBLE)
-    _snprintf(a, 10, "a %f\n", fl);
-#endif    
- 
-}
-    
-VOID Instruction(INS ins, VOID *v)
-{
-    static BOOL first = true;
-
-    if (!first)
-        return;
-    first = false;
-    
-    // test once with a context and once without
-    INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(sn), IARG_CONTEXT, IARG_END);
-    INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(sn), IARG_END);
+  _snprintf(a, 10, "a %f\n", fl);
+#endif
 }
 
-int main(int argc, char * argv[])
-{
-    PIN_Init(argc, argv);
+VOID Instruction(INS ins, VOID *v) {
+  static BOOL first = true;
 
-    INS_AddInstrumentFunction(Instruction, 0);
-    
-    // Never returns
-    PIN_StartProgram();
-    
-    return 0;
+  if (!first) return;
+  first = false;
+
+  // test once with a context and once without
+  INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(sn), IARG_CONTEXT, IARG_END);
+  INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(sn), IARG_END);
+}
+
+int main(int argc, char *argv[]) {
+  PIN_Init(argc, argv);
+
+  INS_AddInstrumentFunction(Instruction, 0);
+
+  // Never returns
+  PIN_StartProgram();
+
+  return 0;
 }

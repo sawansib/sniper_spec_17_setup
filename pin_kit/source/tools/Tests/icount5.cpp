@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,57 +29,48 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 #include <iostream>
+
 #include "pin.H"
 
 UINT64 before = 0;
 UINT64 after = 0;
 UINT64 noFallThrough = 0;
 
-VOID docount_before(BOOL hasFallTrough)
-{
-    before++;
-    if ( ! hasFallTrough) noFallThrough++;
+VOID docount_before(BOOL hasFallTrough) {
+  before++;
+  if (!hasFallTrough) noFallThrough++;
 }
 
-VOID docount_after()
-{
-    after++;
-}
+VOID docount_after() { after++; }
 
-VOID Trace(TRACE trace, VOID *v)
-{
-    INS ins;
-    
-    for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
-    {
-        for (ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins))
-        {
-            UINT32 hasFallThrough = INS_HasFallThrough(ins);
-            INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(docount_before), IARG_UINT32, hasFallThrough, IARG_END);
-            if (hasFallThrough)
-            {
-                INS_InsertCall(ins, IPOINT_AFTER, AFUNPTR(docount_after), IARG_END);
-            }
-        }
+VOID Trace(TRACE trace, VOID *v) {
+  INS ins;
+
+  for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl)) {
+    for (ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins)) {
+      UINT32 hasFallThrough = INS_HasFallThrough(ins);
+      INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(docount_before), IARG_UINT32,
+                     hasFallThrough, IARG_END);
+      if (hasFallThrough) {
+        INS_InsertCall(ins, IPOINT_AFTER, AFUNPTR(docount_after), IARG_END);
+      }
     }
+  }
 }
 
-VOID Fini(INT32 code, VOID *v)
-{
-    std::cerr << "Count before: " << before << endl;
-    std::cerr << "Count after: " << after << endl;
-    std::cerr << "Count no fall-through: " << noFallThrough << endl;
+VOID Fini(INT32 code, VOID *v) {
+  std::cerr << "Count before: " << before << endl;
+  std::cerr << "Count after: " << after << endl;
+  std::cerr << "Count no fall-through: " << noFallThrough << endl;
 }
 
+int main(INT32 argc, CHAR **argv) {
+  PIN_Init(argc, argv);
+  TRACE_AddInstrumentFunction(Trace, 0);
+  PIN_AddFiniFunction(Fini, 0);
 
-int main(INT32 argc, CHAR **argv)
-{
-    PIN_Init(argc, argv);
-    TRACE_AddInstrumentFunction(Trace, 0);
-    PIN_AddFiniFunction(Fini, 0);
-    
-    // Never returns
-    PIN_StartProgram();
-    
-    return 0;
+  // Never returns
+  PIN_StartProgram();
+
+  return 0;
 }

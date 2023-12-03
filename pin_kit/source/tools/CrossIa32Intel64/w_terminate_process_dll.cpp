@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -28,58 +28,51 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
-#define _WIN32_WINNT   0x0400 
+#define _WIN32_WINNT 0x0400
 #include <Windows.h>
-#include <iostream>
 #include <stdio.h>
+
+#include <iostream>
 using namespace std;
 
 static volatile int i = 0;
 
-//Verify that the LFH is available. return true when running under debugger.
-bool VerifyLFHAvailable()
-{
-    if(IsDebuggerPresent())
-    {
-        //LFH is not available unser debugger
-        return true;
-    }
-    else
-    {
-        ULONG heapInfo = 2;
-        return HeapSetInformation(GetProcessHeap(), HeapCompatibilityInformation, &heapInfo, sizeof(ULONG));
-    }
+// Verify that the LFH is available. return true when running under debugger.
+bool VerifyLFHAvailable() {
+  if (IsDebuggerPresent()) {
+    // LFH is not available unser debugger
+    return true;
+  } else {
+    ULONG heapInfo = 2;
+    return HeapSetInformation(GetProcessHeap(), HeapCompatibilityInformation,
+                              &heapInfo, sizeof(ULONG));
+  }
 }
 
-BOOL WINAPI DllMain(HANDLE hDll, DWORD dwReason, LPVOID lpReserved)
-{
-    switch (dwReason) 
-    {
-      case DLL_PROCESS_ATTACH:
-      {
-		  if(VerifyLFHAvailable())
-		  {		  
-              cout << "Terminating process in DllMain(PROCESS_ATTACH)" << endl << flush;
-		  }
-		  else
-		  {
-              cout << "ERROR: LFH is not available" << endl << flush;
-		  }
-          TerminateProcess(GetCurrentProcess(), 0);
-          i = 12;
-          return FALSE;
-          break;
-      }  
-      case DLL_THREAD_ATTACH:
-          break;
-      case DLL_THREAD_DETACH: 
-          break;
-      case DLL_PROCESS_DETACH:
-          break;
-      default:
-          break; 
-    } 
-    return TRUE; 
+BOOL WINAPI DllMain(HANDLE hDll, DWORD dwReason, LPVOID lpReserved) {
+  switch (dwReason) {
+    case DLL_PROCESS_ATTACH: {
+      if (VerifyLFHAvailable()) {
+        cout << "Terminating process in DllMain(PROCESS_ATTACH)" << endl
+             << flush;
+      } else {
+        cout << "ERROR: LFH is not available" << endl << flush;
+      }
+      TerminateProcess(GetCurrentProcess(), 0);
+      i = 12;
+      return FALSE;
+      break;
+    }
+    case DLL_THREAD_ATTACH:
+      break;
+    case DLL_THREAD_DETACH:
+      break;
+    case DLL_PROCESS_DETACH:
+      break;
+    default:
+      break;
+  }
+  return TRUE;
 }
 
-extern "C" __declspec(dllexport) int Something() {return i;}
+extern "C" __declspec(dllexport) int Something() { return i; }

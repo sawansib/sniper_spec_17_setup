@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,77 +29,61 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 
-
 /* ===================================================================== */
 /*! @file
  *  This file tests error reporting.
-*/
+ */
 
 /* ===================================================================== */
-#include "pin.H"
 #include <iostream>
+
+#include "pin.H"
 
 using namespace std;
 
 /* ===================================================================== */
 
 /* ===================================================================== */
-void * Malloc(  CONTEXT * ctxt, AFUNPTR pf_malloc, size_t size )
-{
-    void * res;
+void *Malloc(CONTEXT *ctxt, AFUNPTR pf_malloc, size_t size) {
+  void *res;
 
-    // PIN_CallApplicationFunction() cannot be called in Probe mode!
-    // This should result in an error.  Do not try this at home.
-    //
-    PIN_CallApplicationFunction( ctxt, PIN_ThreadId(),
-                                 CALLINGSTD_DEFAULT, pf_malloc,
-                                 PIN_PARG(int), &res,
-                                 PIN_PARG(size_t), size,
-                                 PIN_PARG_END() );
-    
+  // PIN_CallApplicationFunction() cannot be called in Probe mode!
+  // This should result in an error.  Do not try this at home.
+  //
+  PIN_CallApplicationFunction(ctxt, PIN_ThreadId(), CALLINGSTD_DEFAULT,
+                              pf_malloc, PIN_PARG(int), &res, PIN_PARG(size_t),
+                              size, PIN_PARG_END());
 
-    return res;
-}
-
-
-/* ===================================================================== */
-VOID ImageLoad(IMG img, VOID *v)
-{
-    
-    PROTO proto = PROTO_Allocate( PIN_PARG(void *), CALLINGSTD_DEFAULT,
-                                  "malloc", PIN_PARG(size_t),
-                                  PIN_PARG_END() );
-    
-    RTN rtn = RTN_FindByName(img, "malloc");
-    if (RTN_Valid(rtn))
-    {
-        RTN_ReplaceSignatureProbed(
-            rtn, AFUNPTR(Malloc),
-            IARG_PROTOTYPE, proto,
-            IARG_CONTEXT,
-            IARG_ORIG_FUNCPTR,
-            IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
-            IARG_END);
-
-    }    
-    PROTO_Free( proto );
+  return res;
 }
 
 /* ===================================================================== */
-int main(INT32 argc, CHAR *argv[])
-{
-    PIN_InitSymbols();
+VOID ImageLoad(IMG img, VOID *v) {
+  PROTO proto = PROTO_Allocate(PIN_PARG(void *), CALLINGSTD_DEFAULT, "malloc",
+                               PIN_PARG(size_t), PIN_PARG_END());
 
-    PIN_Init(argc, argv);
+  RTN rtn = RTN_FindByName(img, "malloc");
+  if (RTN_Valid(rtn)) {
+    RTN_ReplaceSignatureProbed(rtn, AFUNPTR(Malloc), IARG_PROTOTYPE, proto,
+                               IARG_CONTEXT, IARG_ORIG_FUNCPTR,
+                               IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
+  }
+  PROTO_Free(proto);
+}
 
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-    
-    PIN_StartProgramProbed();
+/* ===================================================================== */
+int main(INT32 argc, CHAR *argv[]) {
+  PIN_InitSymbols();
 
-    return 0;
+  PIN_Init(argc, argv);
+
+  IMG_AddInstrumentFunction(ImageLoad, 0);
+
+  PIN_StartProgramProbed();
+
+  return 0;
 }
 
 /* ===================================================================== */
 /* eof */
 /* ===================================================================== */
-

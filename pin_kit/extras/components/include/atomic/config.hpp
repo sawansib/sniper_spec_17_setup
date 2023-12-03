@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -35,7 +35,6 @@ END_LEGAL */
 #ifndef ATOMIC_CONFIG_HPP
 #define ATOMIC_CONFIG_HPP
 
-
 /*! @defgroup CONFIG Configuration
  *
  * The ATOMIC library can be configured by redefining the following macros
@@ -47,7 +46,7 @@ END_LEGAL */
  * In order to override this, define ATOMIC_ASSERT to the name of a macro or
  * function that takes a single argument.
  *
- * \par ATOMIC_NO_ASSERT   
+ * \par ATOMIC_NO_ASSERT
  * Define this macro in order to disable all internal assertion checks in the
  * ATOMIC header files.
  *
@@ -59,20 +58,20 @@ END_LEGAL */
 // Define the macro for normal asserts.
 //
 #if defined(ATOMIC_NO_ASSERT)
-#   define ATOMIC_CHECK_ASSERT(x) (static_cast<void>(0))
+#define ATOMIC_CHECK_ASSERT(x) (static_cast<void>(0))
 #elif !defined(ATOMIC_ASSERT)
-#   include <cassert>
-#   define ATOMIC_CHECK_ASSERT(x) assert(x)
+#include <cassert>
+#define ATOMIC_CHECK_ASSERT(x) assert(x)
 #else
-#   define ATOMIC_CHECK_ASSERT(x) ATOMIC_ASSERT(x)
+#define ATOMIC_CHECK_ASSERT(x) ATOMIC_ASSERT(x)
 #endif
 
 // Define the macro for slow asserts.
 //
 #if defined(ATOMIC_NO_ASSERTSLOW)
-#   define ATOMIC_CHECK_ASSERTSLOW(x) ((void)0)
+#define ATOMIC_CHECK_ASSERTSLOW(x) ((void)0)
 #else
-#   define ATOMIC_CHECK_ASSERTSLOW(x) ATOMIC_CHECK_ASSERT(x)
+#define ATOMIC_CHECK_ASSERTSLOW(x) ATOMIC_CHECK_ASSERT(x)
 #endif
 
-#endif // file guard
+#endif  // file guard

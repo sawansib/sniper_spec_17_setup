@@ -1,7 +1,5 @@
 
 const char* EStaticNetworkStrings[] = {
-   "shmem-1",
-   "system",
+    "shmem-1",
+    "system",
 };
-
-

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -32,23 +32,21 @@ END_LEGAL */
 extern void movdqa_test(char* p);
 #endif
 
-int main(int argc, char** argv)
-{
-    char a[1000];
+int main(int argc, char** argv) {
+  char a[1000];
 
-    /* get in to the buffer and then align it by 16 */
+  /* get in to the buffer and then align it by 16 */
 
-    char* b = (char*)(((unsigned long int)(a+16) >> 4) << 4);
+  char* b = (char*)(((unsigned long int)(a + 16) >> 4) << 4);
 
-    /* generate one aligned move and one unaligned move. The alignchk tool
-     * should catch the latter one. */
+  /* generate one aligned move and one unaligned move. The alignchk tool
+   * should catch the latter one. */
 
 #if defined(__GNUC__)
-    char* c = b + 1;
-    asm volatile("movdqa %%xmm0, %0" : "=m" (*b)  : : "%xmm0"); 
-    asm volatile("movdqa %%xmm0, %0" : "=m" (*c)  : : "%xmm0"); 
+  char* c = b + 1;
+  asm volatile("movdqa %%xmm0, %0" : "=m"(*b) : : "%xmm0");
+  asm volatile("movdqa %%xmm0, %0" : "=m"(*c) : : "%xmm0");
 #else
-    movdqa_test(b);
+  movdqa_test(b);
 #endif
-    
 }

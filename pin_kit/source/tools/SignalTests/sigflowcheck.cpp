@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,68 +29,64 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 #include <fstream>
+
 #include "pin.H"
 
-static void OnSig(THREADID, CONTEXT_CHANGE_REASON, const CONTEXT *, CONTEXT *, INT32, VOID *);
+static void OnSig(THREADID, CONTEXT_CHANGE_REASON, const CONTEXT *, CONTEXT *,
+                  INT32, VOID *);
 static void OnEnd(INT32, VOID *);
-
 
 std::vector<ADDRINT> Stack;
 
 KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "inscount.out",
-        "specify output file name");
+                            "specify output file name");
 
 ofstream OutFile;
 
-INT32 Usage()
-{
-    OutFile << endl << KNOB_BASE::StringKnobSummary() << endl;
-    return -1;
+INT32 Usage() {
+  OutFile << endl << KNOB_BASE::StringKnobSummary() << endl;
+  return -1;
 }
 
-int main(int argc, char * argv[])
-{
-    if (PIN_Init(argc, argv)) return Usage();
+int main(int argc, char *argv[]) {
+  if (PIN_Init(argc, argv)) return Usage();
 
-    OutFile.open(KnobOutputFile.Value().c_str());
+  OutFile.open(KnobOutputFile.Value().c_str());
 
-    PIN_AddContextChangeFunction(OnSig, 0);
-    PIN_AddFiniFunction(OnEnd, 0);
+  PIN_AddContextChangeFunction(OnSig, 0);
+  PIN_AddFiniFunction(OnEnd, 0);
 
-    PIN_StartProgram();
-    return 0;
+  PIN_StartProgram();
+  return 0;
 }
 
-
-static void OnSig(THREADID threadIndex, CONTEXT_CHANGE_REASON reason, const CONTEXT *ctxtFrom,
-    CONTEXT *ctxtTo, INT32 sig, VOID *v)
-{
-    switch (reason)
-    {
+static void OnSig(THREADID threadIndex, CONTEXT_CHANGE_REASON reason,
+                  const CONTEXT *ctxtFrom, CONTEXT *ctxtTo, INT32 sig,
+                  VOID *v) {
+  switch (reason) {
     case CONTEXT_CHANGE_REASON_SIGNAL:
-        Stack.push_back(PIN_GetContextReg(ctxtFrom, REG_INST_PTR));
-        break;
+      Stack.push_back(PIN_GetContextReg(ctxtFrom, REG_INST_PTR));
+      break;
 
-    case CONTEXT_CHANGE_REASON_SIGRETURN:
-      {
-        ADDRINT savedPC = Stack.back();
-        ADDRINT returnPC = PIN_GetContextReg(ctxtTo, REG_INST_PTR);
-        if (savedPC != returnPC)
-        {
-            OutFile << "Handler does not return to original location: saved=" << hex << savedPC <<
-                " return=" << returnPC << dec << endl;
-        }
-        Stack.pop_back();
-        break;
+    case CONTEXT_CHANGE_REASON_SIGRETURN: {
+      ADDRINT savedPC = Stack.back();
+      ADDRINT returnPC = PIN_GetContextReg(ctxtTo, REG_INST_PTR);
+      if (savedPC != returnPC) {
+        OutFile << "Handler does not return to original location: saved=" << hex
+                << savedPC << " return=" << returnPC << dec << endl;
       }
-    default:
-        OutFile << "Unexpected CONTEXT_CHANGE_REASON " << reason << ", exiting the test." << endl;
-        PIN_ExitProcess(1);
-        break;
+      Stack.pop_back();
+      break;
     }
+    default:
+      OutFile << "Unexpected CONTEXT_CHANGE_REASON " << reason
+              << ", exiting the test." << endl;
+      PIN_ExitProcess(1);
+      break;
+  }
 }
 
-static void OnEnd(INT32 code, VOID *v)
-{
-    OutFile << "Program exitted with " << Stack.size() << " signal frames pending" << endl;
+static void OnEnd(INT32 code, VOID *v) {
+  OutFile << "Program exitted with " << Stack.size() << " signal frames pending"
+          << endl;
 }

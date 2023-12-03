@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -35,12 +35,13 @@ END_LEGAL */
 
 /* ===================================================================== */
 /*! @file
-  *  Test for the shortest symbol name at an address.
+ *  Test for the shortest symbol name at an address.
  */
 
-#include "pin.H"
-#include <iostream>
 #include <fstream>
+#include <iostream>
+
+#include "pin.H"
 
 using namespace std;
 
@@ -54,85 +55,76 @@ ofstream TraceFile;
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE,         "pintool",
-                            "o", "short_name.outfile", "specify profile file name");
-
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o",
+                            "short_name.outfile", "specify profile file name");
 
 /* ===================================================================== */
 
-INT32 Usage()
-{
-    cerr <<
-         "This pin tool prints the shortest name for each address\n"
-        "\n";
+INT32 Usage() {
+  cerr << "This pin tool prints the shortest name for each address\n"
+          "\n";
 
-    cerr << KNOB_BASE::StringKnobSummary();
+  cerr << KNOB_BASE::StringKnobSummary();
 
-    cerr << endl;
+  cerr << endl;
 
-    return -1;
+  return -1;
 }
 
 string invalid = "invalid_rtn";
 /* ===================================================================== */
-const string *Target2String(ADDRINT target)
-{
-    string name = RTN_FindNameByAddress(target);
-    if (name == "")
-        return &invalid;
-    else
-        return new string(name);
+const string *Target2String(ADDRINT target) {
+  string name = RTN_FindNameByAddress(target);
+  if (name == "")
+    return &invalid;
+  else
+    return new string(name);
 }
 
 /* ===================================================================== */
 
-VOID ImageLoad(IMG img, VOID *v)
-{
-    cout << "Processing " << IMG_Name( img ) << endl;
+VOID ImageLoad(IMG img, VOID *v) {
+  cout << "Processing " << IMG_Name(img) << endl;
 
-    for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec))
-    {
-        for (RTN rtn = SEC_RtnHead(sec); RTN_Valid(rtn); rtn = RTN_Next(rtn))
-        {
-            ADDRINT rtnAddr = RTN_Address(rtn);
-            const string & rtnName = RTN_FindNameByAddress(rtnAddr);
+  for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec)) {
+    for (RTN rtn = SEC_RtnHead(sec); RTN_Valid(rtn); rtn = RTN_Next(rtn)) {
+      ADDRINT rtnAddr = RTN_Address(rtn);
+      const string &rtnName = RTN_FindNameByAddress(rtnAddr);
 
-            TraceFile << rtnName << ": " << (unsigned long)rtnAddr;
+      TraceFile << rtnName << ": " << (unsigned long)rtnAddr;
 
-            if ( SYM_Dynamic( RTN_Sym(rtn) ))
-                TraceFile << ", dynamic";
-            else
-                TraceFile << ", static";
+      if (SYM_Dynamic(RTN_Sym(rtn)))
+        TraceFile << ", dynamic";
+      else
+        TraceFile << ", static";
 
-            TraceFile << endl;
-        }
+      TraceFile << endl;
     }
+  }
 
-    cout << "Completed " << IMG_Name( img ) << endl;
+  cout << "Completed " << IMG_Name(img) << endl;
 }
 
 /* ===================================================================== */
 
-int main(int argc, CHAR *argv[])
-{
-    PIN_InitSymbols();
+int main(int argc, CHAR *argv[]) {
+  PIN_InitSymbols();
 
-    if( PIN_Init(argc,argv) )
-    {
-        return Usage();
-    }
+  if (PIN_Init(argc, argv)) {
+    return Usage();
+  }
 
-    TraceFile.open(KnobOutputFile.Value().c_str());
-    TraceFile << hex;
-    TraceFile.setf(ios::showbase);
+  TraceFile.open(KnobOutputFile.Value().c_str());
+  TraceFile << hex;
+  TraceFile.setf(ios::showbase);
 
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-    
-    // Never returns
+  IMG_AddInstrumentFunction(ImageLoad, 0);
 
-    PIN_StartProgram();
-    
-    return 0;
+  // Never returns
+
+  PIN_StartProgram();
+
+  return 0;
 }
 
 /* ===================================================================== */

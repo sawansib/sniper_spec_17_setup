@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -34,10 +34,12 @@ END_LEGAL */
   Replaces pthread_spin_lock(). Linux only, of course.
  */
 
-#include "pin.H"
-#include <iostream>
-#include <fstream>
 #include <stdlib.h>
+
+#include <fstream>
+#include <iostream>
+
+#include "pin.H"
 
 using namespace std;
 
@@ -45,79 +47,66 @@ using namespace std;
 /* Global Variables */
 /* ===================================================================== */
 
-typedef void  (*FUNCPTR)(int status);
-static void  (*pf_exit)(int status);
-
-
-/* ===================================================================== */
-
-INT32 Usage()
-{
-    cerr <<
-        "This pin tool replaces exit() function in libc\n"
-        "\n";
-    cerr << KNOB_BASE::StringKnobSummary();
-    cerr << endl;
-    return -1;
-}
-
+typedef void (*FUNCPTR)(int status);
+static void (*pf_exit)(int status);
 
 /* ===================================================================== */
 
-void MyExit(int arg)
-{
-    cout << "MyExit: calling original exit() from libc" << endl;
-
-    return (pf_exit)(arg);
+INT32 Usage() {
+  cerr << "This pin tool replaces exit() function in libc\n"
+          "\n";
+  cerr << KNOB_BASE::StringKnobSummary();
+  cerr << endl;
+  return -1;
 }
 
+/* ===================================================================== */
+
+void MyExit(int arg) {
+  cout << "MyExit: calling original exit() from libc" << endl;
+
+  return (pf_exit)(arg);
+}
 
 /* ===================================================================== */
 
 // Called every time a new image is loaded.
 // Look for routines that we want to replace.
-VOID ImageLoad(IMG img, VOID *v)
-{
-    RTN rtn = RTN_FindByName(img, "exit");
+VOID ImageLoad(IMG img, VOID *v) {
+  RTN rtn = RTN_FindByName(img, "exit");
 
-    if ( RTN_Valid(rtn))
-    {
-        //fprintf(stderr, "Attach to prs %d\n", PIN_GetPid());
-        //getchar();
-        if (RTN_IsSafeForProbedReplacementEx(rtn, PROBE_MODE_ALLOW_RELOCATION))
-        {        
-            // Save the function pointer that points to the new location of
-            // the entry point of the original exit in this image.
-            //
-            pf_exit = (FUNCPTR)RTN_ReplaceProbedEx( rtn, PROBE_MODE_ALLOW_RELOCATION, AFUNPTR(MyExit));
-            
-            cout << "ImageLoad: Replaced exit() in: "  << IMG_Name(img) << endl;
-    	}
-        else
-        {
-            cout << "ImageLoad: Pin can't replace exit() in: "  << IMG_Name(img) << endl;
-            exit(-1);
-        }
+  if (RTN_Valid(rtn)) {
+    // fprintf(stderr, "Attach to prs %d\n", PIN_GetPid());
+    // getchar();
+    if (RTN_IsSafeForProbedReplacementEx(rtn, PROBE_MODE_ALLOW_RELOCATION)) {
+      // Save the function pointer that points to the new location of
+      // the entry point of the original exit in this image.
+      //
+      pf_exit = (FUNCPTR)RTN_ReplaceProbedEx(rtn, PROBE_MODE_ALLOW_RELOCATION,
+                                             AFUNPTR(MyExit));
+
+      cout << "ImageLoad: Replaced exit() in: " << IMG_Name(img) << endl;
+    } else {
+      cout << "ImageLoad: Pin can't replace exit() in: " << IMG_Name(img)
+           << endl;
+      exit(-1);
     }
+  }
 }
-
 
 /* ===================================================================== */
 
-int main(int argc, CHAR *argv[])
-{
-    PIN_InitSymbols();
+int main(int argc, CHAR *argv[]) {
+  PIN_InitSymbols();
 
-    if( PIN_Init(argc,argv) )
-        return Usage();
+  if (PIN_Init(argc, argv)) return Usage();
 
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-    
-    PIN_StartProgramProbed();
-    
-    return 0;
+  IMG_AddInstrumentFunction(ImageLoad, 0);
+
+  PIN_StartProgramProbed();
+
+  return 0;
 }
-
 
 /* ===================================================================== */
 /* eof */

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -35,9 +35,11 @@ END_LEGAL */
  */
 
 /* ===================================================================== */
-#include "pin.H"
-#include <iostream>
 #include <stdlib.h>
+
+#include <iostream>
+
+#include "pin.H"
 
 using namespace std;
 
@@ -45,105 +47,84 @@ using namespace std;
 /* Analysis routines  */
 /* ===================================================================== */
 
-VOID Before_MyMalloc0( size_t size )
-{
-    cout << "Before_MyMalloc0: Calling my_malloc() with size=" << size << endl << flush;
+VOID Before_MyMalloc0(size_t size) {
+  cout << "Before_MyMalloc0: Calling my_malloc() with size=" << size << endl
+       << flush;
 }
 
-VOID Before_MyMalloc1( size_t size )
-{
-    cout << "Before_MyMalloc1: Calling my_malloc() with size=" << size << endl << flush;
+VOID Before_MyMalloc1(size_t size) {
+  cout << "Before_MyMalloc1: Calling my_malloc() with size=" << size << endl
+       << flush;
 }
 
-VOID Before_MyFree0( void * ptr )
-{
-    cout << "Before_MyFree0: Calling my_free() with ptr=" << hex <<
-        (ADDRINT)ptr << dec << endl << flush;
+VOID Before_MyFree0(void *ptr) {
+  cout << "Before_MyFree0: Calling my_free() with ptr=" << hex << (ADDRINT)ptr
+       << dec << endl
+       << flush;
 }
 
-VOID Before_MyFree1( void * ptr )
-{
-    cout << "Before_MyFree1: Calling my_free() with ptr=" << hex <<
-        (ADDRINT)ptr << dec << endl << flush;
+VOID Before_MyFree1(void *ptr) {
+  cout << "Before_MyFree1: Calling my_free() with ptr=" << hex << (ADDRINT)ptr
+       << dec << endl
+       << flush;
 }
-
-
 
 /* ===================================================================== */
 /* Instrumentation routines  */
 /* ===================================================================== */
 
-VOID Sanity(IMG img, RTN rtn)
-{
-    if ( PIN_IsProbeMode() && ! RTN_IsSafeForProbedInsertion( rtn ) )
-    {
-        cout << "Cannot insert calls around " << RTN_Name(rtn) <<
-            "() in " << IMG_Name(img) << endl;
-        exit(1);
-    }
+VOID Sanity(IMG img, RTN rtn) {
+  if (PIN_IsProbeMode() && !RTN_IsSafeForProbedInsertion(rtn)) {
+    cout << "Cannot insert calls around " << RTN_Name(rtn) << "() in "
+         << IMG_Name(img) << endl;
+    exit(1);
+  }
 }
 
 /* ===================================================================== */
-VOID ImageLoad(IMG img, VOID *v)
-{
-    if ( ! IMG_IsMainExecutable(img) )
-        return;
-    
-    
-    RTN rtn = RTN_FindByName(img, "my_malloc");
-    if (RTN_Valid(rtn))
-    {
-        Sanity(img, rtn);
-        
-        cout << "Inserting 2 calls before my_malloc in " << IMG_Name(img) << endl;
+VOID ImageLoad(IMG img, VOID *v) {
+  if (!IMG_IsMainExecutable(img)) return;
 
-        RTN_InsertCallProbed(
-            rtn, IPOINT_BEFORE, AFUNPTR( Before_MyMalloc0 ),
-            IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
-            IARG_END);
+  RTN rtn = RTN_FindByName(img, "my_malloc");
+  if (RTN_Valid(rtn)) {
+    Sanity(img, rtn);
 
-        RTN_InsertCallProbed(
-            rtn, IPOINT_BEFORE, AFUNPTR( Before_MyMalloc1 ),
-            IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
-            IARG_END);
-    }
+    cout << "Inserting 2 calls before my_malloc in " << IMG_Name(img) << endl;
 
-    rtn = RTN_FindByName(img, "my_free");
-    if (RTN_Valid(rtn))
-    {
-        Sanity(img, rtn);
-        
-        cout << "Inserting 2 calls before my_free in " << IMG_Name(img) << endl;
+    RTN_InsertCallProbed(rtn, IPOINT_BEFORE, AFUNPTR(Before_MyMalloc0),
+                         IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
 
-        RTN_InsertCallProbed(
-            rtn, IPOINT_BEFORE, AFUNPTR( Before_MyFree0 ),
-            IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
-            IARG_END);
+    RTN_InsertCallProbed(rtn, IPOINT_BEFORE, AFUNPTR(Before_MyMalloc1),
+                         IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
+  }
 
-        RTN_InsertCallProbed(
-            rtn, IPOINT_BEFORE, AFUNPTR( Before_MyFree1 ),
-            IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
-            IARG_END);
-    }
+  rtn = RTN_FindByName(img, "my_free");
+  if (RTN_Valid(rtn)) {
+    Sanity(img, rtn);
+
+    cout << "Inserting 2 calls before my_free in " << IMG_Name(img) << endl;
+
+    RTN_InsertCallProbed(rtn, IPOINT_BEFORE, AFUNPTR(Before_MyFree0),
+                         IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
+
+    RTN_InsertCallProbed(rtn, IPOINT_BEFORE, AFUNPTR(Before_MyFree1),
+                         IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
+  }
 }
-
 
 /* ===================================================================== */
 
-int main(INT32 argc, CHAR *argv[])
-{
-    PIN_InitSymbols();
-    
-    PIN_Init(argc, argv);
-    
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-    
-    PIN_StartProgramProbed();
-    
-    return 0;
+int main(INT32 argc, CHAR *argv[]) {
+  PIN_InitSymbols();
+
+  PIN_Init(argc, argv);
+
+  IMG_AddInstrumentFunction(ImageLoad, 0);
+
+  PIN_StartProgramProbed();
+
+  return 0;
 }
-
-
 
 /* ===================================================================== */
 /* eof */

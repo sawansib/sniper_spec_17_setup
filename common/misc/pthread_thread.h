@@ -1,32 +1,28 @@
 #ifndef PTHREAD_THREAD_H
 #define PTHREAD_THREAD_H
 
-#include "_thread.h"
 #include <pthread.h>
 
-class PthreadThread : public _Thread
-{
-public:
-   PthreadThread(ThreadFunc func, void *param);
-   ~PthreadThread();
-   void run();
+#include "_thread.h"
 
-private:
-   static void *spawnedThreadFunc(void *);
+class PthreadThread : public _Thread {
+ public:
+  PthreadThread(ThreadFunc func, void *param);
+  ~PthreadThread();
+  void run();
 
-   struct FuncData
-   {
-      ThreadFunc func;
-      void *arg;
+ private:
+  static void *spawnedThreadFunc(void *);
 
-      FuncData(ThreadFunc f, void *a)
-         : func(f)
-         , arg(a)
-      { }
-   };
+  struct FuncData {
+    ThreadFunc func;
+    void *arg;
 
-   FuncData m_data;
-   pthread_t m_thread;
+    FuncData(ThreadFunc f, void *a) : func(f), arg(a) {}
+  };
+
+  FuncData m_data;
+  pthread_t m_thread;
 };
 
-#endif // PTHREAD_THREAD_H
+#endif  // PTHREAD_THREAD_H

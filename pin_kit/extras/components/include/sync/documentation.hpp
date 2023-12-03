@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -34,7 +34,6 @@ END_LEGAL */
 
 #ifndef SYNC_DOCUMENTATION_HPP
 #define SYNC_DOCUMENTATION_HPP
-
 
 namespace SYNC {
 
@@ -87,7 +86,7 @@ namespace SYNC {
  * implementation needs.  The parameter should be the name of a "class" or
  * "struct" type that defines certain static methods (described below).
  *
- * If you are running on a Unix system, you can use one of the pre-defined 
+ * If you are running on a Unix system, you can use one of the pre-defined
  * "OS" struct's that implement these O/S primitives via the "barecrt" library.
  * For example:
  *
@@ -201,7 +200,8 @@ namespace SYNC {
  *      // are waiting on a futex variable.
  *      //
  *      //  @param[in] futex            Pointer to the "futex" variable.
- *      //  @param[in] numberToWake     The maximum number of threads to wake up.
+ *      //  @param[in] numberToWake     The maximum number of threads to wake
+ * up.
  *      //
  *      static void FutexWake(int *futex, int numberToWake);
  *
@@ -256,5 +256,5 @@ namespace SYNC {
  *                                                                      \endcode
  */
 
-} // namespace
-#endif // file guard
+}  // namespace SYNC
+#endif  // file guard

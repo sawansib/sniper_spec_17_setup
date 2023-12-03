@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -33,28 +33,22 @@ END_LEGAL */
 
 extern int my_yield();
 
-int my_marker()
-{
-    return 1;
-}
+int my_marker() { return 1; }
 
-int main()
-{
-    int i;
+int main() {
+  int i;
 
-    printf("Calling my_yield()\n");
+  printf("Calling my_yield()\n");
 
-    for (i = 0; i < 100; i++)
-    {
-        int res = my_yield();
-        if (res != 0)
-        {
-            printf("my_yield failed...\n");
-            exit(1);
-        }
+  for (i = 0; i < 100; i++) {
+    int res = my_yield();
+    if (res != 0) {
+      printf("my_yield failed...\n");
+      exit(1);
     }
+  }
 
-    my_marker();
+  my_marker();
 
-    return(0);
+  return (0);
 }

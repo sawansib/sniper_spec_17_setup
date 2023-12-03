@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -28,43 +28,37 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
-#define _WIN32_WINNT  0x0400 
+#define _WIN32_WINNT 0x0400
 
 #include <Windows.h>
 #include <stdio.h>
-#define EXPORT_SYM __declspec( dllexport ) 
+#define EXPORT_SYM __declspec(dllexport)
 
 int beenHere = 0;
 
-// perform recursive APC - 
+// perform recursive APC -
 // add APC to the thread queue and go to alertable sleep
-extern "C" 
-EXPORT_SYM
-VOID CALLBACK My_APCProc(ULONG_PTR dwParam)
-{
-    beenHere++;
-    if(dwParam == 1)
-    {
-        return;
-    }
-    QueueUserAPC(My_APCProc, GetCurrentThread() , dwParam - 1);
-    DWORD status = SleepEx(INFINITE , true);
-    printf("SleepEx status = 0x%x \n" ,status);
+extern "C" EXPORT_SYM VOID CALLBACK My_APCProc(ULONG_PTR dwParam) {
+  beenHere++;
+  if (dwParam == 1) {
+    return;
+  }
+  QueueUserAPC(My_APCProc, GetCurrentThread(), dwParam - 1);
+  DWORD status = SleepEx(INFINITE, true);
+  printf("SleepEx status = 0x%x \n", status);
 }
 
-int QueueApc()
-{ 
-    int recursiveDepth = 10;
-    QueueUserAPC(My_APCProc, GetCurrentThread() , recursiveDepth);
-    DWORD status = SleepEx(INFINITE , true);
-    printf("SleepEx status = 0x%x \n" ,status);
-    printf("Number of visits in My_APCProc = %d \n" ,beenHere);
-    fflush(stderr);
-    return 0;
+int QueueApc() {
+  int recursiveDepth = 10;
+  QueueUserAPC(My_APCProc, GetCurrentThread(), recursiveDepth);
+  DWORD status = SleepEx(INFINITE, true);
+  printf("SleepEx status = 0x%x \n", status);
+  printf("Number of visits in My_APCProc = %d \n", beenHere);
+  fflush(stderr);
+  return 0;
 }
 
-int main()
-{
-    QueueApc();
-    return 0;
+int main() {
+  QueueApc();
+  return 0;
 }

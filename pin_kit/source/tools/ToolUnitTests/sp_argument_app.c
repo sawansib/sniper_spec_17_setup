@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -28,31 +28,22 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
-void * current_sp_value(void* arg1,
-                        void* arg2,
-                        void* arg3,
-                        void* arg4,
-                        void* arg5,
-                        void* arg6,
-                        void* arg7,
-                        void* arg8,
-                        void* arg9)
-{
-    // Assume arg9 is on stack. Return SP value at entry to the function.
-    // It is assumed that stack slot of size sizeof(void*) corresponds to every argument.
-    // This is relevant to any X86 and Intel(R) 64 calling conventions.
-    // The expression returns address of return IP slot.
-    return &arg9 - 9;
+void* current_sp_value(void* arg1, void* arg2, void* arg3, void* arg4,
+                       void* arg5, void* arg6, void* arg7, void* arg8,
+                       void* arg9) {
+  // Assume arg9 is on stack. Return SP value at entry to the function.
+  // It is assumed that stack slot of size sizeof(void*) corresponds to every
+  // argument. This is relevant to any X86 and Intel(R) 64 calling conventions.
+  // The expression returns address of return IP slot.
+  return &arg9 - 9;
 }
 
 // Replaced by Pin instrumentation
-int check_sp_value(void* arg)
-{
-    if (arg != 0) return 0;
-    return 1;
+int check_sp_value(void* arg) {
+  if (arg != 0) return 0;
+  return 1;
 }
-int main()
-{
-    void * current_sp = current_sp_value(0, 0, 0, 0, 0, 0, 0, 0, 0);
-    return check_sp_value(current_sp);
+int main() {
+  void* current_sp = current_sp_value(0, 0, 0, 0, 0, 0, 0, 0, 0);
+  return check_sp_value(current_sp);
 }

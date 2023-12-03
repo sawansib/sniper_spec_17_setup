@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -36,10 +36,11 @@ END_LEGAL */
 //  Sample usage:
 //    pin -mt -t mtFlush -- threadWait
 
-#include "pin.H"
-#include "utils.H"
-#include "portability.H"
 #include <stdio.h>
+
+#include "pin.H"
+#include "portability.H"
+#include "utils.H"
 
 using namespace std;
 
@@ -47,7 +48,7 @@ using namespace std;
 /* Global Variables                                                   */
 /* ================================================================== */
 
-FILE * out;
+FILE *out;
 PIN_LOCK lock;
 int numThreads;
 int numFlushesTriggered;
@@ -57,72 +58,64 @@ int numFlushesOccurred;
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB<BOOL>  KnobHelp(KNOB_MODE_WRITEONCE, "pintool",
-    "hh", "0", "Print help message (command-line switches)");
+KNOB<BOOL> KnobHelp(KNOB_MODE_WRITEONCE, "pintool", "hh", "0",
+                    "Print help message (command-line switches)");
 
-void InitializeMe()
-{
-    out = fopen("mtFlush.out", "w");
-    numThreads = 1;
-    numFlushesTriggered = 0;
-    numFlushesOccurred = 0;
-}
-
-VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
-{
-    PIN_GetLock(&lock, threadid+1);
-    fprintf(out, "thread begin %d\n",threadid);
-    numThreads++;
-    if (threadid % 5 == 4) 
-    {
-        numFlushesTriggered++;
-        fprintf(out, "DUNK! (%d)\n",numFlushesTriggered);
-        CODECACHE_FlushCache();
-    }
-    fflush(out);
-    PIN_ReleaseLock(&lock);
-}
-    
-VOID ThreadFini(THREADID threadid, const CONTEXT *ctxt, INT32 code, VOID *v)
-{
-    PIN_GetLock(&lock, threadid+1);
-    fprintf(out, "thread end %d code %d\n",(int)threadid, (int)code);
-    fflush(out);
-    PIN_ReleaseLock(&lock);
-}
-    
-VOID FlushHappened()
-{
-    numFlushesOccurred++;
-    fprintf(out, "SWOOSH! (%d)\n",numFlushesOccurred);
+void InitializeMe() {
+  out = fopen("mtFlush.out", "w");
+  numThreads = 1;
+  numFlushesTriggered = 0;
+  numFlushesOccurred = 0;
 }
 
-VOID Fini(INT32 code, VOID *v)
-{
-    fprintf(out, "Fini: code %d\n", code);
-    fclose(out);
+VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v) {
+  PIN_GetLock(&lock, threadid + 1);
+  fprintf(out, "thread begin %d\n", threadid);
+  numThreads++;
+  if (threadid % 5 == 4) {
+    numFlushesTriggered++;
+    fprintf(out, "DUNK! (%d)\n", numFlushesTriggered);
+    CODECACHE_FlushCache();
+  }
+  fflush(out);
+  PIN_ReleaseLock(&lock);
+}
+
+VOID ThreadFini(THREADID threadid, const CONTEXT *ctxt, INT32 code, VOID *v) {
+  PIN_GetLock(&lock, threadid + 1);
+  fprintf(out, "thread end %d code %d\n", (int)threadid, (int)code);
+  fflush(out);
+  PIN_ReleaseLock(&lock);
+}
+
+VOID FlushHappened() {
+  numFlushesOccurred++;
+  fprintf(out, "SWOOSH! (%d)\n", numFlushesOccurred);
+}
+
+VOID Fini(INT32 code, VOID *v) {
+  fprintf(out, "Fini: code %d\n", code);
+  fclose(out);
 }
 
 /* ===================================================================== */
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(INT32 argc, CHAR **argv)
-{
-    PIN_InitLock(&lock);
+int main(INT32 argc, CHAR **argv) {
+  PIN_InitLock(&lock);
 
-    InitializeMe();
-    
-    if (PIN_Init(argc, argv) || KnobHelp) return Usage();
-    
-    PIN_AddThreadStartFunction(ThreadStart, 0);
-    PIN_AddThreadFiniFunction(ThreadFini, 0);
-    CODECACHE_AddCacheFlushedFunction(FlushHappened, 0);
-    PIN_AddFiniFunction(Fini, 0);
-    
-    // Never returns
-    PIN_StartProgram();
-    
-    return 0;
+  InitializeMe();
+
+  if (PIN_Init(argc, argv) || KnobHelp) return Usage();
+
+  PIN_AddThreadStartFunction(ThreadStart, 0);
+  PIN_AddThreadFiniFunction(ThreadFini, 0);
+  CODECACHE_AddCacheFlushedFunction(FlushHappened, 0);
+  PIN_AddFiniFunction(Fini, 0);
+
+  // Never returns
+  PIN_StartProgram();
+
+  return 0;
 }
-

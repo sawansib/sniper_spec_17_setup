@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -28,65 +28,58 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
-#include <sched.h>
-#include <sys/types.h>
-#include <signal.h>
-#include <unistd.h>
 #include <assert.h>
-#include <stdio.h>
 #include <pthread.h>
+#include <sched.h>
+#include <signal.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 int a[100000];
 int n = 10;
 
-void * hello(void * arg)
-{
-    int i,j;
-    
-    for (j = 0; j < 1000; j++)
-    {
-        for (i = 0; i < n; i++)
-        {
-            a[i] = 1;
-        }
-        usleep(1); //This will give up thread control
-    }
+void *hello(void *arg) {
+  int i, j;
 
-    return 0;
+  for (j = 0; j < 1000; j++) {
+    for (i = 0; i < n; i++) {
+      a[i] = 1;
+    }
+    usleep(1);  // This will give up thread control
+  }
+
+  return 0;
 }
 
 #define MAXTHREADS 1000
 
 int threads_started;
 
-int main(int argc, char *argv[])
-{
-    int numthreads = 0;
-    int i;
-    pthread_t threads[MAXTHREADS];
-    
+int main(int argc, char *argv[]) {
+  int numthreads = 0;
+  int i;
+  pthread_t threads[MAXTHREADS];
+
 #if defined(i386)
-    asm("pusha;popa");
-#endif    
+  asm("pusha;popa");
+#endif
 
-    numthreads = 20;
-    assert(numthreads < MAXTHREADS);
-    
-    for (threads_started = 0; threads_started < numthreads; threads_started++)
-    {
-        printf("Creating thread\n");
-        fflush(stdout);
-        pthread_create(threads+threads_started, 0, hello, 0);
-        fflush(stdout);
-    }
+  numthreads = 20;
+  assert(numthreads < MAXTHREADS);
 
-    for (i = 0; i < numthreads; i++)
-    {
-        pthread_join(threads[i], 0);
-        printf("Joined %d\n", i);
-    }
-    printf("All threads joined\n");
+  for (threads_started = 0; threads_started < numthreads; threads_started++) {
+    printf("Creating thread\n");
+    fflush(stdout);
+    pthread_create(threads + threads_started, 0, hello, 0);
+    fflush(stdout);
+  }
 
-    return 0;
+  for (i = 0; i < numthreads; i++) {
+    pthread_join(threads[i], 0);
+    printf("Joined %d\n", i);
+  }
+  printf("All threads joined\n");
+
+  return 0;
 }
-

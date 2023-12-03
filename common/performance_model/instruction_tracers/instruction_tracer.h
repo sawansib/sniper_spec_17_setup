@@ -7,19 +7,19 @@
 class Core;
 class DynamicMicroOp;
 
-class InstructionTracer
-{
-   public:
-      static void init();
-      static InstructionTracer* create(const Core *core);
+class InstructionTracer {
+ public:
+  static void init();
+  static InstructionTracer *create(const Core *core);
 
-      virtual ~InstructionTracer() {}
+  virtual ~InstructionTracer() {}
 
-      typedef struct {
-         SubsecondTime dispatch, issue, done, commit;
-      } uop_times_t;
+  typedef struct {
+    SubsecondTime dispatch, issue, done, commit;
+  } uop_times_t;
 
-      virtual void traceInstruction(const DynamicMicroOp *uop, uop_times_t *times) = 0;
+  virtual void traceInstruction(const DynamicMicroOp *uop,
+                                uop_times_t *times) = 0;
 };
 
-#endif // __INSTRUCTION_TRACER_H
+#endif  // __INSTRUCTION_TRACER_H

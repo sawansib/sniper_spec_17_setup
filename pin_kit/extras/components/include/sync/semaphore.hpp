@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -35,7 +35,6 @@ END_LEGAL */
 #ifndef SYNC_SEMAPHORE_HPP
 #define SYNC_SEMAPHORE_HPP
 
-
 namespace SYNC {
 
 /*!
@@ -49,70 +48,69 @@ namespace SYNC {
  * concrete implementations of SEMAPHORE (e.g. POD and SAFEPOD) do not derive
  * from this base class.  See \ref SYNC_POD for a description.
  */
-class /*<UTILITY>*/ SEMAPHORE
-{
-public:
-    /*!
-     * Initialize the semaphore before its first use.  This method is provided
-     * for implementations of SEMAPHORE that could fail during initialization.
-     * Implementations which cannot fail during initialization are fully
-     * initialized by their constructor, but they still provide a dummy version
-     * of Initialize().
-     *
-     * @return  TRUE on success.
-     */
-    virtual bool Initialize() = 0;
+class /*<UTILITY>*/ SEMAPHORE {
+ public:
+  /*!
+   * Initialize the semaphore before its first use.  This method is provided
+   * for implementations of SEMAPHORE that could fail during initialization.
+   * Implementations which cannot fail during initialization are fully
+   * initialized by their constructor, but they still provide a dummy version
+   * of Initialize().
+   *
+   * @return  TRUE on success.
+   */
+  virtual bool Initialize() = 0;
 
-    /*!
-     * It is usually not necessary to call this method because the destructor
-     * will destroy the semaphore.  Calling Destroy() will cause the semaphore
-     * to be uninitialized, but you may call Initialize() to re-initialize the
-     * object later.  The Destroy() method is provided mostly to retain symmetry
-     * with the POD and SAFEPOD implementations of SEMAPHORE.
-     */
-    virtual void Destroy() = 0;
+  /*!
+   * It is usually not necessary to call this method because the destructor
+   * will destroy the semaphore.  Calling Destroy() will cause the semaphore
+   * to be uninitialized, but you may call Initialize() to re-initialize the
+   * object later.  The Destroy() method is provided mostly to retain symmetry
+   * with the POD and SAFEPOD implementations of SEMAPHORE.
+   */
+  virtual void Destroy() = 0;
 
-    /*!
-     * Change the semaphore to "set" state and tell any waiters in Wait() or
-     * TimedWait() to resume.  Those threads are guaranteed to return from
-     * Wait() or TimedWait() only if the semaphore is still "set" when they
-     * actually do resume running.
-     */
-    virtual void Set() = 0;
+  /*!
+   * Change the semaphore to "set" state and tell any waiters in Wait() or
+   * TimedWait() to resume.  Those threads are guaranteed to return from
+   * Wait() or TimedWait() only if the semaphore is still "set" when they
+   * actually do resume running.
+   */
+  virtual void Set() = 0;
 
-    /*!
-     * Change the semaphore to "clear" state.
-     */
-    virtual void Clear() = 0;
+  /*!
+   * Change the semaphore to "clear" state.
+   */
+  virtual void Clear() = 0;
 
-    /*!
-     * Check whether the semaphore's state is "set".  This method always returns
-     * immediately.
-     *
-     * @return  TRUE if the state is "set".
-     */
-    virtual bool IsSet() = 0;
+  /*!
+   * Check whether the semaphore's state is "set".  This method always returns
+   * immediately.
+   *
+   * @return  TRUE if the state is "set".
+   */
+  virtual bool IsSet() = 0;
 
-    /*!
-     * Block the calling thread until the semaphore's state is "set".  This
-     * method returns immediately if the state is already "set".
-     */
-    virtual void Wait() = 0;
+  /*!
+   * Block the calling thread until the semaphore's state is "set".  This
+   * method returns immediately if the state is already "set".
+   */
+  virtual void Wait() = 0;
 
-    /*!
-     * Block the calling thread until the semaphore's state is "set" or until
-     * a timeout expires.  This method returns immediately if the state is
-     * already "set".
-     *
-     *  @param[in] timeout  Maximum number of milliseconds to wait.
-     *
-     * @return  TRUE if the semaphore is in "set" state.  FALSE if this method
-     *           returns instead due to the timeout.
-     */
-    virtual bool TimedWait(unsigned timeout) = 0;
+  /*!
+   * Block the calling thread until the semaphore's state is "set" or until
+   * a timeout expires.  This method returns immediately if the state is
+   * already "set".
+   *
+   *  @param[in] timeout  Maximum number of milliseconds to wait.
+   *
+   * @return  TRUE if the semaphore is in "set" state.  FALSE if this method
+   *           returns instead due to the timeout.
+   */
+  virtual bool TimedWait(unsigned timeout) = 0;
 
-    virtual ~SEMAPHORE() {}
+  virtual ~SEMAPHORE() {}
 };
 
-} // namespace
-#endif // file guard
+}  // namespace SYNC
+#endif  // file guard

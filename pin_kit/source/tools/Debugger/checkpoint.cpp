@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -32,65 +32,54 @@ END_LEGAL */
  * @ORIGINAL_AUTHOR: Greg Lueck
  *
  * A sample tool that extends GDB by adding "checkpoint" and "resume" commands.
- * This is a very simple example that works only for single-threaded applications.
+ * This is a very simple example that works only for single-threaded
+ * applications.
  */
 
-#include "pin.H"
 #include "memlog.hpp"
+#include "pin.H"
 
 static CONTEXT Registers;
 static MEMLOG MemLog;
 static BOOL isCheckpointing = FALSE;
 
-
 static VOID Instruction(INS, VOID *);
 static VOID OnMemWrite(ADDRINT, ADDRINT);
-static BOOL DebugInterpreter(THREADID, CONTEXT *, const string &, string *, VOID *);
+static BOOL DebugInterpreter(THREADID, CONTEXT *, const string &, string *,
+                             VOID *);
 
+int main(int argc, char *argv[]) {
+  if (PIN_Init(argc, argv)) return 1;
 
-int main(int argc, char *argv[])
-{
-    if (PIN_Init(argc, argv))
-        return 1;
+  PIN_AddDebugInterpreter(DebugInterpreter, 0);
+  INS_AddInstrumentFunction(Instruction, 0);
 
-    PIN_AddDebugInterpreter(DebugInterpreter, 0);
-    INS_AddInstrumentFunction(Instruction, 0);
-
-    PIN_StartProgram();
-    return 0;
+  PIN_StartProgram();
+  return 0;
 }
 
-
-static VOID Instruction(INS ins, VOID *)
-{
-    if (INS_IsMemoryWrite(ins))
-    {
-        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)OnMemWrite,
-            IARG_MEMORYWRITE_EA, IARG_MEMORYWRITE_SIZE, IARG_END);
-    }
+static VOID Instruction(INS ins, VOID *) {
+  if (INS_IsMemoryWrite(ins)) {
+    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)OnMemWrite, IARG_MEMORYWRITE_EA,
+                   IARG_MEMORYWRITE_SIZE, IARG_END);
+  }
 }
 
-
-static VOID OnMemWrite(ADDRINT addr, ADDRINT size)
-{
-    if (isCheckpointing)
-        MemLog.Record(addr, size);
+static VOID OnMemWrite(ADDRINT addr, ADDRINT size) {
+  if (isCheckpointing) MemLog.Record(addr, size);
 }
 
-
-static BOOL DebugInterpreter(THREADID, CONTEXT *ctxt, const string &cmd, string *, VOID *)
-{
-    if (cmd == "checkpoint")
-    {
-        PIN_SaveContext(ctxt, &Registers);
-        isCheckpointing = TRUE;
-        return TRUE;
-    }
-    if (cmd == "restore")
-    {
-        PIN_SaveContext(&Registers, ctxt);
-        MemLog.Restore();
-        return TRUE;
-    }
-    return FALSE;
+static BOOL DebugInterpreter(THREADID, CONTEXT *ctxt, const string &cmd,
+                             string *, VOID *) {
+  if (cmd == "checkpoint") {
+    PIN_SaveContext(ctxt, &Registers);
+    isCheckpointing = TRUE;
+    return TRUE;
+  }
+  if (cmd == "restore") {
+    PIN_SaveContext(&Registers, ctxt);
+    MemLog.Restore();
+    return TRUE;
+  }
+  return FALSE;
 }

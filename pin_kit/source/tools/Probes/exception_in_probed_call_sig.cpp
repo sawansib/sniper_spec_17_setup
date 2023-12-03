@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,66 +29,57 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 #include <stdio.h>
-#include <string>
 #include <stdlib.h>
+
+#include <string>
 
 #include "pin.H"
 
 #ifndef TARGET_LINUX
-namespace WND
-{
+namespace WND {
 #include <windows.h>
 }
 #endif
 
-typedef int (* foo_t)();
+typedef int (*foo_t)();
 
-static int foo_rep(foo_t orig_foo, ADDRINT returnIp)
-{
-	printf("foo rep called\n");
+static int foo_rep(foo_t orig_foo, ADDRINT returnIp) {
+  printf("foo rep called\n");
 
-	int res = orig_foo();
+  int res = orig_foo();
 
-    // May not be executed if exception occurs in previous statement
-    printf("Caller IP = %s\n", hexstr(returnIp).c_str());
+  // May not be executed if exception occurs in previous statement
+  printf("Caller IP = %s\n", hexstr(returnIp).c_str());
 
-    return res;
+  return res;
 }
 
-static VOID on_module_loading(IMG img, VOID *data)
-{
-    if (IMG_IsMainExecutable(img))
-	{
-		RTN routine = RTN_FindByName(img, "foo");
-		if (!RTN_Valid(routine))
-		{
-            routine = RTN_FindByName(img, "_foo");
-        }
-
-		if (RTN_Valid(routine))
-		{
-            PROTO foo_proto = PROTO_Allocate( PIN_PARG(int), CALLINGSTD_DEFAULT,
-                                             "foo", PIN_PARG_END() );
-            AFUNPTR foo_ptr = RTN_ReplaceSignatureProbed(routine, (AFUNPTR)foo_rep,
-                IARG_PROTOTYPE, foo_proto,
-                IARG_ORIG_FUNCPTR,
-                IARG_RETURN_IP,
-                IARG_END);
-            ASSERTX(foo_ptr != 0);
-		}
-	}
-}
-
-int main(int argc, char** argv)
-{
-    PIN_InitSymbols();
-
-    if (!PIN_Init(argc, argv))
-    {
-        IMG_AddInstrumentFunction(on_module_loading,  0);        
-
-        PIN_StartProgramProbed();
+static VOID on_module_loading(IMG img, VOID* data) {
+  if (IMG_IsMainExecutable(img)) {
+    RTN routine = RTN_FindByName(img, "foo");
+    if (!RTN_Valid(routine)) {
+      routine = RTN_FindByName(img, "_foo");
     }
 
-    exit(1);
+    if (RTN_Valid(routine)) {
+      PROTO foo_proto = PROTO_Allocate(PIN_PARG(int), CALLINGSTD_DEFAULT, "foo",
+                                       PIN_PARG_END());
+      AFUNPTR foo_ptr = RTN_ReplaceSignatureProbed(
+          routine, (AFUNPTR)foo_rep, IARG_PROTOTYPE, foo_proto,
+          IARG_ORIG_FUNCPTR, IARG_RETURN_IP, IARG_END);
+      ASSERTX(foo_ptr != 0);
+    }
+  }
+}
+
+int main(int argc, char** argv) {
+  PIN_InitSymbols();
+
+  if (!PIN_Init(argc, argv)) {
+    IMG_AddInstrumentFunction(on_module_loading, 0);
+
+    PIN_StartProgramProbed();
+  }
+
+  exit(1);
 }

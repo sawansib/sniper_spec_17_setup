@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -37,10 +37,9 @@ END_LEGAL */
  * handler.  (The same bug Pin used to have.)
  */
 
-#include <stdio.h>
 #include <signal.h>
+#include <stdio.h>
 #include <sys/time.h>
-
 
 int DidTest;
 int DFSet = 0;
@@ -49,54 +48,47 @@ int Flags;
 extern void SetAndClearDF();
 extern void SignalHandler(int);
 
+int main() {
+  struct sigaction sigact;
+  struct itimerval itval;
 
-int main()
-{
-    struct sigaction sigact;
-    struct itimerval itval;
+  sigact.sa_handler = SignalHandler;
+  sigact.sa_flags = 0;
+  sigemptyset(&sigact.sa_mask);
+  if (sigaction(SIGALRM, &sigact, 0) == -1) {
+    fprintf(stderr, "Unable to set up handler\n");
+    return 1;
+  }
 
+  itval.it_interval.tv_sec = 0;
+  itval.it_interval.tv_usec = 100000;
+  itval.it_value.tv_sec = 0;
+  itval.it_value.tv_usec = 100000;
+  if (setitimer(ITIMER_REAL, &itval, 0) == -1) {
+    fprintf(stderr, "Unable to set up timer\n");
+    return 1;
+  }
 
-    sigact.sa_handler = SignalHandler;
-    sigact.sa_flags = 0;
-    sigemptyset(&sigact.sa_mask);
-    if (sigaction(SIGALRM, &sigact, 0) == -1)
-    {
-        fprintf(stderr, "Unable to set up handler\n");
-        return 1;
-    }
+  /*
+   * Continuously set and clear the DF bit until a signal arrives while DF is
+   * set.
+   */
+  while (!DidTest) SetAndClearDF();
 
-    itval.it_interval.tv_sec = 0;
-    itval.it_interval.tv_usec = 100000;
-    itval.it_value.tv_sec = 0;
-    itval.it_value.tv_usec = 100000;
-    if (setitimer(ITIMER_REAL, &itval, 0) == -1)
-    {
-        fprintf(stderr, "Unable to set up timer\n");
-        return 1;
-    }
+  itval.it_value.tv_sec = 0;
+  itval.it_value.tv_usec = 0;
+  if (setitimer(ITIMER_REAL, &itval, 0) == -1) {
+    fprintf(stderr, "Unable to disable timer\n");
+    return 1;
+  }
 
-    /*
-     * Continuously set and clear the DF bit until a signal arrives while DF is set.
-     */
-    while (!DidTest)
-        SetAndClearDF();
-
-    itval.it_value.tv_sec = 0;
-    itval.it_value.tv_usec = 0;
-    if (setitimer(ITIMER_REAL, &itval, 0) == -1)
-    {
-        fprintf(stderr, "Unable to disable timer\n");
-        return 1;
-    }
-
-    /*
-     * The signal handler copied the flags to 'Flags'.  Make sure the DF bit was
-     * cleared in the handler.
-     */
-    if (Flags & (1<<10))
-    {
-        fprintf(stderr, "DF bit set incorrectly in signal handler\n");
-        return 1;
-    }
-    return 0;
+  /*
+   * The signal handler copied the flags to 'Flags'.  Make sure the DF bit was
+   * cleared in the handler.
+   */
+  if (Flags & (1 << 10)) {
+    fprintf(stderr, "DF bit set incorrectly in signal handler\n");
+    return 1;
+  }
+  return 0;
 }

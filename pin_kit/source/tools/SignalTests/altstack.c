@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -33,52 +33,45 @@ END_LEGAL */
  * its signal handler.
  */
 
-#include <stdio.h>
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 char Stack[SIGSTKSZ];
 
 static void Handle(int);
 
+int main() {
+  struct sigaction act;
+  stack_t ss;
 
-int main()
-{
-    struct sigaction act;
-    stack_t ss;
+  ss.ss_sp = Stack;
+  ss.ss_size = sizeof(Stack);
+  ss.ss_flags = 0;
+  if (sigaltstack(&ss, 0) != 0) {
+    fprintf(stderr, "Unable to set alternate stack\n");
+    return 1;
+  }
+  printf("Alternate stack is %p - %p\n", Stack, &Stack[SIGSTKSZ]);
 
-    ss.ss_sp = Stack;
-    ss.ss_size = sizeof(Stack);
-    ss.ss_flags = 0;
-    if (sigaltstack(&ss, 0) != 0)
-    {
-        fprintf(stderr, "Unable to set alternate stack\n");
-        return 1;
-    }
-    printf("Alternate stack is %p - %p\n", Stack, &Stack[SIGSTKSZ]);
+  act.sa_handler = Handle;
+  act.sa_flags = SA_ONSTACK;
+  sigemptyset(&act.sa_mask);
+  if (sigaction(SIGUSR1, &act, 0) != 0) {
+    fprintf(stderr, "Unable to set up USR1 handler\n");
+    return 1;
+  }
 
-    act.sa_handler = Handle;
-    act.sa_flags = SA_ONSTACK;
-    sigemptyset(&act.sa_mask);
-    if (sigaction(SIGUSR1, &act, 0) != 0)
-    {
-        fprintf(stderr, "Unable to set up USR1 handler\n");
-        return 1;
-    }
-
-    raise(SIGUSR1);
-    return 0;
+  raise(SIGUSR1);
+  return 0;
 }
 
+static void Handle(int sig) {
+  char *sp = (char *)&sig;
 
-static void Handle(int sig)
-{
-    char *sp = (char *)&sig;
-
-    printf("Got signal %d with SP=%p\n", sig, sp);
-    if (sp < Stack || sp > &Stack[SIGSTKSZ])
-    {
-        fprintf(stderr, "Handler not running on alternate stack\n");
-        exit(1);
-    }
+  printf("Got signal %d with SP=%p\n", sig, sp);
+  if (sp < Stack || sp > &Stack[SIGSTKSZ]) {
+    fprintf(stderr, "Handler not running on alternate stack\n");
+    exit(1);
+  }
 }

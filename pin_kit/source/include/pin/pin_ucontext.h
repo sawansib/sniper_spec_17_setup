@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -35,7 +35,7 @@ END_LEGAL */
 /*! @file
  *
  * PLEASE INCLUDE THIS FILE BEFORE ANY OTHER SYSTEM INCLUDE FILES !!!
- *  
+ *
  * This file comes to solve a problem with including <sys/ucontext.h>.
  * Some Pin-tools/tests get register values from the ucontext structure
  * by using the REG_XXX enum value as the index to the gregset_t array.
@@ -43,11 +43,10 @@ END_LEGAL */
  * Changes in the header files in the new Linux versions (starting from
  * Fedora-13) cause the REG_XXX to get undeclared on the Pin-tools/tests
  * that include <sys/ucontext.h>.  To fix that, this file should be
- * included at the beginning of Pin-tools/tests (before any other system 
+ * included at the beginning of Pin-tools/tests (before any other system
  * files are included) instead of the <sys/ucontext.h> file.
- * 
+ *
  */
-
 
 // DETAILED DESCRIPTION:
 //
@@ -69,24 +68,23 @@ END_LEGAL */
 // include this file instead of sys/ucontext.h.
 //
 
-
 // features.h does not exist on FreeBSD
 #ifndef TARGET_BSD
-// features initializes the system's state, including the state of __USE_GNU 
+// features initializes the system's state, including the state of __USE_GNU
 #include <features.h>
 #endif
 
 // If __USE_GNU is defined, we don't need to do anything.
 // If we defined it ourselves, we need to undefine it later.
 #ifndef __USE_GNU
-    #define __USE_GNU
-    #define PINTOOL_UNDEF_USE_GNU
+#define __USE_GNU
+#define PINTOOL_UNDEF_USE_GNU
 #endif
 
 #include <ucontext.h>
 
 // If we defined __USE_GNU ourselves, we need to undefine it here.
 #ifdef PINTOOL_UNDEF_USE_GNU
-    #undef __USE_GNU
-    #undef PINTOOL_UNDEF_USE_GNU
+#undef __USE_GNU
+#undef PINTOOL_UNDEF_USE_GNU
 #endif

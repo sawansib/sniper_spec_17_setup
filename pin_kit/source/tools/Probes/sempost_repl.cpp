@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -36,9 +36,10 @@ END_LEGAL */
   moves the whole routine to another place
  */
 
-#include "pin.H"
-#include <iostream>
 #include <fstream>
+#include <iostream>
+
+#include "pin.H"
 
 using namespace std;
 
@@ -47,73 +48,61 @@ using namespace std;
 /* ===================================================================== */
 
 typedef int (*FUNCPTR)(void *);
-static int (*pf_sempost)(void * arg);
-
-
-/* ===================================================================== */
-
-INT32 Usage()
-{
-    cerr <<
-        "This pin tool replaces sem_post()\n"
-        "\n";
-    cerr << KNOB_BASE::StringKnobSummary();
-    cerr << endl;
-    return -1;
-}
-
+static int (*pf_sempost)(void *arg);
 
 /* ===================================================================== */
 
-int SemPost(void *arg)
-{
-    cout << "SemPost: calling original sem_post() from pthread" << endl;
-
-    return (pf_sempost)(arg);
+INT32 Usage() {
+  cerr << "This pin tool replaces sem_post()\n"
+          "\n";
+  cerr << KNOB_BASE::StringKnobSummary();
+  cerr << endl;
+  return -1;
 }
 
+/* ===================================================================== */
+
+int SemPost(void *arg) {
+  cout << "SemPost: calling original sem_post() from pthread" << endl;
+
+  return (pf_sempost)(arg);
+}
 
 /* ===================================================================== */
 
 // Called every time a new image is loaded.
 // Look for routines that we want to replace.
-VOID ImageLoad(IMG img, VOID *v)
-{
-    RTN rtn = RTN_FindByName(img, "sem_post");
+VOID ImageLoad(IMG img, VOID *v) {
+  RTN rtn = RTN_FindByName(img, "sem_post");
 
-    if ( RTN_Valid(rtn))
-    {
-        //fprintf(stderr, "Attach to prs %d\n", PIN_GetPid());
-        //getchar();
-        if (RTN_IsSafeForProbedReplacementEx(rtn, PROBE_MODE_ALLOW_RELOCATION))
-        {        
-            // Save the function pointer that points to the new location of
-            // the entry point of the original exit in this image.
-            //
-            pf_sempost = (FUNCPTR)RTN_ReplaceProbedEx( rtn, PROBE_MODE_ALLOW_RELOCATION, AFUNPTR(SemPost));
-            
-            cout << "ImageLoad: Replaced sem_post() in:"  << IMG_Name(img) << endl;
-    	}
+  if (RTN_Valid(rtn)) {
+    // fprintf(stderr, "Attach to prs %d\n", PIN_GetPid());
+    // getchar();
+    if (RTN_IsSafeForProbedReplacementEx(rtn, PROBE_MODE_ALLOW_RELOCATION)) {
+      // Save the function pointer that points to the new location of
+      // the entry point of the original exit in this image.
+      //
+      pf_sempost = (FUNCPTR)RTN_ReplaceProbedEx(
+          rtn, PROBE_MODE_ALLOW_RELOCATION, AFUNPTR(SemPost));
+
+      cout << "ImageLoad: Replaced sem_post() in:" << IMG_Name(img) << endl;
     }
+  }
 }
-
 
 /* ===================================================================== */
 
-int main(int argc, CHAR *argv[])
-{
-    PIN_InitSymbols();
+int main(int argc, CHAR *argv[]) {
+  PIN_InitSymbols();
 
-    if( PIN_Init(argc,argv) )
-        return Usage();
+  if (PIN_Init(argc, argv)) return Usage();
 
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-    
-    PIN_StartProgramProbed();
-    
-    return 0;
+  IMG_AddInstrumentFunction(ImageLoad, 0);
+
+  PIN_StartProgramProbed();
+
+  return 0;
 }
-
 
 /* ===================================================================== */
 /* eof */

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -30,89 +30,71 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 
 #include "ialarm.H"
-#include "alarm_manager.H"
-#include "parse_control.H"
-#include "control_chain.H"
-#include <iostream> 
 
+#include <iostream>
+
+#include "alarm_manager.H"
+#include "control_chain.H"
+#include "parse_control.H"
 
 using namespace CONTROLLER;
 
-
-VOID IALARM::InsertIfCall_Count(IALARM* alarm, INS ins, UINT32 ninst){
-    INS_InsertIfCall(ins, IPOINT_BEFORE,
-        AFUNPTR(Count),
-        IARG_FAST_ANALYSIS_CALL,
-        IARG_CALL_ORDER, alarm->GetInstrumentOrder(),
-        IARG_ADDRINT, alarm,
-        IARG_THREAD_ID,
-        IARG_UINT32, ninst,
-        IARG_END);
+VOID IALARM::InsertIfCall_Count(IALARM* alarm, INS ins, UINT32 ninst) {
+  INS_InsertIfCall(ins, IPOINT_BEFORE, AFUNPTR(Count), IARG_FAST_ANALYSIS_CALL,
+                   IARG_CALL_ORDER, alarm->GetInstrumentOrder(), IARG_ADDRINT,
+                   alarm, IARG_THREAD_ID, IARG_UINT32, ninst, IARG_END);
 }
 
-VOID IALARM::InsertThenCall_Fire(IALARM* alarm, INS ins){
-    if (alarm->_need_context){
-        INS_InsertThenCall(ins, IPOINT_BEFORE,
-            AFUNPTR(Fire),
-            IARG_CALL_ORDER, alarm->GetInstrumentOrder(),
-            IARG_ADDRINT, alarm,
-            IARG_CONTEXT, 
-            IARG_INST_PTR,
-            IARG_THREAD_ID,
-            IARG_END);
-    }
-    else{
-        INS_InsertThenCall(ins, IPOINT_BEFORE,
-            AFUNPTR(Fire),
-            IARG_CALL_ORDER, alarm->GetInstrumentOrder(),
-            IARG_ADDRINT, alarm,
-            IARG_ADDRINT, static_cast<ADDRINT>(0), // pass a null as context, 
-            IARG_INST_PTR,
-            IARG_THREAD_ID,
-            IARG_END);
-    }
+VOID IALARM::InsertThenCall_Fire(IALARM* alarm, INS ins) {
+  if (alarm->_need_context) {
+    INS_InsertThenCall(ins, IPOINT_BEFORE, AFUNPTR(Fire), IARG_CALL_ORDER,
+                       alarm->GetInstrumentOrder(), IARG_ADDRINT, alarm,
+                       IARG_CONTEXT, IARG_INST_PTR, IARG_THREAD_ID, IARG_END);
+  } else {
+    INS_InsertThenCall(ins, IPOINT_BEFORE, AFUNPTR(Fire), IARG_CALL_ORDER,
+                       alarm->GetInstrumentOrder(), IARG_ADDRINT, alarm,
+                       IARG_ADDRINT,
+                       static_cast<ADDRINT>(0),  // pass a null as context,
+                       IARG_INST_PTR, IARG_THREAD_ID, IARG_END);
+  }
 }
 
-ADDRINT PIN_FAST_ANALYSIS_CALL IALARM::Count(IALARM* ialarm, 
-                                               UINT32 tid,
-                                               UINT32 ninst){
-    UINT32 armed = ialarm->_armed[tid];
-    UINT32 correct_tid = (ialarm->_tid == tid) | (ialarm->_tid == ALL_THREADS);
+ADDRINT PIN_FAST_ANALYSIS_CALL IALARM::Count(IALARM* ialarm, UINT32 tid,
+                                             UINT32 ninst) {
+  UINT32 armed = ialarm->_armed[tid];
+  UINT32 correct_tid = (ialarm->_tid == tid) | (ialarm->_tid == ALL_THREADS);
 
-    UINT32 should_count = armed & correct_tid;
+  UINT32 should_count = armed & correct_tid;
 
-    //if we are not in the correct thread
-    ialarm->_thread_count[tid] += ninst*(should_count);
+  // if we are not in the correct thread
+  ialarm->_thread_count[tid] += ninst * (should_count);
 
-    return ialarm->_thread_count[tid] >= ialarm->_target_count;
-
+  return ialarm->_thread_count[tid] >= ialarm->_target_count;
 }
 
-//we want to generate the context only when we really need it.
-//that is way most of the code is in the If instrumentation.
-//even if the If instrumentation is be not inlined.
-VOID IALARM::Fire(IALARM* ialarm, CONTEXT* ctxt, VOID * ip, UINT32 tid){
-    ialarm->_alarm_manager->Fire(ctxt, ip, tid);
+// we want to generate the context only when we really need it.
+// that is way most of the code is in the If instrumentation.
+// even if the If instrumentation is be not inlined.
+VOID IALARM::Fire(IALARM* ialarm, CONTEXT* ctxt, VOID* ip, UINT32 tid) {
+  ialarm->_alarm_manager->Fire(ctxt, ip, tid);
 }
 
-VOID IALARM::Arm(){
-    PIN_GetLock(&_lock,0);
-    memset(_armed,1,sizeof(_armed));
-    PIN_ReleaseLock(&_lock);
+VOID IALARM::Arm() {
+  PIN_GetLock(&_lock, 0);
+  memset(_armed, 1, sizeof(_armed));
+  PIN_ReleaseLock(&_lock);
 }
 
-VOID IALARM::Disarm(THREADID tid){
-    _armed[tid] = 0;
-    _thread_count[tid] = 0;
+VOID IALARM::Disarm(THREADID tid) {
+  _armed[tid] = 0;
+  _thread_count[tid] = 0;
 }
 
-VOID IALARM::Disarm(){
-    PIN_GetLock(&_lock,0);
-    memset(_armed,0,sizeof(_armed));
-    memset(_thread_count,0,sizeof(_thread_count));
-    PIN_ReleaseLock(&_lock);
+VOID IALARM::Disarm() {
+  PIN_GetLock(&_lock, 0);
+  memset(_armed, 0, sizeof(_armed));
+  memset(_thread_count, 0, sizeof(_thread_count));
+  PIN_ReleaseLock(&_lock);
 }
 
-UINT32 IALARM::GetInstrumentOrder(){
-    return _alarm_manager->GetInsOrder();
-}
+UINT32 IALARM::GetInstrumentOrder() { return _alarm_manager->GetInsOrder(); }

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -38,7 +38,6 @@ END_LEGAL */
 #include "sync.hpp"
 #include "sync/os-barecrt-linux.hpp"
 
-
 namespace PINVM {
 
 // We use futex-based locks on Linux because it's more efficient than spinning.
@@ -46,7 +45,6 @@ namespace PINVM {
 // because a spinning high-priority thread will never yield the processor to a
 // lower-priority thread.  We use "barecrt" to avoid any possible usage of
 // TLS in glibc.
-
 
 /*!
  * Basic non-recursive lock.
@@ -56,12 +54,14 @@ typedef SYNC::SIMPLE_LOCK_FUTEX<SYNC::OS_BARECRT_LINUX> PINSYNC_LOCK;
 /*!
  * Basic non-recursive lock with POD semantics.
  */
-typedef SYNC::SIMPLE_LOCK_SAFEPOD_FUTEX<SYNC::OS_BARECRT_LINUX> PINSYNC_POD_LOCK;
+typedef SYNC::SIMPLE_LOCK_SAFEPOD_FUTEX<SYNC::OS_BARECRT_LINUX>
+    PINSYNC_POD_LOCK;
 
 /*!
  * Basic non-recursive lock with SAFEPOD semantics.
  */
-typedef SYNC::SIMPLE_LOCK_SAFEPOD_FUTEX<SYNC::OS_BARECRT_LINUX> PINSYNC_SAFEPOD_LOCK;
+typedef SYNC::SIMPLE_LOCK_SAFEPOD_FUTEX<SYNC::OS_BARECRT_LINUX>
+    PINSYNC_SAFEPOD_LOCK;
 
 /*!
  * Read-writer lock.
@@ -71,7 +71,8 @@ typedef SYNC::READER_WRITER_LOCK_FUTEX<SYNC::OS_BARECRT_LINUX> PINSYNC_RWLOCK;
 /*!
  * Read-writer lock with POD semantics.
  */
-typedef SYNC::READER_WRITER_LOCK_SAFEPOD_FUTEX<SYNC::OS_BARECRT_LINUX> PINSYNC_POD_RWLOCK;
+typedef SYNC::READER_WRITER_LOCK_SAFEPOD_FUTEX<SYNC::OS_BARECRT_LINUX>
+    PINSYNC_POD_RWLOCK;
 
 /*!
  * Binary semaphore.
@@ -81,7 +82,8 @@ typedef SYNC::SEMAPHORE_FUTEX<SYNC::OS_BARECRT_LINUX> PINSYNC_SEMAPHORE;
 /*!
  * Binary semaphore with POD semantics.
  */
-typedef SYNC::SEMAPHORE_SAFEPOD_FUTEX<SYNC::OS_BARECRT_LINUX> PINSYNC_POD_SEMAPHORE;
+typedef SYNC::SEMAPHORE_SAFEPOD_FUTEX<SYNC::OS_BARECRT_LINUX>
+    PINSYNC_POD_SEMAPHORE;
 
-} // namespace
-#endif // file guard
+}  // namespace PINVM
+#endif  // file guard

@@ -22,7 +22,6 @@ redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 extern "C" {
 #endif
 
-
 extern void initposix(void);
 extern void initerrno(void);
 extern void initpwd(void);
@@ -43,17 +42,17 @@ extern void _PyWarnings_Init(void);
 
 struct _inittab _PyImport_Inittab[] = {
 
-	{"posix", initposix},
-	{"errno", initerrno},
-	{"pwd", initpwd},
-	{"_sre", init_sre},
-	{"_codecs", init_codecs},
-	{"_weakref", init_weakref},
-	{"zipimport", initzipimport},
-	{"_symtable", init_symtable},
-	{"xxsubtype", initxxsubtype},
+    {"posix", initposix},
+    {"errno", initerrno},
+    {"pwd", initpwd},
+    {"_sre", init_sre},
+    {"_codecs", init_codecs},
+    {"_weakref", init_weakref},
+    {"zipimport", initzipimport},
+    {"_symtable", init_symtable},
+    {"xxsubtype", initxxsubtype},
 
-/* -- ADDMODULE MARKER 2 -- */
+    /* -- ADDMODULE MARKER 2 -- */
 
     /* This module lives in marshal.c */
     {"marshal", PyMarshal_Init},
@@ -77,9 +76,7 @@ struct _inittab _PyImport_Inittab[] = {
     {"_warnings", _PyWarnings_Init},
 
     /* Sentinel */
-    {0, 0}
-};
-
+    {0, 0}};
 
 #ifdef __cplusplus
 }

@@ -3,4 +3,4 @@
 
 void initEmulation();
 
-#endif // __EMULATION_H
+#endif  // __EMULATION_H

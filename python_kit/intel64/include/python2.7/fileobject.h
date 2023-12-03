@@ -8,28 +8,27 @@ extern "C" {
 #endif
 
 typedef struct {
-    PyObject_HEAD
-    FILE *f_fp;
-    PyObject *f_name;
-    PyObject *f_mode;
-    int (*f_close)(FILE *);
-    int f_softspace;            /* Flag used by 'print' command */
-    int f_binary;               /* Flag which indicates whether the file is
-                               open in binary (1) or text (0) mode */
-    char* f_buf;                /* Allocated readahead buffer */
-    char* f_bufend;             /* Points after last occupied position */
-    char* f_bufptr;             /* Current buffer position */
-    char *f_setbuf;             /* Buffer for setbuf(3) and setvbuf(3) */
-    int f_univ_newline;         /* Handle any newline convention */
-    int f_newlinetypes;         /* Types of newlines seen */
-    int f_skipnextlf;           /* Skip next \n */
-    PyObject *f_encoding;
-    PyObject *f_errors;
-    PyObject *weakreflist; /* List of weak references */
-    int unlocked_count;         /* Num. currently running sections of code
-                               using f_fp with the GIL released. */
-    int readable;
-    int writable;
+  PyObject_HEAD FILE *f_fp;
+  PyObject *f_name;
+  PyObject *f_mode;
+  int (*f_close)(FILE *);
+  int f_softspace;    /* Flag used by 'print' command */
+  int f_binary;       /* Flag which indicates whether the file is
+                     open in binary (1) or text (0) mode */
+  char *f_buf;        /* Allocated readahead buffer */
+  char *f_bufend;     /* Points after last occupied position */
+  char *f_bufptr;     /* Current buffer position */
+  char *f_setbuf;     /* Buffer for setbuf(3) and setvbuf(3) */
+  int f_univ_newline; /* Handle any newline convention */
+  int f_newlinetypes; /* Types of newlines seen */
+  int f_skipnextlf;   /* Skip next \n */
+  PyObject *f_encoding;
+  PyObject *f_errors;
+  PyObject *weakreflist; /* List of weak references */
+  int unlocked_count;    /* Num. currently running sections of code
+                        using f_fp with the GIL released. */
+  int readable;
+  int writable;
 } PyFileObject;
 
 PyAPI_DATA(PyTypeObject) PyFile_Type;
@@ -40,9 +39,9 @@ PyAPI_DATA(PyTypeObject) PyFile_Type;
 PyAPI_FUNC(PyObject *) PyFile_FromString(char *, char *);
 PyAPI_FUNC(void) PyFile_SetBufSize(PyObject *, int);
 PyAPI_FUNC(int) PyFile_SetEncoding(PyObject *, const char *);
-PyAPI_FUNC(int) PyFile_SetEncodingAndErrors(PyObject *, const char *, char *errors);
-PyAPI_FUNC(PyObject *) PyFile_FromFile(FILE *, char *, char *,
-                                             int (*)(FILE *));
+PyAPI_FUNC(int)
+    PyFile_SetEncodingAndErrors(PyObject *, const char *, char *errors);
+PyAPI_FUNC(PyObject *) PyFile_FromFile(FILE *, char *, char *, int (*)(FILE *));
 PyAPI_FUNC(FILE *) PyFile_AsFile(PyObject *);
 PyAPI_FUNC(void) PyFile_IncUseCount(PyFileObject *);
 PyAPI_FUNC(void) PyFile_DecUseCount(PyFileObject *);
@@ -62,7 +61,7 @@ PyAPI_DATA(const char *) Py_FileSystemDefaultEncoding;
    or \r\n as line terminators.
 */
 #define PY_STDIOTEXTMODE "b"
-char *Py_UniversalNewlineFgets(char *, int, FILE*, PyObject *);
+char *Py_UniversalNewlineFgets(char *, int, FILE *, PyObject *);
 size_t Py_UniversalNewlineFread(char *, size_t, FILE *, PyObject *);
 
 /* A routine to do sanity checking on the file mode string.  returns

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -34,60 +34,44 @@ END_LEGAL */
  */
 
 #include "pin.H"
-namespace WINDOWS
-{
-#include<Windows.h>
+namespace WINDOWS {
+#include <Windows.h>
 }
 #include <iostream>
 using namespace std;
 
-VOID Before1( WINDOWS::PVOID hHeap, 
-              WINDOWS::ULONG dwFlags, 
-              WINDOWS::SIZE_T dwBytes )
-{     
-	cout << "Before 1: RtlAllocateHeap( " << hex << (ADDRINT)hHeap << ", " <<
-		dwFlags << ", " << dwBytes << ")" << dec << endl << flush; 
+VOID Before1(WINDOWS::PVOID hHeap, WINDOWS::ULONG dwFlags,
+             WINDOWS::SIZE_T dwBytes) {
+  cout << "Before 1: RtlAllocateHeap( " << hex << (ADDRINT)hHeap << ", "
+       << dwFlags << ", " << dwBytes << ")" << dec << endl
+       << flush;
 }
 
-void InsertProbe( IMG img, char * funcName)
-{
-    RTN allocRtn = RTN_FindByName(img, funcName);
-    if (RTN_Valid(allocRtn) && RTN_IsSafeForProbedInsertion(allocRtn))
-    {  
-        cout << "RTN_InsertCallProbed on " << funcName << endl << flush;
+void InsertProbe(IMG img, char *funcName) {
+  RTN allocRtn = RTN_FindByName(img, funcName);
+  if (RTN_Valid(allocRtn) && RTN_IsSafeForProbedInsertion(allocRtn)) {
+    cout << "RTN_InsertCallProbed on " << funcName << endl << flush;
 
-        RTN_InsertCallProbed(allocRtn, IPOINT_BEFORE,
-                             AFUNPTR(Before1),
-                             IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
-                             IARG_FUNCARG_ENTRYPOINT_VALUE, 1,
-                             IARG_FUNCARG_ENTRYPOINT_VALUE, 2,
-                             IARG_END);
-    }    
+    RTN_InsertCallProbed(allocRtn, IPOINT_BEFORE, AFUNPTR(Before1),
+                         IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                         IARG_FUNCARG_ENTRYPOINT_VALUE, 1,
+                         IARG_FUNCARG_ENTRYPOINT_VALUE, 2, IARG_END);
+  }
 }
-
-
 
 /*
  * process_loaded_image: Called every time when new image is loaded.
  */
-static VOID process_loaded_image(IMG image, VOID *value)
-{
-    if ( !IMG_Valid(image) )
-        return;
-    
-    InsertProbe( image, "RtlAllocateHeap");
-    
+static VOID process_loaded_image(IMG image, VOID *value) {
+  if (!IMG_Valid(image)) return;
+
+  InsertProbe(image, "RtlAllocateHeap");
 }
 
+int main(int argc, char **argv) {
+  PIN_InitSymbols();
+  if (PIN_Init(argc, argv)) return -1;
 
-
-int main(int argc, char **argv)
-{
-    PIN_InitSymbols();  
-    if ( PIN_Init(argc, argv) )
-        return -1;
-
-    IMG_AddInstrumentFunction(process_loaded_image, 0); 
-    PIN_StartProbedProgram();
+  IMG_AddInstrumentFunction(process_loaded_image, 0);
+  PIN_StartProbedProgram();
 }
-

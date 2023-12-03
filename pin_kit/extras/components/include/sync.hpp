@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -36,18 +36,18 @@ END_LEGAL */
 #define SYNC_HPP
 
 #include "sync/documentation.hpp"
-#include "sync/reader-writer-lock.hpp"
 #include "sync/reader-writer-lock-spin.hpp"
-#include "sync/semaphore.hpp"
+#include "sync/reader-writer-lock.hpp"
 #include "sync/semaphore-event.hpp"
 #include "sync/semaphore-spin.hpp"
-#include "sync/simple-lock.hpp"
+#include "sync/semaphore.hpp"
 #include "sync/simple-lock-spin.hpp"
+#include "sync/simple-lock.hpp"
 
 #ifndef TARGET_WINDOWS
-    #include "sync/simple-lock-futex.hpp"
-    #include "sync/reader-writer-lock-futex.hpp"
-    #include "sync/semaphore-futex.hpp"
+#include "sync/reader-writer-lock-futex.hpp"
+#include "sync/semaphore-futex.hpp"
+#include "sync/simple-lock-futex.hpp"
 #endif
 
-#endif // file guard
+#endif  // file guard

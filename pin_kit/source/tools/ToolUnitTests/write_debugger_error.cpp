@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,15 +29,15 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 
-
 /* ===================================================================== */
 /*! @file
   This tool is used for testing the "DEBUGGER_ERROR" error code.
 */
 
 /* ===================================================================== */
-#include "pin.H"
 #include <iostream>
+
+#include "pin.H"
 
 using namespace std;
 
@@ -48,44 +48,34 @@ using namespace std;
 #endif
 
 /* ===================================================================== */
-void Before( )
-{
-    PIN_ERROR_DEBUGGER( "Debugger error");
-}
+void Before() { PIN_ERROR_DEBUGGER("Debugger error"); }
 
 /* ===================================================================== */
-VOID ImageLoad(IMG img, VOID *v)
-{
-    for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec))
-    {
-        for (RTN rtn = SEC_RtnHead(sec); RTN_Valid(rtn); rtn = RTN_Next(rtn))
-        {
-            if (RTN_Name(rtn) == BAR_FN_NAME)
-            {
-                RTN_Open(rtn);
-                RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(Before), IARG_END);
-                RTN_Close(rtn);
-            }
-        }
+VOID ImageLoad(IMG img, VOID *v) {
+  for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec)) {
+    for (RTN rtn = SEC_RtnHead(sec); RTN_Valid(rtn); rtn = RTN_Next(rtn)) {
+      if (RTN_Name(rtn) == BAR_FN_NAME) {
+        RTN_Open(rtn);
+        RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(Before), IARG_END);
+        RTN_Close(rtn);
+      }
     }
+  }
 }
 
 /* ===================================================================== */
-int main(INT32 argc, CHAR *argv[])
-{
-    PIN_InitSymbols();
+int main(INT32 argc, CHAR *argv[]) {
+  PIN_InitSymbols();
 
-    PIN_Init(argc, argv);
+  PIN_Init(argc, argv);
 
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-    
-    PIN_StartProgram();
+  IMG_AddInstrumentFunction(ImageLoad, 0);
 
-    return 0;
+  PIN_StartProgram();
+
+  return 0;
 }
 
 /* ===================================================================== */
 /* eof */
 /* ===================================================================== */
-
-

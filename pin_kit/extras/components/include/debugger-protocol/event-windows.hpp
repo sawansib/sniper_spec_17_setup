@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -37,7 +37,6 @@ END_LEGAL */
 
 #include "fund.hpp"
 
-
 namespace DEBUGGER_PROTOCOL {
 
 /*!
@@ -45,71 +44,67 @@ namespace DEBUGGER_PROTOCOL {
  * or EVENT_INFO_WINDOWS64 structures.  If this happens, clients can use the
  * \e _version field to retain backward compatibility.
  *
- * When a client writes information to these structures, it should set \e _version
- * to the latest version that it supports.
+ * When a client writes information to these structures, it should set \e
+ * _version to the latest version that it supports.
  *
  * When a client reads these structures, it should use \e _version to tell which
  * fields are valid.  A client should allow that \e _version may be greater than
  * the newest version it knows about, which happens if an older front-end runs
  * with a newer back-end or vice-versa.
  */
-enum EVENT_INFO_WINDOWS_VERSION
-{
-    EVENT_INFO_WINDOWS_VERSION_0    ///< This is the only defined version currently.
+enum EVENT_INFO_WINDOWS_VERSION {
+  EVENT_INFO_WINDOWS_VERSION_0  ///< This is the only defined version currently.
 };
 
-
-static const unsigned MAX_EXCEPTION_PARAMETERS = 15;    ///< Maximum number of exception parameters.
+static const unsigned MAX_EXCEPTION_PARAMETERS =
+    15;  ///< Maximum number of exception parameters.
 
 /*!
- * This has the same layout as EXCEPTION_RECORD32.  If you are compiling on Windows,
- * you can safely cast to that type.
+ * This has the same layout as EXCEPTION_RECORD32.  If you are compiling on
+ * Windows, you can safely cast to that type.
  */
-struct /*<POD>*/ EXCEPTION32
-{
-    FUND::UINT32 _exceptionCode;
-    FUND::UINT32 _exceptionFlags;
-    FUND::UINT32 _exceptionRecord;
-    FUND::UINT32 _exceptionAddress;
-    FUND::UINT32 _numberParameters;
-    FUND::UINT32 _exceptionInformation[MAX_EXCEPTION_PARAMETERS];
+struct /*<POD>*/ EXCEPTION32 {
+  FUND::UINT32 _exceptionCode;
+  FUND::UINT32 _exceptionFlags;
+  FUND::UINT32 _exceptionRecord;
+  FUND::UINT32 _exceptionAddress;
+  FUND::UINT32 _numberParameters;
+  FUND::UINT32 _exceptionInformation[MAX_EXCEPTION_PARAMETERS];
 };
 
 /*!
- * This has the same layout as EXCEPTION_RECORD64.  If you are compiling on Windows,
- * you can safely cast to that type.
+ * This has the same layout as EXCEPTION_RECORD64.  If you are compiling on
+ * Windows, you can safely cast to that type.
  */
-struct /*<POD>*/ EXCEPTION64
-{
-    FUND::UINT32 _exceptionCode;
-    FUND::UINT32 _exceptionFlags;
-    FUND::UINT64 _exceptionRecord;
-    FUND::UINT64 _exceptionAddress;
-    FUND::UINT32 _numberParameters;
-    FUND::UINT32 _pad;
-    FUND::UINT64 _exceptionInformation[MAX_EXCEPTION_PARAMETERS];
+struct /*<POD>*/ EXCEPTION64 {
+  FUND::UINT32 _exceptionCode;
+  FUND::UINT32 _exceptionFlags;
+  FUND::UINT64 _exceptionRecord;
+  FUND::UINT64 _exceptionAddress;
+  FUND::UINT32 _numberParameters;
+  FUND::UINT32 _pad;
+  FUND::UINT64 _exceptionInformation[MAX_EXCEPTION_PARAMETERS];
 };
-
 
 /*!
  * Information about an exception received on a 32-bit Windows target.
  */
-struct /*<POD>*/ EVENT_INFO_WINDOWS32
-{
-    EVENT_INFO_WINDOWS_VERSION _version;    ///< Tells which fields in this structure are valid.
-    bool _firstChance;                      ///< TRUE if this is a first-chance exception.
-    EXCEPTION32 _exception;                 ///< Windows exception record.
+struct /*<POD>*/ EVENT_INFO_WINDOWS32 {
+  EVENT_INFO_WINDOWS_VERSION
+      _version;            ///< Tells which fields in this structure are valid.
+  bool _firstChance;       ///< TRUE if this is a first-chance exception.
+  EXCEPTION32 _exception;  ///< Windows exception record.
 };
 
 /*!
  * Information about an exception received on a 64-bit Windows target.
  */
-struct /*<POD>*/ EVENT_INFO_WINDOWS64
-{
-    EVENT_INFO_WINDOWS_VERSION _version;    ///< Tells which fields in this structure are valid.
-    bool _firstChance;                      ///< TRUE if this is a first-chance exception.
-    EXCEPTION64 _exception;                 ///< Windows exception record.
+struct /*<POD>*/ EVENT_INFO_WINDOWS64 {
+  EVENT_INFO_WINDOWS_VERSION
+      _version;            ///< Tells which fields in this structure are valid.
+  bool _firstChance;       ///< TRUE if this is a first-chance exception.
+  EXCEPTION64 _exception;  ///< Windows exception record.
 };
 
-} // namespace
-#endif // file guard
+}  // namespace DEBUGGER_PROTOCOL
+#endif  // file guard

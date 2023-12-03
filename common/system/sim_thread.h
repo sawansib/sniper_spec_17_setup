@@ -5,20 +5,19 @@
 #include "fixed_types.h"
 #include "network.h"
 
-class SimThread : public Runnable
-{
-public:
-   SimThread();
-   ~SimThread();
+class SimThread : public Runnable {
+ public:
+  SimThread();
+  ~SimThread();
 
-   void spawn();
+  void spawn();
 
-private:
-   void run();
+ private:
+  void run();
 
-   static void terminateFunc(void *vp, NetPacket pkt);
+  static void terminateFunc(void *vp, NetPacket pkt);
 
-   _Thread *m_thread;
+  _Thread *m_thread;
 };
 
-#endif // SIM_THREAD_H
+#endif  // SIM_THREAD_H

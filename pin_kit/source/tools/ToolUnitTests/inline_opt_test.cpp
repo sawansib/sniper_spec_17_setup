@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,34 +29,28 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 /*
-This tool is used, in conjuction with inline_opt_test_app, to verify that analysis
-functions that are one basic block, but are too long to be inlined are recognized
-as setting all the registers that they set
+This tool is used, in conjuction with inline_opt_test_app, to verify that
+analysis functions that are one basic block, but are too long to be inlined are
+recognized as setting all the registers that they set
 */
 
 #include "pin.H"
 
-
 extern "C" void ZeroOutScratches();
 extern "C" unsigned int scratchVals[];
 unsigned int scratchVals[3];
-    
-VOID Instruction(INS ins, VOID *v)
-{
-    
-    INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(ZeroOutScratches), IARG_END);
-       
+
+VOID Instruction(INS ins, VOID *v) {
+  INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(ZeroOutScratches), IARG_END);
 }
 
-int main(int argc, char * argv[])
-{
-    PIN_Init(argc, argv);
+int main(int argc, char *argv[]) {
+  PIN_Init(argc, argv);
 
-    INS_AddInstrumentFunction(Instruction, 0);
-    
-    // Never returns
-    PIN_StartProgram();
-    
-    return 0;
+  INS_AddInstrumentFunction(Instruction, 0);
+
+  // Never returns
+  PIN_StartProgram();
+
+  return 0;
 }
-

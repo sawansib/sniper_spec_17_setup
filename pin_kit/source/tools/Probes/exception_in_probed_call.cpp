@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,53 +29,46 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 #include <stdio.h>
+
 #include <string>
 
 #include "pin.H"
 
-namespace WND
-{
+namespace WND {
 #include <windows.h>
 }
 
-typedef int (* foo_t)();
+typedef int (*foo_t)();
 
 static AFUNPTR foo_ptr;
 
-static int foo_rep()
-{
-	printf("foo called\n");
+static int foo_rep() {
+  printf("foo called\n");
 
-	return ((foo_t)foo_ptr)();
+  return ((foo_t)foo_ptr)();
 }
 
-static VOID on_module_loading(IMG img, VOID *data)
-{
-    if (IMG_IsMainExecutable(img))
-	{
-		RTN routine = RTN_FindByName(img, "foo");
-		if (!RTN_Valid(routine))
-		{
-            routine = RTN_FindByName(img, "_foo");
-        }
-
-		if (RTN_Valid(routine))
-		{
-			foo_ptr = RTN_ReplaceProbed(routine, (AFUNPTR)(foo_rep));
-		}
-	}
-}
-
-int main(int argc, char** argv)
-{
-    PIN_InitSymbols();
-
-    if (!PIN_Init(argc, argv))
-    {
-        IMG_AddInstrumentFunction(on_module_loading,  0);        
-
-        PIN_StartProbedProgram();
+static VOID on_module_loading(IMG img, VOID* data) {
+  if (IMG_IsMainExecutable(img)) {
+    RTN routine = RTN_FindByName(img, "foo");
+    if (!RTN_Valid(routine)) {
+      routine = RTN_FindByName(img, "_foo");
     }
 
-    exit(1);
+    if (RTN_Valid(routine)) {
+      foo_ptr = RTN_ReplaceProbed(routine, (AFUNPTR)(foo_rep));
+    }
+  }
+}
+
+int main(int argc, char** argv) {
+  PIN_InitSymbols();
+
+  if (!PIN_Init(argc, argv)) {
+    IMG_AddInstrumentFunction(on_module_loading, 0);
+
+    PIN_StartProbedProgram();
+  }
+
+  exit(1);
 }

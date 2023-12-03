@@ -7,24 +7,18 @@ int Iterations = 0;
 
 static void Breakpoint();
 
+int main() {
+  printf("Before the loop, MyVariable = %d\n", MyVariable);
 
-int main()
-{
-    printf("Before the loop, MyVariable = %d\n", MyVariable);
+  // The debugger changes 'MyVariable', which causes the loop to drop out.
+  //
+  while (MyVariable == 89) {
+    Iterations++;
+    Breakpoint();
+  }
 
-    // The debugger changes 'MyVariable', which causes the loop to drop out.
-    //
-    while (MyVariable == 89)
-    {
-        Iterations++;
-        Breakpoint();
-    }
-
-    printf("After the loop, MyVariable = %d\n", MyVariable);
-    return 0;
+  printf("After the loop, MyVariable = %d\n", MyVariable);
+  return 0;
 }
 
-static void Breakpoint()
-{
-    /* Debugger places a breakpoint here */
-}
+static void Breakpoint() { /* Debugger places a breakpoint here */ }

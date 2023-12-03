@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -41,18 +41,17 @@ END_LEGAL */
 
  */
 
-#include <stdio.h>
-#include <pthread.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <syscall.h>
-#include <linux/unistd.h> 
-#include <asm/prctl.h> 
-#include <sys/prctl.h> 
+#include <asm/prctl.h>
 #include <errno.h>
+#include <linux/unistd.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/prctl.h>
 #include <sys/utsname.h>
-
+#include <syscall.h>
+#include <unistd.h>
 
 #define NTHREADS 4
 
@@ -61,103 +60,89 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 unsigned int numOfThreadsReadyForDetach = 0;
 unsigned long pinDetached = 0;
 
-extern "C" void TellPinToDetach(unsigned long *updateWhenReady)
-{
-    return;
-}
+extern "C" void TellPinToDetach(unsigned long *updateWhenReady) { return; }
 
-/* 
+/*
  * Compare FS_BASE values before and after detach.
  */
-void * thread_func (void *arg)
-{
-    unsigned long thread_no = (unsigned long)arg+1;
+void *thread_func(void *arg) {
+  unsigned long thread_no = (unsigned long)arg + 1;
 
-    unsigned long fsBase = 0;
-    int res = syscall(SYS_arch_prctl, ARCH_GET_FS, &fsBase);
-    if (res != 0)
-    {
-        printf("SYS_arch_prctl failed with error: %s\n", strerror(errno));
-        return 0;
-    }
-
-    pthread_mutex_lock(&mutex);
-    numOfThreadsReadyForDetach++;
-    pthread_mutex_unlock(&mutex);
-    
-    while (!pinDetached)
-    {
-        sched_yield();
-    }
-    
-    unsigned long fsBaseAfterDetach = 0;
-    res = syscall(SYS_arch_prctl, ARCH_GET_FS, &fsBaseAfterDetach);
-    if (res != 0)
-    {
-        printf("SYS_arch_prctl failed with error: %s\n", strerror(errno));
-        return (void*)1;
-    }
-    
-    if (fsBase != fsBaseAfterDetach)
-    {
-        fprintf(stderr, "ERROR in thread %d: FS_BASE before detach 0x%lx; after detach 0x%lx\n",
-                thread_no, fsBase, fsBaseAfterDetach);
-        return (void*)1;
-    }
-    else
-    {
-        fprintf(stderr, "fs base in thread %d: 0x%lx\n", thread_no, fsBase);
-    }
+  unsigned long fsBase = 0;
+  int res = syscall(SYS_arch_prctl, ARCH_GET_FS, &fsBase);
+  if (res != 0) {
+    printf("SYS_arch_prctl failed with error: %s\n", strerror(errno));
     return 0;
+  }
+
+  pthread_mutex_lock(&mutex);
+  numOfThreadsReadyForDetach++;
+  pthread_mutex_unlock(&mutex);
+
+  while (!pinDetached) {
+    sched_yield();
+  }
+
+  unsigned long fsBaseAfterDetach = 0;
+  res = syscall(SYS_arch_prctl, ARCH_GET_FS, &fsBaseAfterDetach);
+  if (res != 0) {
+    printf("SYS_arch_prctl failed with error: %s\n", strerror(errno));
+    return (void *)1;
+  }
+
+  if (fsBase != fsBaseAfterDetach) {
+    fprintf(
+        stderr,
+        "ERROR in thread %d: FS_BASE before detach 0x%lx; after detach 0x%lx\n",
+        thread_no, fsBase, fsBaseAfterDetach);
+    return (void *)1;
+  } else {
+    fprintf(stderr, "fs base in thread %d: 0x%lx\n", thread_no, fsBase);
+  }
+  return 0;
 }
 
-int main (int argc, char *argv[])
-{
-    pthread_t h[NTHREADS];
+int main(int argc, char *argv[]) {
+  pthread_t h[NTHREADS];
 
-    unsigned long fsBase = 0;
-    int res = syscall(SYS_arch_prctl, ARCH_GET_FS, &fsBase);
-    if (res != 0)
-    {
-        printf("SYS_arch_prctl failed with error: %s\n", strerror(errno));
-        return -1;
-    }
+  unsigned long fsBase = 0;
+  int res = syscall(SYS_arch_prctl, ARCH_GET_FS, &fsBase);
+  if (res != 0) {
+    printf("SYS_arch_prctl failed with error: %s\n", strerror(errno));
+    return -1;
+  }
 
-    for (unsigned long i = 0; i < NTHREADS; i++)
-    {
-        pthread_create (&h[i], 0, thread_func, (void *)i);
-    }
-    
-    /*
-     * If the number of threads is big, some threads leave system call "clone"
-     * while PIN is detached. This functionality is also tested here.
-     */ 
+  for (unsigned long i = 0; i < NTHREADS; i++) {
+    pthread_create(&h[i], 0, thread_func, (void *)i);
+  }
 
-    TellPinToDetach(&pinDetached);
-    
-    void * result[NTHREADS];
-    for (unsigned long i = 0; i < NTHREADS; i++)
-    {
-        pthread_join (h[i], &(result[i]));
+  /*
+   * If the number of threads is big, some threads leave system call "clone"
+   * while PIN is detached. This functionality is also tested here.
+   */
+
+  TellPinToDetach(&pinDetached);
+
+  void *result[NTHREADS];
+  for (unsigned long i = 0; i < NTHREADS; i++) {
+    pthread_join(h[i], &(result[i]));
+  }
+  for (unsigned long i = 0; i < NTHREADS; i++) {
+    if (result[i] != 0) {
+      fprintf(stderr, "TEST FAILED\n");
+      return -1;
     }
-    for (unsigned long i = 0; i < NTHREADS; i++)
-    {
-        if (result[i] != 0)
-        {
-            fprintf(stderr, "TEST FAILED\n");
-            return -1;
-        }
-    }
-    unsigned long fsBaseAfterDetach = 0;
-    res = syscall(SYS_arch_prctl, ARCH_GET_FS, &fsBaseAfterDetach);
-    
-    if (fsBase != fsBaseAfterDetach)
-    {
-        fprintf(stderr, "ERROR in the main thread: FS_BASE before detach 0x%lx; after detach 0x%lx\n",
-                fsBase, fsBaseAfterDetach);
-        return -1;
-    }    
-    fprintf(stderr, "TEST PASSED\n");
-    return 0;
+  }
+  unsigned long fsBaseAfterDetach = 0;
+  res = syscall(SYS_arch_prctl, ARCH_GET_FS, &fsBaseAfterDetach);
+
+  if (fsBase != fsBaseAfterDetach) {
+    fprintf(stderr,
+            "ERROR in the main thread: FS_BASE before detach 0x%lx; after "
+            "detach 0x%lx\n",
+            fsBase, fsBaseAfterDetach);
+    return -1;
+  }
+  fprintf(stderr, "TEST PASSED\n");
+  return 0;
 }
-

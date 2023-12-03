@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -34,15 +34,15 @@ END_LEGAL */
  *  Test detaching Pin from running process on Linux
  */
 
-#include <stdio.h>
-#include <pthread.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
 #include <dlfcn.h>
-#include <sys/types.h>
+#include <errno.h>
 #include <linux/unistd.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 #ifdef TARGET_ANDROID
 #include <sys/syscall.h>
 #endif
@@ -52,82 +52,63 @@ END_LEGAL */
 /*
  * Get thread Id
  */
-pid_t GetTid()
-{
-     return syscall(__NR_gettid);
-}
+pid_t GetTid() { return syscall(__NR_gettid); }
 
-extern "C" void TellPinToDetach(unsigned long *updateWhenReady)
-{
-    return;
-}
+extern "C" void TellPinToDetach(unsigned long *updateWhenReady) { return; }
 
 volatile bool loop2 = true;
-void * thread_func (void *arg)
-{    
-    while (loop2)
-    {
-        void *space = malloc(300);
-        sleep(1);
-        free(space);
-    }
-    return 0;
-
+void *thread_func(void *arg) {
+  while (loop2) {
+    void *space = malloc(300);
+    sleep(1);
+    free(space);
+  }
+  return 0;
 }
 
 volatile bool loop1 = true;
-typedef  double (*SIN_FUNC)(double x);
+typedef double (*SIN_FUNC)(double x);
 
-void * thread_dlopen_func (void *arg)
-{    
-	double number = 0.2;
-    while (loop1)
-    {
-        void *handle = dlopen("libm.so", RTLD_LAZY);
-        if (handle)
-        {
-            SIN_FUNC sin_fptr = (SIN_FUNC)dlsym(handle, "sin");
-            if (sin_fptr)
-            {
-                double val = (*sin_fptr)(number);
-                printf("val = %.4f\n", val);
-            }
-            sleep(2);
-            dlclose(handle);
-        }
-		number += 0.01;
+void *thread_dlopen_func(void *arg) {
+  double number = 0.2;
+  while (loop1) {
+    void *handle = dlopen("libm.so", RTLD_LAZY);
+    if (handle) {
+      SIN_FUNC sin_fptr = (SIN_FUNC)dlsym(handle, "sin");
+      if (sin_fptr) {
+        double val = (*sin_fptr)(number);
+        printf("val = %.4f\n", val);
+      }
+      sleep(2);
+      dlclose(handle);
     }
-        
-    return 0;
+    number += 0.01;
+  }
 
+  return 0;
 }
 
-int main (int argc, char *argv[])
-{
-    pthread_t h[NTHREADS];
-    
-    pthread_create (&h[0], 0, thread_dlopen_func, 0);
-    for (unsigned long i = 1; i < NTHREADS; i++)
-    {
-        pthread_create (&h[i], 0, thread_func, 0);
-    }
-    
-	unsigned long pinDetached = false;
-    TellPinToDetach(&pinDetached);
-    
-	while (!pinDetached)
-	{
-    	sleep(2);
-	}
-    
-    loop1 = false;
-    loop2 = false;
-    
-    for (unsigned long i = 0; i < NTHREADS; i++)
-    {
-        pthread_join (h[i], 0);
-    }
-    printf("All threads exited. The test PASSED\n");    
-    return 0;
-}
+int main(int argc, char *argv[]) {
+  pthread_t h[NTHREADS];
 
+  pthread_create(&h[0], 0, thread_dlopen_func, 0);
+  for (unsigned long i = 1; i < NTHREADS; i++) {
+    pthread_create(&h[i], 0, thread_func, 0);
+  }
+
+  unsigned long pinDetached = false;
+  TellPinToDetach(&pinDetached);
+
+  while (!pinDetached) {
+    sleep(2);
+  }
+
+  loop1 = false;
+  loop2 = false;
+
+  for (unsigned long i = 0; i < NTHREADS; i++) {
+    pthread_join(h[i], 0);
+  }
+  printf("All threads exited. The test PASSED\n");
+  return 0;
+}

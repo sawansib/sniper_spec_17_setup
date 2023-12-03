@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -31,63 +31,54 @@ END_LEGAL */
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include "num_segvs.h"
-
 #include <sys/mman.h>
+#include <unistd.h>
+
+#include "num_segvs.h"
 
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
 #endif
 
-void handle(int, siginfo_t*, void*);
+void handle(int, siginfo_t *, void *);
 void make_segv();
 
+int main() {
+  int i;
+  struct sigaction sigact;
 
-int main()
-{
-    int i;
-    struct sigaction sigact;
+  sigact.sa_sigaction = handle;
+  sigemptyset(&sigact.sa_mask);
+  sigact.sa_flags = SA_SIGINFO;
+  if (sigaction(SIGSEGV, &sigact, 0) == -1) {
+    fprintf(stderr, "Unable handle signal\n");
+    return 1;
+  }
 
-    sigact.sa_sigaction = handle;
-    sigemptyset(&sigact.sa_mask);
-    sigact.sa_flags = SA_SIGINFO;
-    if (sigaction(SIGSEGV, &sigact, 0) == -1)
-    {
-        fprintf(stderr, "Unable handle signal\n");
-        return 1;
-    }
-
-    for (i=0; i<NUM_SEGVS; i++)
-    {
-        make_segv();
-    }
-    return 0;
+  for (i = 0; i < NUM_SEGVS; i++) {
+    make_segv();
+  }
+  return 0;
 }
 
+void make_segv() {
+  volatile int *p;
+  int i;
+  size_t pagesize = getpagesize();
+  void *ptr = mmap(0, 2 * pagesize, (PROT_READ | PROT_WRITE),
+                   (MAP_PRIVATE | MAP_ANONYMOUS), -1, 0);
+  char *unmap = ((char *)ptr) + pagesize + 0x20;
+  munmap((char *)ptr + pagesize, pagesize);
 
-
-void make_segv()
-{
-    volatile int * p;
-    int i;
-    size_t pagesize = getpagesize();
-    void *ptr = mmap(0, 2*pagesize, (PROT_READ | PROT_WRITE), (MAP_PRIVATE | MAP_ANONYMOUS), -1, 0);
-    char *unmap = ((char *)ptr) + pagesize + 0x20;
-    munmap((char *)ptr+pagesize, pagesize);
-
-    p = (volatile int *)unmap;
-    i = *p;
+  p = (volatile int *)unmap;
+  i = *p;
 }
 
-int numSegvsHandled=0;
-void handle(int sig, siginfo_t* info, void* vctxt)
-{
-    numSegvsHandled++;
-    printf("Got signal %d #sginals %d\n", sig, numSegvsHandled);
-    if (numSegvsHandled >= NUM_SEGVS)
-    {
-       exit (0);
-    }
-
+int numSegvsHandled = 0;
+void handle(int sig, siginfo_t *info, void *vctxt) {
+  numSegvsHandled++;
+  printf("Got signal %d #sginals %d\n", sig, numSegvsHandled);
+  if (numSegvsHandled >= NUM_SEGVS) {
+    exit(0);
+  }
 }

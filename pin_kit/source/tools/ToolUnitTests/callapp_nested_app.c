@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -32,30 +32,26 @@ END_LEGAL */
 //
 #include <stdio.h>
 
-#if defined (TARGET_WINDOWS)
-#define EXPORT_SYM __declspec( dllexport ) 
+#if defined(TARGET_WINDOWS)
+#define EXPORT_SYM __declspec(dllexport)
 #else
 #define EXPORT_SYM extern
 #include <stdlib.h>
 #endif
 
-EXPORT_SYM long Original1( long param1, long param2 );
-EXPORT_SYM long Original2( long param1, long param2 );
+EXPORT_SYM long Original1(long param1, long param2);
+EXPORT_SYM long Original2(long param1, long param2);
 
+int main() {
+  long res;
+  int i;
 
-int main()
-{
-    long res;
-    int i;
-    
-    for (i=0; i<10; i++)
-    {
-        res = Original1(3, 4);
-    }
-    if ((unsigned int)res != (unsigned int)9207)
-    {
-        printf ("***ERROR res %ld is unexpected\n", res);
-        exit (-1);
-    }
-    return 0;
+  for (i = 0; i < 10; i++) {
+    res = Original1(3, 4);
+  }
+  if ((unsigned int)res != (unsigned int)9207) {
+    printf("***ERROR res %ld is unexpected\n", res);
+    exit(-1);
+  }
+  return 0;
 }

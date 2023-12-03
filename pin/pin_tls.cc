@@ -1,48 +1,37 @@
-#include "tls.h"
-#include "log.h"
 #include <pin.H>
 
-class PinTLS : public TLS
-{
-public:
-    PinTLS()
-    {
-        m_key = PIN_CreateThreadDataKey(NULL);
-    }
+#include "log.h"
+#include "tls.h"
 
-    ~PinTLS()
-    {
-        PIN_DeleteThreadDataKey(m_key);
-    }
+class PinTLS : public TLS {
+ public:
+  PinTLS() { m_key = PIN_CreateThreadDataKey(NULL); }
 
-    void* get(int thread_id)
-    {
-        if (thread_id == -1)
-            return PIN_GetThreadData(m_key, PIN_ThreadId());
-        else
-            return PIN_GetThreadData(m_key, thread_id);
-    }
+  ~PinTLS() { PIN_DeleteThreadDataKey(m_key); }
 
-    const void* get(int thread_id) const
-    {
-        return ((PinTLS*)this)->get(thread_id);
-    }
+  void* get(int thread_id) {
+    if (thread_id == -1)
+      return PIN_GetThreadData(m_key, PIN_ThreadId());
+    else
+      return PIN_GetThreadData(m_key, thread_id);
+  }
 
-    void set(void *vp)
-    {
-        LOG_PRINT("%p->set(%p)", this, vp);
-        __attribute__((unused)) BOOL res = PIN_SetThreadData(m_key, vp, PIN_ThreadId());
-        LOG_ASSERT_ERROR(res, "Error setting TLS -- pin tid = %d", PIN_ThreadId());
-    }
+  const void* get(int thread_id) const {
+    return ((PinTLS*)this)->get(thread_id);
+  }
 
-private:
-    TLS_KEY m_key;
+  void set(void* vp) {
+    LOG_PRINT("%p->set(%p)", this, vp);
+    __attribute__((unused)) BOOL res =
+        PIN_SetThreadData(m_key, vp, PIN_ThreadId());
+    LOG_ASSERT_ERROR(res, "Error setting TLS -- pin tid = %d", PIN_ThreadId());
+  }
+
+ private:
+  TLS_KEY m_key;
 };
 
 #if 1
 // override PthreadTLS
-TLS* TLS::create()
-{
-    return new PinTLS();
-}
+TLS* TLS::create() { return new PinTLS(); }
 #endif

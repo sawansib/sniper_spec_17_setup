@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,73 +29,70 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 /*
- * Test that we can call PIN_CallApplicationFunction() when there is a pending signal.
+ * Test that we can call PIN_CallApplicationFunction() when there is a pending
+ * signal.
  */
 
 #include <signal.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
+
 #include "pin.H"
 
 static VOID OnImage(IMG, VOID *);
 static VOID OnFoo(CONTEXT *, THREADID);
 
-
 BOOL FoundBar = FALSE;
 ADDRINT BarAddr;
 
+int main(int argc, char *argv[]) {
+  PIN_Init(argc, argv);
+  PIN_InitSymbols();
 
-int main(int argc, char * argv[])
-{
-    PIN_Init(argc, argv);
-    PIN_InitSymbols();
+  IMG_AddInstrumentFunction(OnImage, 0);
 
-    IMG_AddInstrumentFunction(OnImage, 0);
-
-    PIN_StartProgram();
-    return 0;
+  PIN_StartProgram();
+  return 0;
 }
 
-static VOID OnImage(IMG img, VOID *)
-{
+static VOID OnImage(IMG img, VOID *) {
 #ifdef TARGET_MAC
-    RTN rtn = RTN_FindByName(img, "_PIN_TEST_FOO");
+  RTN rtn = RTN_FindByName(img, "_PIN_TEST_FOO");
 #else
-    RTN rtn = RTN_FindByName(img, "PIN_TEST_FOO");
+  RTN rtn = RTN_FindByName(img, "PIN_TEST_FOO");
 #endif
-    if (RTN_Valid(rtn))
-    {
-        RTN_Open(rtn);
-        RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(OnFoo), IARG_CONTEXT, IARG_THREAD_ID, IARG_END);
-        RTN_Close(rtn);
-    }
+  if (RTN_Valid(rtn)) {
+    RTN_Open(rtn);
+    RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(OnFoo), IARG_CONTEXT,
+                   IARG_THREAD_ID, IARG_END);
+    RTN_Close(rtn);
+  }
 
 #ifdef TARGET_MAC
-    rtn = RTN_FindByName(img, "_PIN_TEST_BAR");
+  rtn = RTN_FindByName(img, "_PIN_TEST_BAR");
 #else
-    rtn = RTN_FindByName(img, "PIN_TEST_BAR");
+  rtn = RTN_FindByName(img, "PIN_TEST_BAR");
 #endif
-    if (RTN_Valid(rtn))
-    {
-        BarAddr = RTN_Address(rtn);
-        FoundBar = TRUE;
-    }
+  if (RTN_Valid(rtn)) {
+    BarAddr = RTN_Address(rtn);
+    FoundBar = TRUE;
+  }
 }
 
-static VOID OnFoo(CONTEXT *ctxt, THREADID tid)
-{
-    // Sending a signal to ourself here will cause the signal to remain pending in Pin until this analysis
-    // routine returns.
-    //
-    kill(getpid(), SIGUSR1);
+static VOID OnFoo(CONTEXT *ctxt, THREADID tid) {
+  // Sending a signal to ourself here will cause the signal to remain pending in
+  // Pin until this analysis routine returns.
+  //
+  kill(getpid(), SIGUSR1);
 
-    if (!FoundBar)
-    {
-        fprintf(stderr, "Unable to find PIN_TEST_BAR()\n");
-        PIN_ExitProcess(1);
-    }
+  if (!FoundBar) {
+    fprintf(stderr, "Unable to find PIN_TEST_BAR()\n");
+    PIN_ExitProcess(1);
+  }
 
-    PIN_CallApplicationFunction(ctxt, tid, CALLINGSTD_DEFAULT, AFUNPTR(BarAddr), PIN_PARG_END());
-    PIN_CallApplicationFunction(ctxt, tid, CALLINGSTD_DEFAULT, AFUNPTR(BarAddr), PIN_PARG_END());
+  PIN_CallApplicationFunction(ctxt, tid, CALLINGSTD_DEFAULT, AFUNPTR(BarAddr),
+                              PIN_PARG_END());
+  PIN_CallApplicationFunction(ctxt, tid, CALLINGSTD_DEFAULT, AFUNPTR(BarAddr),
+                              PIN_PARG_END());
 }

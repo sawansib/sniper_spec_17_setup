@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -38,26 +38,27 @@ END_LEGAL */
 namespace DEBUGGER_PROTOCOL {
 
 /*!
- * In the future, new image types may be added.  To retain backward compatibility,
- * clients should ignore types they don't recognize.
+ * In the future, new image types may be added.  To retain backward
+ * compatibility, clients should ignore types they don't recognize.
  */
-enum IMAGE_TYPE_LINUX
-{
-    /*!
-     * Image is from the main ELF executable file that is loaded into the target process.
-     */
-    IMAGE_TYPE_LINUX_ELF_MAIN,
+enum IMAGE_TYPE_LINUX {
+  /*!
+   * Image is from the main ELF executable file that is loaded into the target
+   * process.
+   */
+  IMAGE_TYPE_LINUX_ELF_MAIN,
 
-    /*!
-     * Image is from an ELF file representing a shared library in the target process.
-     */
-    IMAGE_TYPE_LINUX_ELF_LIBRARY
+  /*!
+   * Image is from an ELF file representing a shared library in the target
+   * process.
+   */
+  IMAGE_TYPE_LINUX_ELF_LIBRARY
 };
 
 /*!
- * In the future, new fields may be added to the end of the IMAGE_INFO_LINUX structure.
- * If this happens, clients can use the \e _version field to retain backward
- * compatibility.
+ * In the future, new fields may be added to the end of the IMAGE_INFO_LINUX
+ * structure. If this happens, clients can use the \e _version field to retain
+ * backward compatibility.
  *
  * When a client writes information to this structure, it should set \e _version
  * to the latest version that it supports.
@@ -67,21 +68,21 @@ enum IMAGE_TYPE_LINUX
  * the newest version it knows about, which happens if an older front-end runs
  * with a newer back-end or vice-versa.
  */
-enum IMAGE_INFO_LINUX_VERSION
-{
-    IMAGE_INFO_LINUX_VERSION_0    ///< This is the only defined version currently.
+enum IMAGE_INFO_LINUX_VERSION {
+  IMAGE_INFO_LINUX_VERSION_0  ///< This is the only defined version currently.
 };
 
 /*!
  * Information about an image in the target application.
  */
-struct /*<UTILITY>*/ IMAGE_INFO_LINUX
-{
-    IMAGE_INFO_LINUX_VERSION _version;  ///< Tells which fields in this structure are valid.
-    IMAGE_TYPE_LINUX _type;             ///< The image type.
-    std::string _name;                  ///< Absolute pathname to the ELF file (UTF-8).
-    FUND::ANYADDR _offset;              ///< Offset from ELF file's link-time address to it's loaded address.
+struct /*<UTILITY>*/ IMAGE_INFO_LINUX {
+  IMAGE_INFO_LINUX_VERSION
+      _version;            ///< Tells which fields in this structure are valid.
+  IMAGE_TYPE_LINUX _type;  ///< The image type.
+  std::string _name;       ///< Absolute pathname to the ELF file (UTF-8).
+  FUND::ANYADDR _offset;   ///< Offset from ELF file's link-time address to it's
+                           ///< loaded address.
 };
 
-} // namespace
-#endif // file guard
+}  // namespace DEBUGGER_PROTOCOL
+#endif  // file guard

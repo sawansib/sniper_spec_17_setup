@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -32,50 +32,39 @@ END_LEGAL */
 Tool that requests IARG_CONST_CONTEXT at each instruction
 */
 #include <stdio.h>
-#include "pin.H"
-#include "instlib.H"
-#include "portability.H"
+
+#include <cstdlib>
+#include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <iomanip>
-#include <fstream>
-#include <cstdlib>
 
+#include "instlib.H"
+#include "pin.H"
+#include "portability.H"
 
+VOID GetSomeIntRegsFromContext(CONTEXT *ctxt) {
+  PIN_GetContextReg(ctxt, REG_INST_PTR);
 
-VOID GetSomeIntRegsFromContext (CONTEXT *ctxt)
-{
-    PIN_GetContextReg( ctxt, REG_INST_PTR );
-    
-    PIN_GetContextReg( ctxt, REG_GAX );
-    
-    PIN_GetContextReg( ctxt, REG_GBX );
+  PIN_GetContextReg(ctxt, REG_GAX);
 
+  PIN_GetContextReg(ctxt, REG_GBX);
 }
 
-VOID ReceiveContext (CONTEXT *ctxt)
-{
-    GetSomeIntRegsFromContext(ctxt);
+VOID ReceiveContext(CONTEXT *ctxt) { GetSomeIntRegsFromContext(ctxt); }
+
+VOID Instruction(INS ins, VOID *v) {
+  INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)ReceiveContext,
+                 IARG_CONST_CONTEXT, IARG_END);
 }
 
+int main(int argc, char *argv[]) {
+  PIN_Init(argc, argv);
 
+  INS_AddInstrumentFunction(Instruction, 0);
 
+  // Never returns
+  PIN_StartProgram();
 
-VOID Instruction(INS ins, VOID *v)
-{
-    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR) ReceiveContext,   IARG_CONST_CONTEXT, IARG_END);
-}
-
-
-
-int main(int argc, char *argv[])
-{
-    PIN_Init(argc,argv);
-
-    INS_AddInstrumentFunction(Instruction, 0);
-
-    // Never returns
-    PIN_StartProgram();
-    
-    return 0;
+  return 0;
 }

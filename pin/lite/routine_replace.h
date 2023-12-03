@@ -1,17 +1,16 @@
 #pragma once
 
-#include "fixed_types.h"
-
-#include "pin.H"
 #include <pthread.h>
 #include <sys/time.h>
 
-namespace lite
-{
+#include "fixed_types.h"
+#include "pin.H"
 
-void RoutineTraceGen(RTN rtn, void* v);
+namespace lite {
 
-void routineCallback(RTN rtn, void* v);
+void RoutineTraceGen(RTN rtn, void *v);
+
+void routineCallback(RTN rtn, void *v);
 void routineStartCallback(RTN rtn, INS ins);
 
 IntPtr nullFunction();
@@ -26,10 +25,12 @@ void freeBefore(THREADID thread_id, ADDRINT eip, ADDRINT address);
 // os emulation
 IntPtr emuGetNprocs();
 IntPtr emuGetCPU(THREADID thread_id);
-IntPtr emuClockGettime(THREADID thread_id, clockid_t clk_id, struct timespec *tp);
-IntPtr emuGettimeofday(THREADID thread_id, struct timeval *tv, struct timezone *tz);
+IntPtr emuClockGettime(THREADID thread_id, clockid_t clk_id,
+                       struct timespec *tp);
+IntPtr emuGettimeofday(THREADID thread_id, struct timeval *tv,
+                       struct timezone *tz);
 void emuKmpReapMonitor(THREADID threadIndex, CONTEXT *ctxt);
 
-AFUNPTR getFunptr(CONTEXT* context, string func_name);
+AFUNPTR getFunptr(CONTEXT *context, string func_name);
 
-}
+}  // namespace lite

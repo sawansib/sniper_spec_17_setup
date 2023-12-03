@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -38,10 +38,12 @@ END_LEGAL */
 /*! @file
  */
 
-#include "pin.H"
-#include <iostream>
-#include <fstream>
 #include <stdlib.h>
+
+#include <fstream>
+#include <iostream>
+
+#include "pin.H"
 
 using namespace std;
 
@@ -49,66 +51,57 @@ using namespace std;
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
-    "o", "attach_tool.out", "specify file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o",
+                            "attach_tool.out", "specify file name");
 
 ofstream TraceFile;
 /* ===================================================================== */
 
-INT32 Usage()
-{
-    cerr <<
-        "This pin tool tests attach to applications with diminished privileges. So far we relied on the accessibility of /proc/self/auxv in Pin Client but this may not be the case when the application starts with superuser privileges and then dimishes them during the run, and then pin attaches to it. This is a regression test for this corner case.\n"
-        "\n";
-    cerr << KNOB_BASE::StringKnobSummary();
-    cerr << endl;
-    return -1;
+INT32 Usage() {
+  cerr << "This pin tool tests attach to applications with diminished "
+          "privileges. So far we relied on the accessibility of "
+          "/proc/self/auxv in Pin Client but this may not be the case when the "
+          "application starts with superuser privileges and then dimishes them "
+          "during the run, and then pin attaches to it. This is a regression "
+          "test for this corner case.\n"
+          "\n";
+  cerr << KNOB_BASE::StringKnobSummary();
+  cerr << endl;
+  return -1;
 }
 
-BOOL PinAttached()
-{
-    return TRUE;
+BOOL PinAttached() { return TRUE; }
+
+VOID ImageLoad(IMG img, void *v) {
+  RTN rtn = RTN_FindByName(img, "PinAttached");
+  if (RTN_Valid(rtn)) {
+    TraceFile << "Replacing PinAttached" << endl;
+    RTN_Replace(rtn, AFUNPTR(PinAttached));
+  }
 }
 
-VOID ImageLoad(IMG img, void *v)
-{
-	RTN rtn = RTN_FindByName(img, "PinAttached");
-	if (RTN_Valid(rtn))
-	{
-		TraceFile << "Replacing PinAttached" << endl;
-		RTN_Replace(rtn, AFUNPTR(PinAttached));
-	}	
-}	
-
-void Fini(INT32 code, VOID *v)
-{
-	TraceFile << "Fini" << endl;
-}
+void Fini(INT32 code, VOID *v) { TraceFile << "Fini" << endl; }
 
 /* ===================================================================== */
 
-int main(int argc, CHAR *argv[])
-{
-    PIN_InitSymbols();
+int main(int argc, CHAR *argv[]) {
+  PIN_InitSymbols();
 
-    if( PIN_Init(argc,argv) )
-    {
-        return Usage();
-    }
+  if (PIN_Init(argc, argv)) {
+    return Usage();
+  }
 
-    TraceFile.open(KnobOutputFile.Value().c_str());
-    TraceFile << hex;
-    TraceFile.setf(ios::showbase);
+  TraceFile.open(KnobOutputFile.Value().c_str());
+  TraceFile << hex;
+  TraceFile.setf(ios::showbase);
 
+  IMG_AddInstrumentFunction(ImageLoad, 0);
+  PIN_AddFiniFunction(Fini, 0);
+  PIN_StartProgram();
 
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-	PIN_AddFiniFunction(Fini, 0);
-    PIN_StartProgram();
-    
-    return 0;
+  return 0;
 }
 
 /* ===================================================================== */
 /* eof */
 /* ===================================================================== */
-

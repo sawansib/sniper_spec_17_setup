@@ -3,9 +3,8 @@
 
 #include "sift.h"
 
-namespace Sift
-{
-   void hexdump(const void * data, uint32_t size);
+namespace Sift {
+void hexdump(const void* data, uint32_t size);
 };
 
-#endif // __SIFT_UTILS_H
+#endif  // __SIFT_UTILS_H

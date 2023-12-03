@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -36,14 +36,15 @@ END_LEGAL */
 // other Pin tools we use PIN_ClaimToolRegister to allocate the
 // register we use.
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
+
 #include "pin.H"
 
 ofstream OutFile;
 
-KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
-    "o", "inscount2_vregs.out", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o",
+                            "inscount2_vregs.out", "specify output file name");
 
 PIN_LOCK Lock;
 UINT64 TotalCount = 0;
@@ -53,91 +54,81 @@ REG ScratchReg;
 // Second parameter is the current dynamic instruction count
 // Return the new count
 //
-ADDRINT PIN_FAST_ANALYSIS_CALL DoCount(ADDRINT numInsts, ADDRINT count)
-{
-    return count + numInsts;
+ADDRINT PIN_FAST_ANALYSIS_CALL DoCount(ADDRINT numInsts, ADDRINT count) {
+  return count + numInsts;
 }
 
-VOID ThreadStart(THREADID tid, CONTEXT *ctxt, INT32 flags, VOID *v)
-{
-    // When the thread starts, zero the virtual register that holds the
-    // dynamic instruction count.
-    //
-    PIN_SetContextReg(ctxt, ScratchReg, 0);
+VOID ThreadStart(THREADID tid, CONTEXT *ctxt, INT32 flags, VOID *v) {
+  // When the thread starts, zero the virtual register that holds the
+  // dynamic instruction count.
+  //
+  PIN_SetContextReg(ctxt, ScratchReg, 0);
 }
 
-VOID ThreadFini(THREADID tid, const CONTEXT *ctxt, INT32 code, VOID *v)
-{
-    // When the thread exits, accumulate the thread's dynamic instruction
-    // count into the total.
-    PIN_GetLock(&Lock, tid+1);
-    TotalCount += PIN_GetContextReg(ctxt, ScratchReg);
-    PIN_ReleaseLock(&Lock);
+VOID ThreadFini(THREADID tid, const CONTEXT *ctxt, INT32 code, VOID *v) {
+  // When the thread exits, accumulate the thread's dynamic instruction
+  // count into the total.
+  PIN_GetLock(&Lock, tid + 1);
+  TotalCount += PIN_GetContextReg(ctxt, ScratchReg);
+  PIN_ReleaseLock(&Lock);
 }
 
-VOID Trace(TRACE trace, VOID *v)
-{
-    for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
-    {
-        // The virtual register ScratchReg holds the dynamic instruction
-        // count for each thread.  DoCount returns the sum of the basic
-        // block instruction count and G0, we write the result back to G0
-        BBL_InsertCall(bbl, IPOINT_ANYWHERE, AFUNPTR(DoCount),
-                       IARG_FAST_ANALYSIS_CALL,
-                       IARG_ADDRINT, BBL_NumIns(bbl),
-                       IARG_REG_VALUE, ScratchReg,
-                       IARG_RETURN_REGS, ScratchReg,
-                       IARG_END);
-    }
+VOID Trace(TRACE trace, VOID *v) {
+  for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl)) {
+    // The virtual register ScratchReg holds the dynamic instruction
+    // count for each thread.  DoCount returns the sum of the basic
+    // block instruction count and G0, we write the result back to G0
+    BBL_InsertCall(bbl, IPOINT_ANYWHERE, AFUNPTR(DoCount),
+                   IARG_FAST_ANALYSIS_CALL, IARG_ADDRINT, BBL_NumIns(bbl),
+                   IARG_REG_VALUE, ScratchReg, IARG_RETURN_REGS, ScratchReg,
+                   IARG_END);
+  }
 }
 
-VOID Fini(INT32 code, VOID *v)
-{
-    OutFile << "Count= " << TotalCount << endl;
-    OutFile.close();
+VOID Fini(INT32 code, VOID *v) {
+  OutFile << "Count= " << TotalCount << endl;
+  OutFile.close();
 }
 
 /* ===================================================================== */
 /* Print Help Message                                                    */
 /* ===================================================================== */
 
-INT32 Usage()
-{
-    cerr << "This Pintool counts the number of dynamic instructions executed" << endl;
-    cerr << endl << KNOB_BASE::StringKnobSummary() << endl;
-    return -1;
+INT32 Usage() {
+  cerr << "This Pintool counts the number of dynamic instructions executed"
+       << endl;
+  cerr << endl << KNOB_BASE::StringKnobSummary() << endl;
+  return -1;
 }
 
 /* ===================================================================== */
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char * argv[])
-{
-    // We accumlate counts into a register, make sure it is 64 bits to
-    // avoid overflow
-    ASSERTX(sizeof(ADDRINT) == sizeof(UINT64));
-    
-    if (PIN_Init(argc, argv)) return Usage();
+int main(int argc, char *argv[]) {
+  // We accumlate counts into a register, make sure it is 64 bits to
+  // avoid overflow
+  ASSERTX(sizeof(ADDRINT) == sizeof(UINT64));
 
-    OutFile.open(KnobOutputFile.Value().c_str());
-     
-    PIN_InitLock(&Lock);
+  if (PIN_Init(argc, argv)) return Usage();
 
-    ScratchReg = PIN_ClaimToolRegister();
-    if (!REG_valid(ScratchReg))
-    {
-        std::cerr << "Cannot allocate a scratch register.\n";
-        std::cerr << std::flush;
-        return 1;
-    }
+  OutFile.open(KnobOutputFile.Value().c_str());
 
-    PIN_AddThreadStartFunction(ThreadStart, 0);
-    PIN_AddThreadFiniFunction(ThreadFini, 0);
-    PIN_AddFiniFunction(Fini, 0);
+  PIN_InitLock(&Lock);
 
-    TRACE_AddInstrumentFunction(Trace, 0);
+  ScratchReg = PIN_ClaimToolRegister();
+  if (!REG_valid(ScratchReg)) {
+    std::cerr << "Cannot allocate a scratch register.\n";
+    std::cerr << std::flush;
+    return 1;
+  }
 
-    PIN_StartProgram();
-    return 0;
+  PIN_AddThreadStartFunction(ThreadStart, 0);
+  PIN_AddThreadFiniFunction(ThreadFini, 0);
+  PIN_AddFiniFunction(Fini, 0);
+
+  TRACE_AddInstrumentFunction(Trace, 0);
+
+  PIN_StartProgram();
+  return 0;
 }

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -31,38 +31,40 @@ END_LEGAL */
 #ifndef REGVALUE_UTILS_H
 #define REGVALUE_UTILS_H
 
-
 /////////////////////
 // INCLUDES
 /////////////////////
 
-#include <string>
 #include <ostream>
+#include <string>
+
 #include "pin.H"
 
-using std::string;
 using std::ostream;
-
+using std::string;
 
 /////////////////////
 // GLOBAL VARIABLES
 /////////////////////
 
-// Boolean indicating whether the system supports avx instructions and registers.
+// Boolean indicating whether the system supports avx instructions and
+// registers.
 extern const bool hasAvxSupport;
-
 
 /////////////////////
 // FUNCTION DECLARATIONS
 /////////////////////
 
-// Returns a string of the hex representation of the given "value" of length "size" bytes.
+// Returns a string of the hex representation of the given "value" of length
+// "size" bytes.
 string Val2Str(const void* value, unsigned int size);
 
 // Compare two values of length "size" bytes.
-bool CompareValues(const void* value, const void* expected, unsigned int size, ostream& ost);
+bool CompareValues(const void* value, const void* expected, unsigned int size,
+                   ostream& ost);
 
 // Assign a PIN_REGISTER object with a new value.
-void AssignNewPinRegisterValue(PIN_REGISTER* pinreg, const UINT64* newval, UINT qwords);
+void AssignNewPinRegisterValue(PIN_REGISTER* pinreg, const UINT64* newval,
+                               UINT qwords);
 
-#endif // REGVALUE_UTILS_H
+#endif  // REGVALUE_UTILS_H

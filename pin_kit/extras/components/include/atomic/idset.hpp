@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -35,13 +35,11 @@ END_LEGAL */
 #ifndef ATOMIC_IDSET_HPP
 #define ATOMIC_IDSET_HPP
 
-#include "fund.hpp"
-#include "atomic/ops.hpp"
 #include "atomic/nullstats.hpp"
-
+#include "atomic/ops.hpp"
+#include "fund.hpp"
 
 namespace ATOMIC {
-
 
 /*! @brief  Maintains a set of unique IDs.
  *
@@ -51,7 +49,8 @@ namespace ATOMIC {
  * small.
  *
  *  @param MaxID    The IDSET allows IDs in the inclusive range [1, MaxID]
- *  @param STATS    Type of an object that collects statistics.  See NULLSTATS for a model.
+ *  @param STATS    Type of an object that collects statistics.  See NULLSTATS
+ * for a model.
  *
  * @par Example:
  *                                                                                          \code
@@ -66,98 +65,90 @@ namespace ATOMIC {
  *  }
  *                                                                                          \endcode
  */
-template<FUND::UINT32 MaxID, typename STATS=NULLSTATS> class /*<UTILITY>*/ IDSET
-{
-  public:
-    /*!
-     * Construct a new IDSET.  This method is NOT atomic.
-     *
-     *  @param[in] stats    The new statistics collection object.
-     */
-    IDSET(STATS *stats=0) : _stats(stats)
-    {
-        for (FUND::UINT32 i = 0;  i < _numElements;  i++)
-            _bits[i] = 0;
+template <FUND::UINT32 MaxID, typename STATS = NULLSTATS>
+class /*<UTILITY>*/ IDSET {
+ public:
+  /*!
+   * Construct a new IDSET.  This method is NOT atomic.
+   *
+   *  @param[in] stats    The new statistics collection object.
+   */
+  IDSET(STATS *stats = 0) : _stats(stats) {
+    for (FUND::UINT32 i = 0; i < _numElements; i++) _bits[i] = 0;
 
-        // If MaxID is not an even multiple of the number of bits in a UINT32,
-        // the _bits[] will contain some "extra" bits.  Permanently reserve these
-        // extra bit positions so GetID() never returns an ID greater than MaxID.
-        //
-        const FUND::UINT32 MaxIDMod32 = MaxID % 32;
-        if (MaxIDMod32)
-            _bits[_numElements-1] = ( (1<<((32-MaxIDMod32)%32)) - 1) << MaxIDMod32;
+    // If MaxID is not an even multiple of the number of bits in a UINT32,
+    // the _bits[] will contain some "extra" bits.  Permanently reserve these
+    // extra bit positions so GetID() never returns an ID greater than MaxID.
+    //
+    const FUND::UINT32 MaxIDMod32 = MaxID % 32;
+    if (MaxIDMod32)
+      _bits[_numElements - 1] = ((1 << ((32 - MaxIDMod32) % 32)) - 1)
+                                << MaxIDMod32;
+  }
+
+  /*!
+   * Set the statistics collection object.  This method is NOT atomic.
+   *
+   *  @param[in] stats    The new statistics collection object.
+   */
+  void SetStatsNonAtomic(STATS *stats) { _stats = stats; }
+
+  /*!
+   * Request a new ID that is not currently in use.
+   *
+   * @return  Returns an ID in the range [1, MaxID] or 0 if there are no
+   *           unused IDs.
+   */
+  FUND::UINT32 GetID() {
+    EXPONENTIAL_BACKOFF<STATS> backoff(1, _stats);
+
+    for (FUND::UINT32 i = 0; i < _numElements; i++) {
+      FUND::UINT32 val = OPS::Load(&_bits[i]);
+
+      while (val != 0xffffffff) {
+        FUND::UINT32 bit = 0;
+        for (FUND::UINT32 tval = val; tval & 1; tval >>= 1) bit++;
+
+        FUND::UINT32 newval = val | (1 << bit);
+        if (OPS::CompareAndDidSwap(&_bits[i], val, newval))
+          return i * sizeof(FUND::UINT32) + bit + 1;
+
+        backoff.Delay();
+        val = OPS::Load(&_bits[i]);
+      }
     }
 
-    /*!
-     * Set the statistics collection object.  This method is NOT atomic.
-     *
-     *  @param[in] stats    The new statistics collection object.
-     */
-    void SetStatsNonAtomic(STATS *stats)
-    {
-        _stats = stats;
-    }
+    return 0;
+  }
 
-    /*!
-     * Request a new ID that is not currently in use.
-     *
-     * @return  Returns an ID in the range [1, MaxID] or 0 if there are no
-     *           unused IDs.
-     */
-    FUND::UINT32 GetID()
-    {
-        EXPONENTIAL_BACKOFF<STATS> backoff(1, _stats);
+  /*!
+   * Release an ID, making it available for reuse.
+   *
+   *  @param[in] id   The ID, which must be in the range [1,MaxID].
+   */
+  void ReleaseID(FUND::UINT32 id) {
+    id--;
+    FUND::UINT32 i = id >> 5;
+    FUND::UINT32 bit = 1 << (id & 0x1f);
 
-        for (FUND::UINT32 i = 0;  i < _numElements;  i++)
-        {
-            FUND::UINT32 val = OPS::Load(&_bits[i]);
+    FUND::UINT32 val;
+    FUND::UINT32 newval;
+    EXPONENTIAL_BACKOFF<STATS> backoff(1, _stats);
 
-            while (val != 0xffffffff)
-            {
-                FUND::UINT32 bit = 0;
-                for (FUND::UINT32 tval = val;  tval & 1;  tval >>= 1)
-                    bit++;
+    do {
+      backoff.Delay();
+      val = OPS::Load(&_bits[i]);
+      newval = val & ~bit;
+    } while (!OPS::CompareAndDidSwap(&_bits[i], val, newval));
+  }
 
-                FUND::UINT32 newval = val | (1 << bit);
-                if (OPS::CompareAndDidSwap(&_bits[i], val, newval))
-                    return i*sizeof(FUND::UINT32) + bit + 1;
+ private:
+  static const FUND::UINT32 _numElements =
+      (MaxID + 8 * sizeof(FUND::UINT32) - 1) / (8 * sizeof(FUND::UINT32));
+  volatile FUND::UINT32 _bits[_numElements];
 
-                backoff.Delay();
-                val = OPS::Load(&_bits[i]);
-            }
-        }
-
-        return 0;
-    }
-
-    /*!
-     * Release an ID, making it available for reuse.
-     *
-     *  @param[in] id   The ID, which must be in the range [1,MaxID].
-     */
-    void ReleaseID(FUND::UINT32 id)
-    {
-        id--;
-        FUND::UINT32 i = id >> 5;
-        FUND::UINT32 bit = 1 << (id & 0x1f);
-
-        FUND::UINT32 val;
-        FUND::UINT32 newval;
-        EXPONENTIAL_BACKOFF<STATS> backoff(1, _stats);
-
-        do {
-            backoff.Delay();
-            val = OPS::Load(&_bits[i]);
-            newval = val & ~bit;
-        } while (!OPS::CompareAndDidSwap(&_bits[i], val, newval));
-    }
-
-  private:
-    static const FUND::UINT32 _numElements = (MaxID + 8*sizeof(FUND::UINT32)-1) / (8*sizeof(FUND::UINT32));
-    volatile FUND::UINT32 _bits[_numElements];
-
-    STATS *_stats;  // Object which collects statistics, or NULL
+  STATS *_stats;  // Object which collects statistics, or NULL
 };
 
-} // namespace
-#endif // file guard
+}  // namespace ATOMIC
+#endif  // file guard

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 
 /*! @file
- *  Runnable and function objects. 
+ *  Runnable and function objects.
  */
 #include "runnable.h"
 
@@ -47,8 +47,8 @@ END_LEGAL */
 // If __USE_GNU is defined, we don't need to do anything.
 // If we defined it ourselves, we need to undefine it later.
 #ifndef __USE_GNU
-    #define __USE_GNU
-    #define APP_UNDEF_USE_GNU
+#define __USE_GNU
+#define APP_UNDEF_USE_GNU
 #endif
 
 #if defined(TARGET_ANDROID)
@@ -59,14 +59,14 @@ END_LEGAL */
 
 // If we defined __USE_GNU ourselves, we need to undefine it here.
 #ifdef APP_UNDEF_USE_GNU
-    #undef __USE_GNU
-    #undef APP_UNDEF_USE_GNU
+#undef __USE_GNU
+#undef APP_UNDEF_USE_GNU
 #endif
 
-#include <unistd.h>
-#include <sys/mman.h>
-#include <signal.h>
 #include <setjmp.h>
+#include <signal.h>
+#include <sys/mman.h>
+#include <unistd.h>
 #endif
 
 //=======================================================================
@@ -78,94 +78,82 @@ END_LEGAL */
 /*!
  * Given exception context and record, retrieve the exception address.
  */
-static void * GetExceptIp(LPEXCEPTION_POINTERS exceptPtr)
-{
+static void* GetExceptIp(LPEXCEPTION_POINTERS exceptPtr) {
 #if defined(TARGET_IA32)
-    return reinterpret_cast<void *>(exceptPtr->ContextRecord->Eip);
+  return reinterpret_cast<void*>(exceptPtr->ContextRecord->Eip);
 #elif defined(TARGET_IA32E)
-    return reinterpret_cast<void *>(exceptPtr->ContextRecord->Rip);
+  return reinterpret_cast<void*>(exceptPtr->ContextRecord->Rip);
 #endif
 }
 
-FUNC_OBJ & FUNC_OBJ::ExecuteSafe()
-{
-    void * exceptIp;
+FUNC_OBJ& FUNC_OBJ::ExecuteSafe() {
+  void* exceptIp;
 
-    __try
-    {
-        FUNC_OBJ& obj =  Execute();
-        return obj;
-    }
-    __except ((exceptIp = GetExceptIp(GetExceptionInformation())), EXCEPTION_EXECUTE_HANDLER)
-    {
-        return HandleException(exceptIp);
-    }
+  __try {
+    FUNC_OBJ& obj = Execute();
+    return obj;
+  } __except ((exceptIp = GetExceptIp(GetExceptionInformation())),
+              EXCEPTION_EXECUTE_HANDLER) {
+    return HandleException(exceptIp);
+  }
 }
 
 #elif defined(TARGET_LINUX)
 
 static sigjmp_buf jumpBuffer;
-static void * exceptIp;
+static void *exceptIp;
 
 /*!
- * Signal handler: stores exception IP in a global variable and returns with siglongjmp.
+ * Signal handler: stores exception IP in a global variable and returns with
+ * siglongjmp.
  */
-static void HandleSignal(int sig, siginfo_t *i, void *vctxt)
-{
-    ucontext_t *ctxt = (ucontext_t *)vctxt;
+static void HandleSignal(int sig, siginfo_t *i, void *vctxt) {
+  ucontext_t *ctxt = (ucontext_t *)vctxt;
 
 #if defined(TARGET_IA32)
-    exceptIp = reinterpret_cast<void *>(ctxt->uc_mcontext.gregs[REG_EIP]);
+  exceptIp = reinterpret_cast<void *>(ctxt->uc_mcontext.gregs[REG_EIP]);
 #elif defined(TARGET_IA32E)
-    exceptIp = reinterpret_cast<void *>(ctxt->uc_mcontext.gregs[REG_RIP]);
+  exceptIp = reinterpret_cast<void *>(ctxt->uc_mcontext.gregs[REG_RIP]);
 #endif
 
-    siglongjmp(jumpBuffer, 1);
+  siglongjmp(jumpBuffer, 1);
 }
 
 /*!
  * Set up the SIGSEGV signal handler.
  */
-static bool SetupSignalHandler()
-{
-    struct sigaction sigact;
+static bool SetupSignalHandler() {
+  struct sigaction sigact;
 
-    sigact.sa_sigaction = HandleSignal;
-    sigact.sa_flags = SA_SIGINFO;
-    sigemptyset(&sigact.sa_mask);
-    if (sigaction(SIGSEGV, &sigact, 0) == -1)
-    {
-        cerr << "Unable to set up handler" << endl;
-        return false;
-    }
-    return true;
+  sigact.sa_sigaction = HandleSignal;
+  sigact.sa_flags = SA_SIGINFO;
+  sigemptyset(&sigact.sa_mask);
+  if (sigaction(SIGSEGV, &sigact, 0) == -1) {
+    cerr << "Unable to set up handler" << endl;
+    return false;
+  }
+  return true;
 }
 
-FUNC_OBJ & FUNC_OBJ::ExecuteSafe()
-{
-    static bool first = true;
-    if (first)
-    {
-        SetupSignalHandler();
-        first = false;
-    }
+FUNC_OBJ &FUNC_OBJ::ExecuteSafe() {
+  static bool first = true;
+  if (first) {
+    SetupSignalHandler();
+    first = false;
+  }
 
-    if (sigsetjmp(jumpBuffer, 1) == 0)
-    {
-        return Execute(); 
-    }
-    else
-    {
-        return HandleException(exceptIp);
-    }
+  if (sigsetjmp(jumpBuffer, 1) == 0) {
+    return Execute();
+  } else {
+    return HandleException(exceptIp);
+  }
 }
 
-#else // OS X*
+#else  // OS X*
 
-FUNC_OBJ & FUNC_OBJ::ExecuteSafe()
-{
-    // Exception handling is not supported on OS X*
-    return Execute(); 
+FUNC_OBJ &FUNC_OBJ::ExecuteSafe() {
+  // Exception handling is not supported on OS X*
+  return Execute();
 }
 
 #endif

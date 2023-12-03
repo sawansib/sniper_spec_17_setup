@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -32,9 +32,10 @@ END_LEGAL */
 #include <windows.h>
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
+
 #include "../Utils/threadlib.h"
 #include "atomic.hpp"
 
@@ -43,40 +44,33 @@ END_LEGAL */
 
 volatile size_t numThreads = 0;
 
-void *compute(void *ptr)
-{
-    size_t newptr = (size_t) ptr;
-    size_t i = 0, start_count = newptr;
+void *compute(void *ptr) {
+  size_t newptr = (size_t)ptr;
+  size_t i = 0, start_count = newptr;
 
-    printf("Thread start %lld %lld\n", newptr, start_count);
+  printf("Thread start %lld %lld\n", newptr, start_count);
 
-    ATOMIC::OPS::Increment<size_t>(&numThreads, 1);
+  ATOMIC::OPS::Increment<size_t>(&numThreads, 1);
 
-    for (i = 0; i < start_count; i++)
-        newptr += (i + newptr);
+  for (i = 0; i < start_count; i++) newptr += (i + newptr);
 
-    printf("Thread end %lld\n", newptr);
-    return (void*) newptr;
+  printf("Thread end %lld\n", newptr);
+  return (void *)newptr;
 }
 
 THREAD_HANDLE threads[MAXTHREADS];
 
-int main()
-{
+int main() {
+  for (int i = 0; i < NUM_TH; i++)
+    CreateOneThread(&threads[i], compute, (void *)(LOOPS + i));
 
-    for (int i = 0; i < NUM_TH; i++)
-        CreateOneThread(&threads[i], compute, (void*) (LOOPS + i));
+  while (numThreads != NUM_TH) {
+    DelayCurrentThread(10);
+  }
+  printf("All threads started running\n");
+  fflush(stdout);
 
-    while (numThreads != NUM_TH)
-    {
-        DelayCurrentThread(10);
-    }
-    printf("All threads started running\n");
-    fflush(stdout);
+  for (int i = 0; i < NUM_TH; i++) JoinOneThread(threads[i]);
 
-    for (int i = 0; i < NUM_TH; i++)
-        JoinOneThread(threads[i]);
-
-    exit(0);
+  exit(0);
 }
-

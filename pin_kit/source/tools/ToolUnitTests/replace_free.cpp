@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -39,9 +39,10 @@ END_LEGAL */
   Generates a trace of malloc/free calls
  */
 
-#include "pin.H"
-#include <iostream>
 #include <fstream>
+#include <iostream>
+
+#include "pin.H"
 
 using namespace std;
 
@@ -50,80 +51,61 @@ using namespace std;
 /* ===================================================================== */
 typedef VOID (*FUNCPTR_FREE)(void *);
 
-VOID   Jit_Free_IA32( CONTEXT * context, AFUNPTR orgFuncptr, void * arg0 );
-
+VOID Jit_Free_IA32(CONTEXT *context, AFUNPTR orgFuncptr, void *arg0);
 
 /* ===================================================================== */
 /* Commandline Switches */
 /* ===================================================================== */
 
-INT32 Usage()
-{
-    cerr <<
-        "This pin tool collects an instruction trace for debugging\n"
-        "\n";
-    cerr << KNOB_BASE::StringKnobSummary();
-    cerr << endl;
-    return -1;
+INT32 Usage() {
+  cerr << "This pin tool collects an instruction trace for debugging\n"
+          "\n";
+  cerr << KNOB_BASE::StringKnobSummary();
+  cerr << endl;
+  return -1;
 }
-
 
 /* ===================================================================== */
 // Called every time a new image is loaded.
 // Look for routines that we want to replace.
-VOID ImageLoad(IMG img, VOID *v)
-{
-    RTN freeRtn = RTN_FindByName(img, "free");
-    if (RTN_Valid(freeRtn))
-    {
-        PROTO proto_free = PROTO_Allocate( PIN_PARG(void), CALLINGSTD_DEFAULT,
-                                           "free", PIN_PARG(void *), PIN_PARG_END() );
-        
-        RTN_ReplaceSignature(
-            freeRtn, AFUNPTR( Jit_Free_IA32 ),
-            IARG_PROTOTYPE, proto_free,
-            IARG_CONTEXT,
-            IARG_ORIG_FUNCPTR,
-            IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
-            IARG_END);
+VOID ImageLoad(IMG img, VOID *v) {
+  RTN freeRtn = RTN_FindByName(img, "free");
+  if (RTN_Valid(freeRtn)) {
+    PROTO proto_free = PROTO_Allocate(PIN_PARG(void), CALLINGSTD_DEFAULT,
+                                      "free", PIN_PARG(void *), PIN_PARG_END());
 
-        cout << "Replaced free() in:"  << IMG_Name(img) << endl;
-    }
+    RTN_ReplaceSignature(freeRtn, AFUNPTR(Jit_Free_IA32), IARG_PROTOTYPE,
+                         proto_free, IARG_CONTEXT, IARG_ORIG_FUNCPTR,
+                         IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
 
-
+    cout << "Replaced free() in:" << IMG_Name(img) << endl;
+  }
 }
 
 /* ===================================================================== */
 
-int main(int argc, CHAR *argv[])
-{
-    PIN_InitSymbols();
+int main(int argc, CHAR *argv[]) {
+  PIN_InitSymbols();
 
-    if( PIN_Init(argc,argv) )
-    {
-        return Usage();
-    }
+  if (PIN_Init(argc, argv)) {
+    return Usage();
+  }
 
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-    
-    
-    PIN_StartProgram();
-    
-    return 0;
+  IMG_AddInstrumentFunction(ImageLoad, 0);
+
+  PIN_StartProgram();
+
+  return 0;
 }
-
 
 /* ===================================================================== */
 
-VOID Jit_Free_IA32( CONTEXT * context, AFUNPTR orgFuncptr, void * ptr)
-{
-    PIN_CallApplicationFunction( context, PIN_ThreadId(),
-                                 CALLINGSTD_DEFAULT, orgFuncptr,
-                                 PIN_PARG(void),
-                                 PIN_PARG(void *), ptr,
-                                 PIN_PARG_END() );
+VOID Jit_Free_IA32(CONTEXT *context, AFUNPTR orgFuncptr, void *ptr) {
+  PIN_CallApplicationFunction(context, PIN_ThreadId(), CALLINGSTD_DEFAULT,
+                              orgFuncptr, PIN_PARG(void), PIN_PARG(void *), ptr,
+                              PIN_PARG_END());
 
-    cout << "free(" << hex << ptr << ")" << dec << endl;
+  cout << "free(" << hex << ptr << ")" << dec << endl;
 }
 
 /* ===================================================================== */

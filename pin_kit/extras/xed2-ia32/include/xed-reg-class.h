@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,14 +29,14 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 /// @file xed-reg-class.h
-/// 
+///
 
 #ifndef _XED_REG_CLASS_H_
-# define  _XED_REG_CLASS_H_
+#define _XED_REG_CLASS_H_
 
+#include "xed-reg-class-enum.h"  // a generated file
+#include "xed-reg-enum.h"        // a generated file
 #include "xed-types.h"
-#include "xed-reg-enum.h" // a generated file
-#include "xed-reg-class-enum.h" // a generated file
 
 /// Returns the register class of the given input register.
 ///@ingroup REGINTFC
@@ -62,13 +62,11 @@ xed_get_largest_enclosing_register32(xed_reg_enum_t r);
 
 /// Returns the  width, in bits, of the named register. 32b mode
 ///@ingroup REGINTFC
-XED_DLL_EXPORT xed_uint32_t
-xed_get_register_width_bits(xed_reg_enum_t r);
+XED_DLL_EXPORT xed_uint32_t xed_get_register_width_bits(xed_reg_enum_t r);
 
 /// Returns the  width, in bits, of the named register. 64b mode.
 ///@ingroup REGINTFC
-XED_DLL_EXPORT xed_uint32_t
-xed_get_register_width_bits64(xed_reg_enum_t r);
+XED_DLL_EXPORT xed_uint32_t xed_get_register_width_bits64(xed_reg_enum_t r);
 
 ////////////////////////////////////////////////////////////////////////////
 

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -35,11 +35,13 @@ END_LEGAL */
 
 /* ===================================================================== */
 /*! @file
- *  This file contains an ISA-portable PIN tool for counting dynamic instructions
+ *  This file contains an ISA-portable PIN tool for counting dynamic
+ * instructions
  */
 
-#include "pin.H"
 #include <iostream>
+
+#include "pin.H"
 
 /* ===================================================================== */
 /* Global Variables */
@@ -51,65 +53,52 @@ UINT64 ins_count = 0;
 /* Commandline Switches */
 /* ===================================================================== */
 
-
 /* ===================================================================== */
 /* Print Help Message                                                    */
 /* ===================================================================== */
 
-INT32 Usage()
-{
-    cerr <<
-        "This tool prints out the number of dynamic instructions executed to stderr.\n"
-        "\n";
+INT32 Usage() {
+  cerr << "This tool prints out the number of dynamic instructions executed to "
+          "stderr.\n"
+          "\n";
 
-    cerr << KNOB_BASE::StringKnobSummary();
+  cerr << KNOB_BASE::StringKnobSummary();
 
-    cerr << endl;
+  cerr << endl;
 
-    return -1;
+  return -1;
 }
 
 /* ===================================================================== */
 
-VOID docount()
-{
-    ins_count++;
+VOID docount() { ins_count++; }
+
+/* ===================================================================== */
+
+VOID Instruction(INS ins, VOID *v) {
+  INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount, IARG_END);
 }
 
 /* ===================================================================== */
 
-VOID Instruction(INS ins, VOID *v)
-{
-    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount, IARG_END);
-}
-
-/* ===================================================================== */
-
-VOID Fini(INT32 code, VOID *v)
-{
-    cerr <<  "Count " << ins_count  << endl;
-    
-}
+VOID Fini(INT32 code, VOID *v) { cerr << "Count " << ins_count << endl; }
 
 /* ===================================================================== */
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char *argv[])
-{
-    if( PIN_Init(argc,argv) )
-    {
-        return Usage();
-    }
-    
+int main(int argc, char *argv[]) {
+  if (PIN_Init(argc, argv)) {
+    return Usage();
+  }
 
-    INS_AddInstrumentFunction(Instruction, 0);
-    PIN_AddFiniFunction(Fini, 0);
+  INS_AddInstrumentFunction(Instruction, 0);
+  PIN_AddFiniFunction(Fini, 0);
 
-    // Never returns
-    PIN_StartProgram();
-    
-    return 0;
+  // Never returns
+  PIN_StartProgram();
+
+  return 0;
 }
 
 /* ===================================================================== */

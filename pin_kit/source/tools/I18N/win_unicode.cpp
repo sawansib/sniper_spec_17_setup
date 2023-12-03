@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -28,34 +28,25 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
-#include <iostream>
 #include <fstream>
+#include <iostream>
 using namespace std;
 
-int wmain(int argc, wchar_t * argv[])
-{
-    std::ofstream file;
-    file.open("win_unicode.out");
-    //internationalization in Japanese (encoded in UTF-16)
-    wchar_t internationalization[] = {0x56fd, 0x969B, 0x5316, 0x0000};
+int wmain(int argc, wchar_t* argv[]) {
+  std::ofstream file;
+  file.open("win_unicode.out");
+  // internationalization in Japanese (encoded in UTF-16)
+  wchar_t internationalization[] = {0x56fd, 0x969B, 0x5316, 0x0000};
 
-    if(argc == 1)
-    {
-        file << "not equal" << endl;
-    } else 
-    {
-        if(_wcsicmp(argv[1], internationalization) == 0)
-        {
-            file << "equal" << endl;
-        }
-        else
-        {
-            file << "not equal" << endl;
-        }
+  if (argc == 1) {
+    file << "not equal" << endl;
+  } else {
+    if (_wcsicmp(argv[1], internationalization) == 0) {
+      file << "equal" << endl;
+    } else {
+      file << "not equal" << endl;
     }
-    file.close();
-    return 0;
+  }
+  file.close();
+  return 0;
 }
-
-
-

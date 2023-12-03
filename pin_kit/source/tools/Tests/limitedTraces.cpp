@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -38,35 +38,31 @@ END_LEGAL */
 
 #include "pin_tests_util.H"
 
-VOID LimitTraces()
-{
-    CODECACHE_ChangeMaxInsPerTrace(1);
-}
+VOID LimitTraces() { CODECACHE_ChangeMaxInsPerTrace(1); }
 
-VOID Trace(TRACE trace, VOID *v)
-{
-    if (rand() % 100 > 80) {
-        UINT32 inscount = 0;
-        for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl)) {
-            for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins)) {
-                inscount++;
-            }
-        }
-        TEST(inscount == 1, "CODECACHE_ChangeMaxInsPerTrace failed");
-        //cout << "trace in 0x" << TRACE_CodeCacheAddress(trace) << " has " << inscount << " INS. ";
+VOID Trace(TRACE trace, VOID *v) {
+  if (rand() % 100 > 80) {
+    UINT32 inscount = 0;
+    for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl)) {
+      for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins)) {
+        inscount++;
+      }
     }
+    TEST(inscount == 1, "CODECACHE_ChangeMaxInsPerTrace failed");
+    // cout << "trace in 0x" << TRACE_CodeCacheAddress(trace) << " has " <<
+    // inscount << " INS. ";
+  }
 }
 
-int main(INT32 argc, CHAR **argv)
-{
-    PIN_Init(argc, argv);
-    srand(time(0));
-    
-    CODECACHE_AddCacheInitFunction(LimitTraces, 0);
-    TRACE_AddInstrumentFunction(Trace, 0);
-    
-    // Never returns
-    PIN_StartProgram();
-    
-    return 0;
+int main(INT32 argc, CHAR **argv) {
+  PIN_Init(argc, argv);
+  srand(time(0));
+
+  CODECACHE_AddCacheInitFunction(LimitTraces, 0);
+  TRACE_AddInstrumentFunction(Trace, 0);
+
+  // Never returns
+  PIN_StartProgram();
+
+  return 0;
 }

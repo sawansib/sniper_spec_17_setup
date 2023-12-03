@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -28,12 +28,15 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
-#include <fstream>
 #include <assert.h>
+
+#include <fstream>
+
 #include "pin.H"
 
 /*
- * Demonstrate the multiversioning of traces to support specialization of instrumentation
+ * Demonstrate the multiversioning of traces to support specialization of
+ * instrumentation
  *
  * We instrument a procedure with 2 entry points: red and blue. See
  * redblue.s in the same directory. When we enter from red, we create the
@@ -55,65 +58,59 @@ ADDRINT redEnter;
 ADDRINT blueEnter;
 ADDRINT commonEnter;
 
-char const * redVersion = "red version";
-char const * red2Version = "red2 version";
-char const * blueVersion = "blue version";
+char const* redVersion = "red version";
+char const* red2Version = "red2 version";
+char const* blueVersion = "blue version";
 
-VOID Emit(char * string)
-{
-    outstream << string << endl;
+VOID Emit(char* string) { outstream << string << endl; }
+
+VOID Trace(TRACE trace, VOID* v) {
+  char* version = reinterpret_cast<char*>(TRACE_Version(trace));
+
+  if (TRACE_Address(trace) == redEnter) {
+    TRACE_InsertCall(trace, IPOINT_BEFORE, AFUNPTR(Emit), IARG_PTR, "Enter red",
+                     IARG_END);
+
+    // Targets of this trace will have red instrumentation
+    BBL_SetTargetVersion(TRACE_BblHead(trace),
+                         reinterpret_cast<ADDRINT>(redVersion));
+
+    // Setting for the 2nd bbl should override previous values
+    BBL bbl2 = BBL_Next(TRACE_BblHead(trace));
+    ASSERTX(BBL_Valid(bbl2));
+    BBL_SetTargetVersion(bbl2, reinterpret_cast<ADDRINT>(red2Version));
+  }
+
+  if (TRACE_Address(trace) == blueEnter) {
+    TRACE_InsertCall(trace, IPOINT_BEFORE, AFUNPTR(Emit), IARG_PTR,
+                     "Enter blue", IARG_END);
+
+    // Target of this trace will have blue instrumentation
+    BBL_SetTargetVersion(TRACE_BblHead(trace),
+                         reinterpret_cast<ADDRINT>(blueVersion));
+  }
+
+  if (TRACE_Address(trace) == commonEnter)
+    TRACE_InsertCall(trace, IPOINT_BEFORE, AFUNPTR(Emit), IARG_PTR,
+                     "Enter common", IARG_END);
+
+  // A ret from a trace will clear the versioning
+  if (version != 0) {
+    for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl)) {
+      INS tail = BBL_InsTail(bbl);
+      if (INS_Valid(tail) && INS_IsRet(tail)) {
+        BBL_SetTargetVersion(bbl, 0);
+      }
+    }
+  }
+
+  // print the versioning of the trace at runtime
+  if (version != 0)
+    TRACE_InsertCall(trace, IPOINT_BEFORE, AFUNPTR(Emit), IARG_PTR, version,
+                     IARG_END);
 }
 
-VOID Trace(TRACE trace, VOID *v)
-{
-    char * version = reinterpret_cast<char*>(TRACE_Version(trace));
-
-    if (TRACE_Address(trace) == redEnter)
-    {
-        TRACE_InsertCall(trace, IPOINT_BEFORE, AFUNPTR(Emit), IARG_PTR, "Enter red", IARG_END);
-
-        // Targets of this trace will have red instrumentation
-        BBL_SetTargetVersion(TRACE_BblHead(trace), reinterpret_cast<ADDRINT>(redVersion));
-
-        // Setting for the 2nd bbl should override previous values
-        BBL bbl2 = BBL_Next(TRACE_BblHead(trace));
-        ASSERTX(BBL_Valid(bbl2));
-        BBL_SetTargetVersion(bbl2, reinterpret_cast<ADDRINT>(red2Version));
-    }
-    
-    if (TRACE_Address(trace) == blueEnter)
-    {
-        TRACE_InsertCall(trace, IPOINT_BEFORE, AFUNPTR(Emit), IARG_PTR, "Enter blue", IARG_END);
-
-        // Target of this trace will have blue instrumentation
-        BBL_SetTargetVersion(TRACE_BblHead(trace), reinterpret_cast<ADDRINT>(blueVersion));
-    }
-    
-    if (TRACE_Address(trace) == commonEnter)
-        TRACE_InsertCall(trace, IPOINT_BEFORE, AFUNPTR(Emit), IARG_PTR, "Enter common", IARG_END);
-
-    // A ret from a trace will clear the versioning
-    if (version != 0)
-    {
-        for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
-        {
-            INS tail = BBL_InsTail(bbl);
-            if (INS_Valid(tail) && INS_IsRet(tail))
-            {
-                BBL_SetTargetVersion(bbl, 0);
-            }
-        }
-    }
-
-    // print the versioning of the trace at runtime
-    if (version != 0)
-        TRACE_InsertCall(trace, IPOINT_BEFORE, AFUNPTR(Emit), IARG_PTR, version, IARG_END);
-}
-
-VOID Fini(INT32 code, VOID *v)
-{
-    outstream.close();
-}
+VOID Fini(INT32 code, VOID* v) { outstream.close(); }
 
 #if defined(TARGET_MAC)
 const char* red_rtn = "_red";
@@ -126,39 +123,33 @@ const char* common_rtn = "common";
 #endif
 
 // Find the entries points
-VOID ImageLoad(IMG img, VOID *v)
-{
-    RTN redRtn = RTN_FindByName(img, red_rtn);
-    if (RTN_Valid(redRtn))
-        redEnter = RTN_Address(redRtn);
-    
-    RTN blueRtn = RTN_FindByName(img, blue_rtn);
-    if (RTN_Valid(blueRtn))
-        blueEnter = RTN_Address(blueRtn);
-            
-    RTN commonRtn = RTN_FindByName(img, common_rtn);
-    if (RTN_Valid(commonRtn))
-        commonEnter = RTN_Address(commonRtn);
+VOID ImageLoad(IMG img, VOID* v) {
+  RTN redRtn = RTN_FindByName(img, red_rtn);
+  if (RTN_Valid(redRtn)) redEnter = RTN_Address(redRtn);
+
+  RTN blueRtn = RTN_FindByName(img, blue_rtn);
+  if (RTN_Valid(blueRtn)) blueEnter = RTN_Address(blueRtn);
+
+  RTN commonRtn = RTN_FindByName(img, common_rtn);
+  if (RTN_Valid(commonRtn)) commonEnter = RTN_Address(commonRtn);
 }
 
-            
-int main(int argc, char * argv[])
-{
-    PIN_InitSymbolsAlt(EXPORT_SYMBOLS);
+int main(int argc, char* argv[]) {
+  PIN_InitSymbolsAlt(EXPORT_SYMBOLS);
 
-    // Initialize pin
-    PIN_Init(argc, argv);
+  // Initialize pin
+  PIN_Init(argc, argv);
 
-    // Register Instruction to be called to instrument instructions
-    TRACE_AddInstrumentFunction(Trace, 0);
+  // Register Instruction to be called to instrument instructions
+  TRACE_AddInstrumentFunction(Trace, 0);
 
-    // Register Fini to be called when the application exits
-    PIN_AddFiniFunction(Fini, 0);
-    
-    IMG_AddInstrumentFunction(ImageLoad, 0);
+  // Register Fini to be called when the application exits
+  PIN_AddFiniFunction(Fini, 0);
 
-    // Start the program, never returns
-    PIN_StartProgram();
-    
-    return 0;
+  IMG_AddInstrumentFunction(ImageLoad, 0);
+
+  // Start the program, never returns
+  PIN_StartProgram();
+
+  return 0;
 }

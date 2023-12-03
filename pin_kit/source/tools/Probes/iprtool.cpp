@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -34,8 +34,9 @@ END_LEGAL */
 // properly.
 //
 
-#include "pin.H"
 #include <iostream>
+
+#include "pin.H"
 using namespace std;
 
 /* ===================================================================== */
@@ -46,38 +47,29 @@ static void (*pf_iprel_imm)();
 static void (*pf_iprel_reg)(int);
 static int (*pf_reg_iprel)();
 
-
 /* ===================================================================== */
 /* Replacement Functions */
 /* ===================================================================== */
 
-void IprelImmProbe()
-{
-    if (pf_iprel_imm)
-    {
-        (pf_iprel_imm)();
-    }
+void IprelImmProbe() {
+  if (pf_iprel_imm) {
+    (pf_iprel_imm)();
+  }
 }
 
-
-void IprelRegProbe( int b )
-{
-    if (pf_iprel_reg)
-    {
-        (pf_iprel_reg)( b );
-    }
+void IprelRegProbe(int b) {
+  if (pf_iprel_reg) {
+    (pf_iprel_reg)(b);
+  }
 }
 
+int RegIprelProbe() {
+  int a = 0;
 
-int RegIprelProbe()
-{
-    int a=0;
-
-    if (pf_reg_iprel)
-    {
-        a = (pf_reg_iprel)();
-    }
-    return a;
+  if (pf_reg_iprel) {
+    a = (pf_reg_iprel)();
+  }
+  return a;
 }
 
 /* ===================================================================== */
@@ -85,46 +77,41 @@ int RegIprelProbe()
 // Called every time a new image is loaded
 // Look for routines that we want to probe
 
-VOID ImageLoad(IMG img, VOID *v)
-{
-    RTN iprelImmRtn = RTN_FindByName(img, "iprel_imm");
-    if (RTN_Valid(iprelImmRtn))
-    {
-        pf_iprel_imm = (void (*)()) RTN_ReplaceProbed(iprelImmRtn,
-                                                      AFUNPTR(IprelImmProbe));
-        cerr << "Inserted probe for iprel_imm:" << IMG_Name(img) << endl;
-    }
-    
-    RTN iprelRegRtn = RTN_FindByName(img, "iprel_reg");
-    if (RTN_Valid(iprelRegRtn))
-    {
-        pf_iprel_reg = (void (*)(int)) RTN_ReplaceProbed(iprelRegRtn,
-                                                         AFUNPTR(IprelRegProbe));
-        cerr << "Inserted probe for iprel_reg:" << IMG_Name(img) << endl;
-    }
+VOID ImageLoad(IMG img, VOID *v) {
+  RTN iprelImmRtn = RTN_FindByName(img, "iprel_imm");
+  if (RTN_Valid(iprelImmRtn)) {
+    pf_iprel_imm =
+        (void (*)())RTN_ReplaceProbed(iprelImmRtn, AFUNPTR(IprelImmProbe));
+    cerr << "Inserted probe for iprel_imm:" << IMG_Name(img) << endl;
+  }
 
-    RTN regIprelRtn = RTN_FindByName(img, "reg_iprel");
-    if (RTN_Valid(regIprelRtn))
-    {
-        pf_reg_iprel = (int (*)()) RTN_ReplaceProbed(regIprelRtn,
-                                                     AFUNPTR(RegIprelProbe));
-        cerr << "Inserted probe for reg_iprel:" << IMG_Name(img) << endl;
-    }
+  RTN iprelRegRtn = RTN_FindByName(img, "iprel_reg");
+  if (RTN_Valid(iprelRegRtn)) {
+    pf_iprel_reg =
+        (void (*)(int))RTN_ReplaceProbed(iprelRegRtn, AFUNPTR(IprelRegProbe));
+    cerr << "Inserted probe for iprel_reg:" << IMG_Name(img) << endl;
+  }
+
+  RTN regIprelRtn = RTN_FindByName(img, "reg_iprel");
+  if (RTN_Valid(regIprelRtn)) {
+    pf_reg_iprel =
+        (int (*)())RTN_ReplaceProbed(regIprelRtn, AFUNPTR(RegIprelProbe));
+    cerr << "Inserted probe for reg_iprel:" << IMG_Name(img) << endl;
+  }
 }
 
 /* ===================================================================== */
 
-int main(int argc, CHAR *argv[])
-{
-    PIN_InitSymbols();
+int main(int argc, CHAR *argv[]) {
+  PIN_InitSymbols();
 
-    PIN_Init(argc,argv);
+  PIN_Init(argc, argv);
 
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-    
-    PIN_StartProgramProbed();
-    
-    return 0;
+  IMG_AddInstrumentFunction(ImageLoad, 0);
+
+  PIN_StartProgramProbed();
+
+  return 0;
 }
 
 /* ===================================================================== */

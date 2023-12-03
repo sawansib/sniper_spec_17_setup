@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -30,51 +30,47 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 
 /*! @file
- *  Implementation of the threading API in Unix. 
+ *  Implementation of the threading API in Unix.
  */
 
-#include "threadlib.h"
-#include <sched.h>
-#include <sys/types.h>
-#include <signal.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <stdio.h>
 #include <assert.h>
+#include <pthread.h>
+#include <sched.h>
+#include <signal.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-BOOL CreateOneThread(THREAD_HANDLE * pThreadHandle, THREAD_RTN_PTR threadRtn, void * arg)
-{
-    pthread_t pthreadId;
-    int rval;
+#include "threadlib.h"
 
-    rval = pthread_create(&pthreadId, 0, threadRtn, arg);
-    if (rval != 0) {
-        perror("thread");
-        fprintf(stdout, "pthread_create() failed with code: %d\n", rval);
-        fflush(stdout);
-        return FALSE;
-    }
+BOOL CreateOneThread(THREAD_HANDLE* pThreadHandle, THREAD_RTN_PTR threadRtn,
+                     void* arg) {
+  pthread_t pthreadId;
+  int rval;
 
-    *pThreadHandle = (THREAD_HANDLE)pthreadId;
-    return TRUE;
+  rval = pthread_create(&pthreadId, 0, threadRtn, arg);
+  if (rval != 0) {
+    perror("thread");
+    fprintf(stdout, "pthread_create() failed with code: %d\n", rval);
+    fflush(stdout);
+    return FALSE;
+  }
+
+  *pThreadHandle = (THREAD_HANDLE)pthreadId;
+  return TRUE;
 }
 
-BOOL JoinOneThread(THREAD_HANDLE threadHandle)
-{
-    pthread_t pthreadId = (pthread_t)threadHandle;
-    pthread_join(pthreadId, 0);
-    return TRUE;
+BOOL JoinOneThread(THREAD_HANDLE threadHandle) {
+  pthread_t pthreadId = (pthread_t)threadHandle;
+  pthread_join(pthreadId, 0);
+  return TRUE;
 }
 
-void ExitCurrentThread()
-{
-    pthread_exit(0);
-}
+void ExitCurrentThread() { pthread_exit(0); }
 
-void DelayCurrentThread(unsigned int millisec)
-{
+void DelayCurrentThread(unsigned int millisec) {
 #if defined(TARGET_LINUX)
-    sched_yield();
+  sched_yield();
 #endif
-    usleep(millisec*1000);
+  usleep(millisec * 1000);
 }

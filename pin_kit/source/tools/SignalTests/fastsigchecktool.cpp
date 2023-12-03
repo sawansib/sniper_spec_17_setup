@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -42,25 +42,21 @@ END_LEGAL */
 
 #include <pin.H>
 
-void OutOfLine()
-{
-    static volatile int Var = 0;
+void OutOfLine() {
+  static volatile int Var = 0;
 
-    for (int i = 0;  i < 10;  i++)
-        Var++;
+  for (int i = 0; i < 10; i++) Var++;
 }
 
-void InstrumentTrace(TRACE trace, VOID *)
-{
-    for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
-        BBL_InsertCall(bbl, IPOINT_BEFORE, AFUNPTR(OutOfLine), IARG_END);
+void InstrumentTrace(TRACE trace, VOID *) {
+  for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
+    BBL_InsertCall(bbl, IPOINT_BEFORE, AFUNPTR(OutOfLine), IARG_END);
 }
 
-int main(int argc, char * argv[])
-{
-    PIN_Init(argc, argv);
+int main(int argc, char *argv[]) {
+  PIN_Init(argc, argv);
 
-    TRACE_AddInstrumentFunction(InstrumentTrace, 0);
-    PIN_StartProgram();
-    return 0;
+  TRACE_AddInstrumentFunction(InstrumentTrace, 0);
+  PIN_StartProgram();
+  return 0;
 }

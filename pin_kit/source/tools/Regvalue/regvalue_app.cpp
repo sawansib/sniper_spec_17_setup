@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -31,11 +31,10 @@ END_LEGAL */
 #include "regvalues.h"
 
 #ifdef TARGET_WINDOWS
-#define EXPORT_SYM __declspec( dllexport )
+#define EXPORT_SYM __declspec(dllexport)
 #else
 #define EXPORT_SYM
 #endif
-
 
 /////////////////////
 // EXTERNAL FUNCTIONS
@@ -49,38 +48,36 @@ END_LEGAL */
 // Finally, the original register values are restored.
 extern "C" void ChangeRegsWrapper() ASMNAME("ChangeRegsWrapper");
 
-
 /////////////////////
 // UTILITY FUNCTIONS
 /////////////////////
 
-// The SaveAppPointers() function is an empty function which is used by the tool to save pointers
-// to the application's modified register values.
-// These values will be set in the SaveRegsToMem() function (see the changeRegs_<arch> assembly file).
+// The SaveAppPointers() function is an empty function which is used by the tool
+// to save pointers to the application's modified register values. These values
+// will be set in the SaveRegsToMem() function (see the changeRegs_<arch>
+// assembly file).
 #ifdef TARGET_MIC
-extern "C" EXPORT_SYM void SaveAppPointers(unsigned char* agprval, unsigned char* astval,
-                                           unsigned char* azmmval, unsigned char* akval)
-{
-}
+extern "C" EXPORT_SYM void SaveAppPointers(unsigned char* agprval,
+                                           unsigned char* astval,
+                                           unsigned char* azmmval,
+                                           unsigned char* akval) {}
 #else
-extern "C" EXPORT_SYM void SaveAppPointers(unsigned char* agprval, unsigned char* astval,
-                                           unsigned char* axmmval, unsigned char* aymmval)
-{
-}
+extern "C" EXPORT_SYM void SaveAppPointers(unsigned char* agprval,
+                                           unsigned char* astval,
+                                           unsigned char* axmmval,
+                                           unsigned char* aymmval) {}
 #endif
-
 
 /////////////////////
 // MAIN FUNCTION
 /////////////////////
 
-int main()
-{
+int main() {
 #ifdef TARGET_MIC
-    SaveAppPointers(agprval, astval, azmmval, akval);
+  SaveAppPointers(agprval, astval, azmmval, akval);
 #else
-    SaveAppPointers(agprval, astval, axmmval, aymmval);
+  SaveAppPointers(agprval, astval, axmmval, aymmval);
 #endif
-    ChangeRegsWrapper();
-    return 0;
+  ChangeRegsWrapper();
+  return 0;
 }

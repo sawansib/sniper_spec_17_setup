@@ -1,17 +1,16 @@
 #ifndef __GLOBALS_H
 #define __GLOBALS_H
 
-#include "sift_format.h"
-
 #include "pin.H"
+#include "sift_format.h"
 #ifdef PINPLAY_SUPPORTED
-# include "pinplay.H"
+#include "pinplay.H"
 #endif
 
-#include <unordered_map>
 #include <deque>
+#include <unordered_map>
 
-//#define DEBUG_OUTPUT 1
+// #define DEBUG_OUTPUT 1
 #define DEBUG_OUTPUT 0
 
 #define LINE_SIZE_BYTES 64
@@ -26,7 +25,7 @@ extern KNOB<UINT64> KnobFastForwardTarget;
 extern KNOB<UINT64> KnobDetailedTarget;
 extern KNOB<UINT64> KnobUseResponseFiles;
 extern KNOB<UINT64> KnobEmulateSyscalls;
-extern KNOB<BOOL>   KnobSendPhysicalAddresses;
+extern KNOB<BOOL> KnobSendPhysicalAddresses;
 extern KNOB<UINT64> KnobFlowControl;
 extern KNOB<UINT64> KnobFlowControlFF;
 extern KNOB<INT64> KnobSiftAppId;
@@ -36,10 +35,10 @@ extern KNOB<BOOL> KnobDebug;
 extern KNOB<BOOL> KnobVerbose;
 extern KNOB<UINT64> KnobStopAddress;
 
-# define KNOB_REPLAY_NAME "replay"
-# define KNOB_FAMILY "pintool:sift-recorder"
+#define KNOB_REPLAY_NAME "replay"
+#define KNOB_FAMILY "pintool:sift-recorder"
 extern KNOB_COMMENT pinplay_driver_knob_family;
-extern KNOB<BOOL>KnobReplayer;
+extern KNOB<BOOL> KnobReplayer;
 #ifdef PINPLAY_SUPPORTED
 extern PINPLAY_ENGINE pinplay_engine;
 #endif /* PINPLAY_SUPPORTED */
@@ -60,9 +59,9 @@ extern const bool verbose;
 extern std::unordered_map<ADDRINT, bool> routines;
 
 #if defined(TARGET_IA32)
-   typedef uint32_t syscall_args_t[6];
+typedef uint32_t syscall_args_t[6];
 #elif defined(TARGET_INTEL64)
-   typedef uint64_t syscall_args_t[6];
+typedef uint64_t syscall_args_t[6];
 #endif
 
-#endif // __GLOBALS_H
+#endif  // __GLOBALS_H

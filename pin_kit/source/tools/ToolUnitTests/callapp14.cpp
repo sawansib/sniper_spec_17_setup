@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -31,7 +31,7 @@ END_LEGAL */
 
 /* ===================================================================== */
 /*! @file
-  Replace an original function with a custom function defined in the tool. 
+  Replace an original function with a custom function defined in the tool.
   Call the original function from the replacement function using
   PIN_CallApplicationFunction
   Verify that the original function and functions it calls are instrumented
@@ -39,9 +39,11 @@ END_LEGAL */
 */
 
 /* ===================================================================== */
-#include "pin.H"
-#include <iostream>
 #include <stdlib.h>
+
+#include <iostream>
+
+#include "pin.H"
 using namespace std;
 
 ADDRINT functionCalledByFunctionToBeReplacedAddr = 0;
@@ -53,143 +55,121 @@ BOOL functionToBeReplacedInstrumentationCalled = FALSE;
 BOOL functionCalledByFunctionToBeReplacedInstrumented = FALSE;
 BOOL functionCalledByFunctionToBeReplacedInstrumentationCalled = FALSE;
 
-
-
 /* ===================================================================== */
 
-int MyReplacementFunction( CONTEXT * ctxt,  AFUNPTR origPtr, int one, int two )
-{
-    cout << " MyReplacementFunction: PIN_CallApplicationFunction Replaced Function at address " << hexstr(ADDRINT(origPtr)) << endl;
-    
-    int res;
-    
-    replacementFunctionCalled = TRUE;
-    PIN_CallApplicationFunction( ctxt, PIN_ThreadId(),
-                                 CALLINGSTD_DEFAULT, origPtr,
-                                 PIN_PARG(int), &res,
-                                 PIN_PARG(int), one,
-                                 PIN_PARG(int), two,
-                                 PIN_PARG_END() );
-    
-    cout << " MyReplacementFunction: Returned from Replaced Function res = " << res << endl;
+int MyReplacementFunction(CONTEXT *ctxt, AFUNPTR origPtr, int one, int two) {
+  cout << " MyReplacementFunction: PIN_CallApplicationFunction Replaced "
+          "Function at address "
+       << hexstr(ADDRINT(origPtr)) << endl;
 
-    return res;
-}
+  int res;
 
+  replacementFunctionCalled = TRUE;
+  PIN_CallApplicationFunction(ctxt, PIN_ThreadId(), CALLINGSTD_DEFAULT, origPtr,
+                              PIN_PARG(int), &res, PIN_PARG(int), one,
+                              PIN_PARG(int), two, PIN_PARG_END());
 
-/* ===================================================================== */
-VOID ImageLoad(IMG img, VOID *v)
-{
-    PROTO proto = PROTO_Allocate( PIN_PARG(int), CALLINGSTD_DEFAULT,
-                                      "FunctionToBeReplaced", PIN_PARG(int), PIN_PARG(int),
-                                      PIN_PARG_END() );
-    
-    RTN rtn = RTN_FindByName(img, "FunctionToBeReplaced");
-    if (RTN_Valid(rtn))
-    {
-        cout << " RTN_ReplaceSignature " << RTN_Name(rtn) << " in " << IMG_Name(img) << " at address "
-             << hexstr(RTN_Address(rtn)) << " with MyReplacementFunction" << endl;
+  cout << " MyReplacementFunction: Returned from Replaced Function res = "
+       << res << endl;
 
-        functionToBeReplacedAddr = RTN_Address(rtn);
-        
-        RTN_ReplaceSignature(
-                rtn, AFUNPTR(MyReplacementFunction),
-                IARG_PROTOTYPE, proto,
-                IARG_CONTEXT,
-                IARG_ORIG_FUNCPTR,
-                IARG_UINT32, 1,
-                IARG_UINT32, 2,
-                IARG_END);
-
-
-        RTN rtn2 = RTN_FindByName(img, "FunctionCalledByFunctionToBeReplaced");
-        if (RTN_Valid(rtn2))
-        {
-            functionCalledByFunctionToBeReplacedAddr = RTN_Address(rtn2);
-        }
-
-        replacementDone = TRUE;
-    }    
-    PROTO_Free( proto );
-}
-
-
-VOID FunctionToBeReplacedAnalysisFunc()
-{
-    functionToBeReplacedInstrumentationCalled = TRUE;
-}
-
-
-VOID FunctionCalledByFunctionToBeReplacedAnalysisFunc()
-{
-    functionCalledByFunctionToBeReplacedInstrumentationCalled = TRUE;
-}
-
-VOID Instruction(INS ins, VOID *v)
-{
-    if (INS_Address(ins) == functionToBeReplacedAddr)
-    {
-        functionToBeReplacedInstrumented = TRUE;
-        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)FunctionToBeReplacedAnalysisFunc, IARG_END);
-    }
-    else if (INS_Address(ins) == functionCalledByFunctionToBeReplacedAddr)
-    {
-        functionCalledByFunctionToBeReplacedInstrumented = TRUE;
-        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)FunctionCalledByFunctionToBeReplacedAnalysisFunc, IARG_END);
-    }
-}
-
-VOID Fini(INT32 code, VOID *v)
-{
-    BOOL hadError = FALSE;
-    if (!replacementDone)
-    {
-        cout << "***Error !replacementDone" << endl;
-        hadError = TRUE;
-    }
-    if (!functionToBeReplacedInstrumented)
-    {
-        cout << "***Error !functionToBeReplacedInstrumented" << endl;
-        hadError = TRUE;
-    }
-    if (!functionCalledByFunctionToBeReplacedInstrumented)
-    {
-        cout << "***Error !functionCalledByFunctionToBeReplacedInstrumented" << endl;
-        hadError = TRUE;
-    }
-    if (!functionToBeReplacedInstrumentationCalled)
-    {
-        cout << "***Error !functionToBeReplacedInstrumentationCalled" << endl;
-        hadError = TRUE;
-    }
-    if (!functionCalledByFunctionToBeReplacedInstrumentationCalled)
-    {
-        cout << "***Error !functionCalledByFunctionToBeReplacedInstrumentationCalled" << endl;
-        hadError = TRUE;
-    }
-    if (hadError)
-    {
-        cout << "***Error hadError" << endl;
-        exit (-1);
-    }
+  return res;
 }
 
 /* ===================================================================== */
-int main(INT32 argc, CHAR *argv[])
-{
-    PIN_InitSymbols();
+VOID ImageLoad(IMG img, VOID *v) {
+  PROTO proto =
+      PROTO_Allocate(PIN_PARG(int), CALLINGSTD_DEFAULT, "FunctionToBeReplaced",
+                     PIN_PARG(int), PIN_PARG(int), PIN_PARG_END());
 
-    PIN_Init(argc, argv);
+  RTN rtn = RTN_FindByName(img, "FunctionToBeReplaced");
+  if (RTN_Valid(rtn)) {
+    cout << " RTN_ReplaceSignature " << RTN_Name(rtn) << " in " << IMG_Name(img)
+         << " at address " << hexstr(RTN_Address(rtn))
+         << " with MyReplacementFunction" << endl;
 
-    IMG_AddInstrumentFunction(ImageLoad, 0);
+    functionToBeReplacedAddr = RTN_Address(rtn);
 
-    INS_AddInstrumentFunction(Instruction, 0);
+    RTN_ReplaceSignature(rtn, AFUNPTR(MyReplacementFunction), IARG_PROTOTYPE,
+                         proto, IARG_CONTEXT, IARG_ORIG_FUNCPTR, IARG_UINT32, 1,
+                         IARG_UINT32, 2, IARG_END);
 
-    PIN_AddFiniFunction(Fini, 0);
-    
-    PIN_StartProgram();
+    RTN rtn2 = RTN_FindByName(img, "FunctionCalledByFunctionToBeReplaced");
+    if (RTN_Valid(rtn2)) {
+      functionCalledByFunctionToBeReplacedAddr = RTN_Address(rtn2);
+    }
 
-    return 0;
+    replacementDone = TRUE;
+  }
+  PROTO_Free(proto);
+}
+
+VOID FunctionToBeReplacedAnalysisFunc() {
+  functionToBeReplacedInstrumentationCalled = TRUE;
+}
+
+VOID FunctionCalledByFunctionToBeReplacedAnalysisFunc() {
+  functionCalledByFunctionToBeReplacedInstrumentationCalled = TRUE;
+}
+
+VOID Instruction(INS ins, VOID *v) {
+  if (INS_Address(ins) == functionToBeReplacedAddr) {
+    functionToBeReplacedInstrumented = TRUE;
+    INS_InsertCall(ins, IPOINT_BEFORE,
+                   (AFUNPTR)FunctionToBeReplacedAnalysisFunc, IARG_END);
+  } else if (INS_Address(ins) == functionCalledByFunctionToBeReplacedAddr) {
+    functionCalledByFunctionToBeReplacedInstrumented = TRUE;
+    INS_InsertCall(ins, IPOINT_BEFORE,
+                   (AFUNPTR)FunctionCalledByFunctionToBeReplacedAnalysisFunc,
+                   IARG_END);
+  }
+}
+
+VOID Fini(INT32 code, VOID *v) {
+  BOOL hadError = FALSE;
+  if (!replacementDone) {
+    cout << "***Error !replacementDone" << endl;
+    hadError = TRUE;
+  }
+  if (!functionToBeReplacedInstrumented) {
+    cout << "***Error !functionToBeReplacedInstrumented" << endl;
+    hadError = TRUE;
+  }
+  if (!functionCalledByFunctionToBeReplacedInstrumented) {
+    cout << "***Error !functionCalledByFunctionToBeReplacedInstrumented"
+         << endl;
+    hadError = TRUE;
+  }
+  if (!functionToBeReplacedInstrumentationCalled) {
+    cout << "***Error !functionToBeReplacedInstrumentationCalled" << endl;
+    hadError = TRUE;
+  }
+  if (!functionCalledByFunctionToBeReplacedInstrumentationCalled) {
+    cout
+        << "***Error !functionCalledByFunctionToBeReplacedInstrumentationCalled"
+        << endl;
+    hadError = TRUE;
+  }
+  if (hadError) {
+    cout << "***Error hadError" << endl;
+    exit(-1);
+  }
+}
+
+/* ===================================================================== */
+int main(INT32 argc, CHAR *argv[]) {
+  PIN_InitSymbols();
+
+  PIN_Init(argc, argv);
+
+  IMG_AddInstrumentFunction(ImageLoad, 0);
+
+  INS_AddInstrumentFunction(Instruction, 0);
+
+  PIN_AddFiniFunction(Fini, 0);
+
+  PIN_StartProgram();
+
+  return 0;
 }
 
 /* ===================================================================== */

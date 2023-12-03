@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -28,69 +28,58 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
-#include <signal.h>
 #include <assert.h>
+#include <signal.h>
 #include <stdio.h>
+
 #include "pin.H"
 
 FILE *trace = NULL;
 
-ADDRINT ProcessAddress(ADDRINT val, VOID *ip)
-{
-    fprintf(trace, "%p: %p\n", ip, (void*)val);
-    return val;
+ADDRINT ProcessAddress(ADDRINT val, VOID *ip) {
+  fprintf(trace, "%p: %p\n", ip, (void *)val);
+  return val;
 }
 
-VOID RewriteIns(INS ins)
-{
-    //fprintf(stderr,"Rewriting %p\n",(void*)INS_Address(ins));
-    
-    for (UINT32 memopIdx=0; memopIdx < INS_MemoryOperandCount(ins); memopIdx++)
-    {
-        REG scratchReg = REG(int(REG_INST_G0)+memopIdx);
+VOID RewriteIns(INS ins) {
+  // fprintf(stderr,"Rewriting %p\n",(void*)INS_Address(ins));
 
-        INS_InsertCall(ins, IPOINT_BEFORE,
-                       AFUNPTR(ProcessAddress),
-                       IARG_MEMORYOP_EA, memopIdx,
-                       IARG_INST_PTR,
-                       IARG_RETURN_REGS, scratchReg, IARG_END);
-        INS_RewriteMemoryOperand(ins, memopIdx, scratchReg); 
+  for (UINT32 memopIdx = 0; memopIdx < INS_MemoryOperandCount(ins);
+       memopIdx++) {
+    REG scratchReg = REG(int(REG_INST_G0) + memopIdx);
+
+    INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(ProcessAddress),
+                   IARG_MEMORYOP_EA, memopIdx, IARG_INST_PTR, IARG_RETURN_REGS,
+                   scratchReg, IARG_END);
+    INS_RewriteMemoryOperand(ins, memopIdx, scratchReg);
+  }
+}
+
+VOID Trace(TRACE trace, VOID *v) {
+  for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl)) {
+    for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins)) {
+      RewriteIns(ins);
     }
+  }
 }
 
-VOID Trace(TRACE trace, VOID *v)
-{
-    for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
-    {
-        for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins))
-        {
-            RewriteIns(ins);
-        }
-    }
-}
+void AtEnd(INT32 code, VOID *arg) { fclose(trace); }
 
-void AtEnd(INT32 code, VOID *arg)
-{
-    fclose(trace);
-}
+int main(int argc, char *argv[]) {
+  PIN_InitSymbols();
+  PIN_Init(argc, argv);
 
-int main(int argc, char * argv[])
-{
-    PIN_InitSymbols();
-    PIN_Init(argc, argv);
+  trace = fopen("rewritememtrace.out", "w");
+  if (!trace) {
+    perror("fopen");
+    return 1;
+  }
 
-    trace = fopen("rewritememtrace.out", "w");
-    if (!trace)
-    {
-        perror("fopen");
-        return 1;
-    }
+  TRACE_AddInstrumentFunction(Trace, 0);
+  PIN_AddFiniFunction(AtEnd, 0);
 
-    TRACE_AddInstrumentFunction(Trace, 0);
-    PIN_AddFiniFunction(AtEnd, 0);
+  // Never returns
+  PIN_StartProgram();
 
-    // Never returns
-    PIN_StartProgram();
-    
-    return 0;
+  return 0;
 }

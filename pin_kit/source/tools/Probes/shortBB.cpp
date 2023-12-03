@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -34,60 +34,52 @@ END_LEGAL */
 // Check proper translation of the copied original bytes
 //
 
+#include <iostream>
 
 #include "pin.H"
-#include <iostream>
 
 using namespace std;
 
 //--------------------------------------------------------------------------------------------------
-typedef  int (__fastcall *fooType)( int val );
-int FooProbe(fooType fooWithoutReplacement, int val)
-{
-    return fooWithoutReplacement(val);
+typedef int(__fastcall *fooType)(int val);
+int FooProbe(fooType fooWithoutReplacement, int val) {
+  return fooWithoutReplacement(val);
 }
 
 /* ===================================================================== */
 // Called every time a new image is loaded
 // Look for routines that we want to probe
 
-VOID ImageLoad(IMG img, VOID *v)
-{
-    RTN fooRtn = RTN_FindByName(img, "foo");
-    if (!RTN_Valid(fooRtn))
-    {
-        fooRtn = RTN_FindByName(img, "@foo@4");
-    }
+VOID ImageLoad(IMG img, VOID *v) {
+  RTN fooRtn = RTN_FindByName(img, "foo");
+  if (!RTN_Valid(fooRtn)) {
+    fooRtn = RTN_FindByName(img, "@foo@4");
+  }
 
-    if (RTN_Valid(fooRtn) && RTN_IsSafeForProbedReplacement(fooRtn))
-    {
-        PROTO s_protoFoo = PROTO_Allocate( PIN_PARG(int), CALLINGSTD_REGPARMS,
-             "foo", PIN_PARG(int), PIN_PARG_END() );
-        AFUNPTR fff = RTN_ReplaceSignatureProbed(fooRtn, AFUNPTR(FooProbe),
-                                    IARG_PROTOTYPE, s_protoFoo,
-                                     IARG_ORIG_FUNCPTR,
-                                     IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
-                                     IARG_END);
-		PROTO_Free(s_protoFoo);
-    }
+  if (RTN_Valid(fooRtn) && RTN_IsSafeForProbedReplacement(fooRtn)) {
+    PROTO s_protoFoo = PROTO_Allocate(PIN_PARG(int), CALLINGSTD_REGPARMS, "foo",
+                                      PIN_PARG(int), PIN_PARG_END());
+    AFUNPTR fff = RTN_ReplaceSignatureProbed(
+        fooRtn, AFUNPTR(FooProbe), IARG_PROTOTYPE, s_protoFoo,
+        IARG_ORIG_FUNCPTR, IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_END);
+    PROTO_Free(s_protoFoo);
+  }
 }
 
 /* ===================================================================== */
 
-int main(int argc, CHAR *argv[])
-{
-    PIN_InitSymbols();
+int main(int argc, CHAR *argv[]) {
+  PIN_InitSymbols();
 
-    if( PIN_Init(argc,argv) )
-    {
-        return -1;
-    }
+  if (PIN_Init(argc, argv)) {
+    return -1;
+  }
 
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-    
-    PIN_StartProgramProbed();
-    
-    return 0;
+  IMG_AddInstrumentFunction(ImageLoad, 0);
+
+  PIN_StartProgramProbed();
+
+  return 0;
 }
 
 /* ===================================================================== */

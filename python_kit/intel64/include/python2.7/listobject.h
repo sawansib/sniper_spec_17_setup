@@ -20,28 +20,28 @@ extern "C" {
 #endif
 
 typedef struct {
-    PyObject_VAR_HEAD
-    /* Vector of pointers to list elements.  list[0] is ob_item[0], etc. */
-    PyObject **ob_item;
+  PyObject_VAR_HEAD
+      /* Vector of pointers to list elements.  list[0] is ob_item[0], etc. */
+      PyObject **ob_item;
 
-    /* ob_item contains space for 'allocated' elements.  The number
-     * currently in use is ob_size.
-     * Invariants:
-     *     0 <= ob_size <= allocated
-     *     len(list) == ob_size
-     *     ob_item == NULL implies ob_size == allocated == 0
-     * list.sort() temporarily sets allocated to -1 to detect mutations.
-     *
-     * Items must normally not be NULL, except during construction when
-     * the list is not yet visible outside the function that builds it.
-     */
-    Py_ssize_t allocated;
+  /* ob_item contains space for 'allocated' elements.  The number
+   * currently in use is ob_size.
+   * Invariants:
+   *     0 <= ob_size <= allocated
+   *     len(list) == ob_size
+   *     ob_item == NULL implies ob_size == allocated == 0
+   * list.sort() temporarily sets allocated to -1 to detect mutations.
+   *
+   * Items must normally not be NULL, except during construction when
+   * the list is not yet visible outside the function that builds it.
+   */
+  Py_ssize_t allocated;
 } PyListObject;
 
 PyAPI_DATA(PyTypeObject) PyList_Type;
 
 #define PyList_Check(op) \
-		PyType_FastSubclass(Py_TYPE(op), Py_TPFLAGS_LIST_SUBCLASS)
+  PyType_FastSubclass(Py_TYPE(op), Py_TPFLAGS_LIST_SUBCLASS)
 #define PyList_CheckExact(op) (Py_TYPE(op) == &PyList_Type)
 
 PyAPI_FUNC(PyObject *) PyList_New(Py_ssize_t size);
@@ -60,7 +60,7 @@ PyAPI_FUNC(PyObject *) _PyList_Extend(PyListObject *, PyObject *);
 /* Macro, trading safety for speed */
 #define PyList_GET_ITEM(op, i) (((PyListObject *)(op))->ob_item[i])
 #define PyList_SET_ITEM(op, i, v) (((PyListObject *)(op))->ob_item[i] = (v))
-#define PyList_GET_SIZE(op)    Py_SIZE(op)
+#define PyList_GET_SIZE(op) Py_SIZE(op)
 
 #ifdef __cplusplus
 }

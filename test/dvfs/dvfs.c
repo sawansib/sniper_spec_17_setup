@@ -8,41 +8,39 @@
 int value;
 
 int loop() {
-
-	int i;
-	for (i = 0 ; i < 10000; i++) {
-		value += i;
-	}
-	return value;
+  int i;
+  for (i = 0; i < 10000; i++) {
+    value += i;
+  }
+  return value;
 }
 
 int main() {
+  SimRoiStart();
 
-	SimRoiStart();
+  value = 0;
+  loop();
 
-	value = 0;
-	loop();
+  unsigned long freq = SimGetOwnFreqMHz();
+  printf("Current Freq = %lu MHz\n", freq);
 
-	unsigned long freq = SimGetOwnFreqMHz();
-	printf("Current Freq = %lu MHz\n", freq);
+  freq = 5000;
+  printf("Setting frequency to %lu MHz\n", freq);
+  SimSetOwnFreqMHz(freq);
+  freq = SimGetOwnFreqMHz();
+  printf("Current Freq = %lu MHz\n", freq);
 
-	freq = 5000;
-	printf("Setting frequency to %lu MHz\n", freq);
-	SimSetOwnFreqMHz(freq);
-	freq = SimGetOwnFreqMHz();
-	printf("Current Freq = %lu MHz\n", freq);
+  value = 0;
+  loop();
 
-	value = 0;
-	loop();
+  freq = 1000;
+  printf("Setting frequency to %lu MHz\n", freq);
+  SimSetFreqMHz(1, freq);
+  freq = SimGetFreqMHz(1);
+  printf("Current Freq = %lu MHz\n", freq);
 
-	freq = 1000;
-	printf("Setting frequency to %lu MHz\n", freq);
-	SimSetFreqMHz(1, freq);
-	freq = SimGetFreqMHz(1);
-	printf("Current Freq = %lu MHz\n", freq);
+  value = 0;
+  loop();
 
-	value = 0;
-	loop();
-
-	SimRoiEnd();
+  SimRoiEnd();
 }

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,31 +29,28 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 /*
- * A trivial application that does nothing, but contains function that loops forever
- * which is invoked by Pin's aplication thread creation routine.
+ * A trivial application that does nothing, but contains function that loops
+ * forever which is invoked by Pin's aplication thread creation routine.
  */
 
+#include <sched.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sched.h>
 
-void doNothing()
-{
-    volatile int loopCount;
+void doNothing() {
+  volatile int loopCount;
 
-    for (;;)
-    {
-        sched_yield();
-        loopCount++;
-    }
+  for (;;) {
+    sched_yield();
+    loopCount++;
+  }
 }
 
 void (*funcPtr)();
 
-int main(int argc, char ** argv)
-{
-    // Ensure that the compiler thinks there is a reference to doNothing.
-    funcPtr = doNothing;
-    sleep(10);
-    exit(0);
+int main(int argc, char** argv) {
+  // Ensure that the compiler thinks there is a reference to doNothing.
+  funcPtr = doNothing;
+  sleep(10);
+  exit(0);
 }

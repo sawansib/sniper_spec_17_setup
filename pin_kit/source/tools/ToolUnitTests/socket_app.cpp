@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -28,9 +28,9 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
-#include <winsock2.h> 
-#include <windows.h> 
-#include <stdio.h> 
+#include <stdio.h>
+#include <windows.h>
+#include <winsock2.h>
 
 //=======================================================================
 // This is the application for testing the funreplace_alert tool.
@@ -38,50 +38,48 @@ END_LEGAL */
 // replaced by the tool.
 //=======================================================================
 
-static void init_server( void )
-{
-    struct WSAData wsaData;
-    SOCKET socketFd;
-    char yes;
-    struct sockaddr_in localAddr;
+static void init_server(void) {
+  struct WSAData wsaData;
+  SOCKET socketFd;
+  char yes;
+  struct sockaddr_in localAddr;
 
-    // Initialize winsock2:
-    WSAStartup( MAKEWORD(2, 0), &wsaData );
+  // Initialize winsock2:
+  WSAStartup(MAKEWORD(2, 0), &wsaData);
 
-    // socket:
-    socketFd = socket( AF_INET, SOCK_STREAM, 0 );
-    yes = 1;
-    setsockopt( socketFd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int) );
+  // socket:
+  socketFd = socket(AF_INET, SOCK_STREAM, 0);
+  yes = 1;
+  setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
 
-    // bind:
-    localAddr.sin_family = AF_INET;
-    localAddr.sin_port = 0;
-    localAddr.sin_addr.s_addr = htonl( INADDR_ANY ); // use my local IP address
-    memset( &(localAddr.sin_zero), '\0', 8 );
-    bind( socketFd, (struct sockaddr*)&localAddr, sizeof(struct sockaddr) );
+  // bind:
+  localAddr.sin_family = AF_INET;
+  localAddr.sin_port = 0;
+  localAddr.sin_addr.s_addr = htonl(INADDR_ANY);  // use my local IP address
+  memset(&(localAddr.sin_zero), '\0', 8);
+  bind(socketFd, (struct sockaddr*)&localAddr, sizeof(struct sockaddr));
 
-    // listen:            
-    printf( "--> mpi::init_server, before listen() ...\n" ); fflush( stdout );
+  // listen:
+  printf("--> mpi::init_server, before listen() ...\n");
+  fflush(stdout);
 
-    //listen() internally throws exception on ia32. Exceptions are not supported
-    //in replacement functions, so we comment it this call to listen().
-    //listen( socketFd, 3 );
+  // listen() internally throws exception on ia32. Exceptions are not supported
+  // in replacement functions, so we comment it this call to listen().
+  // listen( socketFd, 3 );
 
-    printf( "--> mpi::init_server, after listen() ...\n" ); fflush( stdout );
+  printf("--> mpi::init_server, after listen() ...\n");
+  fflush(stdout);
 }
 
 //=======================================================================
 
-extern "C" __declspec(dllexport) 
-void my_mpi_init( void )
-{
-    printf( "--> mpi::mpi_init\n" ); fflush( stdout );
-    init_server();
+extern "C" __declspec(dllexport) void my_mpi_init(void) {
+  printf("--> mpi::mpi_init\n");
+  fflush(stdout);
+  init_server();
 }
 
-int main()
-{
-    my_mpi_init();
-    return 0;
+int main() {
+  my_mpi_init();
+  return 0;
 }
-

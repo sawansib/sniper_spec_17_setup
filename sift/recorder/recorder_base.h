@@ -3,4 +3,4 @@
 
 void initRecorderBase();
 
-#endif // __RECORDER_BASE_H
+#endif  // __RECORDER_BASE_H

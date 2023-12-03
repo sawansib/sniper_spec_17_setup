@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -39,8 +39,8 @@ END_LEGAL */
  * value even for buggy kernels.
  */
 
-#include <stdio.h>
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #ifdef TARGET_ANDROID
 #include "android_ucontext.h"
@@ -51,119 +51,113 @@ END_LEGAL */
 extern void DoMath();
 static void Handle(int, siginfo_t *, void *);
 
+int main() {
+  struct sigaction act;
+  act.sa_sigaction = Handle;
+  act.sa_flags = SA_SIGINFO;
+  sigemptyset(&act.sa_mask);
+  sigaction(SIGSEGV, &act, 0);
+  sigaction(SIGBUS, &act, 0);
 
-int main()
-{
-    struct sigaction act;
-    act.sa_sigaction = Handle;
-    act.sa_flags = SA_SIGINFO;
-    sigemptyset(&act.sa_mask);
-    sigaction(SIGSEGV, &act, 0);
-    sigaction(SIGBUS, &act, 0);
+  /*
+   * Do some FP math, then raise a SEGV.  The SEGV handler below verifies
+   * that the saved FP state has the expected values.
+   */
+  DoMath();
+  /* does not return */
 
-    /*
-     * Do some FP math, then raise a SEGV.  The SEGV handler below verifies
-     * that the saved FP state has the expected values.
-     */
-    DoMath();
-    /* does not return */
-
-    return 0;
+  return 0;
 }
 
 #if !defined(TARGET_MAC)
-static void Handle(int sig, siginfo_t *info, void *vctxt)
-{
-    ucontext_t *ctxt = vctxt;
+static void Handle(int sig, siginfo_t *info, void *vctxt) {
+  ucontext_t *ctxt = vctxt;
 
-    /*
-     * There should be two values on the FP stack, at physical FP registers R6 and R7.
-     * The value at R7 should be 0.0 (zero tag) and the value at R6 should 1.0 (valid tag).
-     */
-    if ((ctxt->uc_mcontext.fpregs->tag & 0xffff) != 0x4fff)
-    {
-        printf("FP tags wrong, expected 0x4fff, but got 0x%lx\n",
-            (unsigned long)(ctxt->uc_mcontext.fpregs->tag & 0xffff));
-        exit(1);
-    }
+  /*
+   * There should be two values on the FP stack, at physical FP registers R6 and
+   * R7. The value at R7 should be 0.0 (zero tag) and the value at R6 should 1.0
+   * (valid tag).
+   */
+  if ((ctxt->uc_mcontext.fpregs->tag & 0xffff) != 0x4fff) {
+    printf("FP tags wrong, expected 0x4fff, but got 0x%lx\n",
+           (unsigned long)(ctxt->uc_mcontext.fpregs->tag & 0xffff));
+    exit(1);
+  }
 
-    /*
-     * The top of the FP stack should be "1.0".
-     */
-    if ((ctxt->uc_mcontext.fpregs->_st[0].significand[0] != 0) ||
-        (ctxt->uc_mcontext.fpregs->_st[0].significand[1] != 0) ||
-        (ctxt->uc_mcontext.fpregs->_st[0].significand[2] != 0) ||
-        (ctxt->uc_mcontext.fpregs->_st[0].significand[3] != 0x8000) ||
-        (ctxt->uc_mcontext.fpregs->_st[0].exponent != 0x3fff))
-    {
-        printf("ST[0] wrong, expected 1.0, but got 0x%x 0x%x 0x%x 0x%x E 0x%x\n",
-            (unsigned)ctxt->uc_mcontext.fpregs->_st[0].significand[0],
-            (unsigned)ctxt->uc_mcontext.fpregs->_st[0].significand[1],
-            (unsigned)ctxt->uc_mcontext.fpregs->_st[0].significand[2],
-            (unsigned)ctxt->uc_mcontext.fpregs->_st[0].significand[3],
-            (unsigned)ctxt->uc_mcontext.fpregs->_st[0].exponent);
-        exit(1);
-    }
+  /*
+   * The top of the FP stack should be "1.0".
+   */
+  if ((ctxt->uc_mcontext.fpregs->_st[0].significand[0] != 0) ||
+      (ctxt->uc_mcontext.fpregs->_st[0].significand[1] != 0) ||
+      (ctxt->uc_mcontext.fpregs->_st[0].significand[2] != 0) ||
+      (ctxt->uc_mcontext.fpregs->_st[0].significand[3] != 0x8000) ||
+      (ctxt->uc_mcontext.fpregs->_st[0].exponent != 0x3fff)) {
+    printf("ST[0] wrong, expected 1.0, but got 0x%x 0x%x 0x%x 0x%x E 0x%x\n",
+           (unsigned)ctxt->uc_mcontext.fpregs->_st[0].significand[0],
+           (unsigned)ctxt->uc_mcontext.fpregs->_st[0].significand[1],
+           (unsigned)ctxt->uc_mcontext.fpregs->_st[0].significand[2],
+           (unsigned)ctxt->uc_mcontext.fpregs->_st[0].significand[3],
+           (unsigned)ctxt->uc_mcontext.fpregs->_st[0].exponent);
+    exit(1);
+  }
 
-    /*
-     * The other value on the FP stack should be "0.0".
-     */
-    if ((ctxt->uc_mcontext.fpregs->_st[1].significand[0] != 0) ||
-        (ctxt->uc_mcontext.fpregs->_st[1].significand[1] != 0) ||
-        (ctxt->uc_mcontext.fpregs->_st[1].significand[2] != 0) ||
-        (ctxt->uc_mcontext.fpregs->_st[1].significand[3] != 0) ||
-        (ctxt->uc_mcontext.fpregs->_st[1].exponent != 0))
-    {
-        printf("ST[1] wrong, expected 0.0, but got 0x%x 0x%x 0x%x 0x%x E 0x%x\n",
-            (unsigned)ctxt->uc_mcontext.fpregs->_st[1].significand[0],
-            (unsigned)ctxt->uc_mcontext.fpregs->_st[1].significand[1],
-            (unsigned)ctxt->uc_mcontext.fpregs->_st[1].significand[2],
-            (unsigned)ctxt->uc_mcontext.fpregs->_st[1].significand[3],
-            (unsigned)ctxt->uc_mcontext.fpregs->_st[1].exponent);
-        exit(1);
-    }
+  /*
+   * The other value on the FP stack should be "0.0".
+   */
+  if ((ctxt->uc_mcontext.fpregs->_st[1].significand[0] != 0) ||
+      (ctxt->uc_mcontext.fpregs->_st[1].significand[1] != 0) ||
+      (ctxt->uc_mcontext.fpregs->_st[1].significand[2] != 0) ||
+      (ctxt->uc_mcontext.fpregs->_st[1].significand[3] != 0) ||
+      (ctxt->uc_mcontext.fpregs->_st[1].exponent != 0)) {
+    printf("ST[1] wrong, expected 0.0, but got 0x%x 0x%x 0x%x 0x%x E 0x%x\n",
+           (unsigned)ctxt->uc_mcontext.fpregs->_st[1].significand[0],
+           (unsigned)ctxt->uc_mcontext.fpregs->_st[1].significand[1],
+           (unsigned)ctxt->uc_mcontext.fpregs->_st[1].significand[2],
+           (unsigned)ctxt->uc_mcontext.fpregs->_st[1].significand[3],
+           (unsigned)ctxt->uc_mcontext.fpregs->_st[1].exponent);
+    exit(1);
+  }
 
-    exit(0);
+  exit(0);
 }
 
 #else
-static void Handle(int sig, siginfo_t *info, void *vctxt)
-{
-    ucontext_t *ctxt = vctxt;
-    char one[10] = { 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0x3f };
-    char zero[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+static void Handle(int sig, siginfo_t *info, void *vctxt) {
+  ucontext_t *ctxt = vctxt;
+  char one[10] = {0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0x3f};
+  char zero[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-    /*
-     * There should be two values on the FP stack, at physical FP registers R6 and R7.
-     * The value at R7 should be 0.0 (zero tag) and the value at R6 should 1.0 (valid tag).
-     */
-    if (ctxt->uc_mcontext->__fs.__fpu_ftw != 0xc0)
-    {
-        printf("FP tags wrong, expected 0xc0, but got 0x%lx\n",
-            (unsigned long)(ctxt->uc_mcontext->__fs.__fpu_ftw));
-        exit(1);
-    }
+  /*
+   * There should be two values on the FP stack, at physical FP registers R6 and
+   * R7. The value at R7 should be 0.0 (zero tag) and the value at R6 should 1.0
+   * (valid tag).
+   */
+  if (ctxt->uc_mcontext->__fs.__fpu_ftw != 0xc0) {
+    printf("FP tags wrong, expected 0xc0, but got 0x%lx\n",
+           (unsigned long)(ctxt->uc_mcontext->__fs.__fpu_ftw));
+    exit(1);
+  }
 
-    /*
-     * The top of the FP stack should be "1.0".
-     */
-    if (memcmp(ctxt->uc_mcontext->__fs.__fpu_stmm0.__mmst_reg, one, sizeof(one)) != 0)
-    {
-        printf("ST[0] wrong, expected 1.0, but got %g\n",
-                *(double*)ctxt->uc_mcontext->__fs.__fpu_stmm0.__mmst_reg);
-        exit(1);
-    }
+  /*
+   * The top of the FP stack should be "1.0".
+   */
+  if (memcmp(ctxt->uc_mcontext->__fs.__fpu_stmm0.__mmst_reg, one,
+             sizeof(one)) != 0) {
+    printf("ST[0] wrong, expected 1.0, but got %g\n",
+           *(double *)ctxt->uc_mcontext->__fs.__fpu_stmm0.__mmst_reg);
+    exit(1);
+  }
 
-    /*
-     * The other value on the FP stack should be "0.0".
-     */
-    if (memcmp(ctxt->uc_mcontext->__fs.__fpu_stmm1.__mmst_reg, zero, sizeof(zero)) != 0)
-    {
-        printf("ST[1] wrong, expected 0.0, but got %g\n",
-                *(double*)ctxt->uc_mcontext->__fs.__fpu_stmm1.__mmst_reg);
-        exit(1);
-    }
+  /*
+   * The other value on the FP stack should be "0.0".
+   */
+  if (memcmp(ctxt->uc_mcontext->__fs.__fpu_stmm1.__mmst_reg, zero,
+             sizeof(zero)) != 0) {
+    printf("ST[1] wrong, expected 0.0, but got %g\n",
+           *(double *)ctxt->uc_mcontext->__fs.__fpu_stmm1.__mmst_reg);
+    exit(1);
+  }
 
-    exit(0);
+  exit(0);
 }
 #endif

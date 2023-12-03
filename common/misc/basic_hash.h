@@ -1,30 +1,28 @@
 #ifndef BASIC_HASH_H
 #define BASIC_HASH_H
 
-#include "fixed_types.h"
-
-#include <unordered_map>
-#include <utility>
-#include <iostream>
 #include <assert.h>
 
-//#define DEBUG_BASIC_HASH
+#include <iostream>
+#include <unordered_map>
+#include <utility>
 
+#include "fixed_types.h"
 
-class BasicHash
-{
-   protected:
-      typedef std::unordered_map<UInt64, UInt64> Bucket;
-      Bucket *array;
-      UInt64 size;
+// #define DEBUG_BASIC_HASH
 
-   public:
-      BasicHash(UInt64 size);
-      ~BasicHash();
+class BasicHash {
+ protected:
+  typedef std::unordered_map<UInt64, UInt64> Bucket;
+  Bucket *array;
+  UInt64 size;
 
-      std::pair<bool, UInt64> find(UInt64 key);
-      bool insert(UInt64 key, UInt64 value);
+ public:
+  BasicHash(UInt64 size);
+  ~BasicHash();
 
+  std::pair<bool, UInt64> find(UInt64 key);
+  bool insert(UInt64 key, UInt64 value);
 };
 
 #endif

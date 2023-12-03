@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -46,58 +46,59 @@ UINT32 xchgCount = 0;
 UINT32 directFarJumpCount = 0;
 UINT32 memoryIndexRegCount = 0;
 
-VOID CountsUpdate(INS ins)
-{
-    if (INS_FullRegRContain(ins, REG_EAX) && XED_CATEGORY_WIDENOP != INS_Category(ins)) fullRegRContainCount++;
-    if (INS_IsInterrupt(ins)) interruptCount++;
-    if (INS_IsRDTSC(ins)) rdtscCount++;
-    if (INS_IsSysret(ins)) sysretCount++;
-    if (INS_IsXchg(ins)) xchgCount++;
+VOID CountsUpdate(INS ins) {
+  if (INS_FullRegRContain(ins, REG_EAX) &&
+      XED_CATEGORY_WIDENOP != INS_Category(ins))
+    fullRegRContainCount++;
+  if (INS_IsInterrupt(ins)) interruptCount++;
+  if (INS_IsRDTSC(ins)) rdtscCount++;
+  if (INS_IsSysret(ins)) sysretCount++;
+  if (INS_IsXchg(ins)) xchgCount++;
 
-    if (INS_IsDirectFarJump(ins)) {
-        directFarJumpCount++;
+  if (INS_IsDirectFarJump(ins)) {
+    directFarJumpCount++;
 
-        UINT32 displacement; UINT16 segment;
-        INS_GetFarPointer(ins, segment, displacement);
-        TEST(segment == 0xabcd && displacement == 0x14, "INS_GetFarPointer failed");
+    UINT32 displacement;
+    UINT16 segment;
+    INS_GetFarPointer(ins, segment, displacement);
+    TEST(segment == 0xabcd && displacement == 0x14, "INS_GetFarPointer failed");
+  }
+  if (INS_MemoryIndexReg(ins) != REG_INVALID() &&
+      XED_CATEGORY_WIDENOP != INS_Category(ins))
+    memoryIndexRegCount++;
+}
+
+VOID Rtn(RTN rtn, VOID *v) {
+  string name = RTN_Name(rtn);
+  if (name == "test1") {
+    RTN_Open(rtn);
+    for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins)) {
+      CountsUpdate(ins);
     }
-    if (INS_MemoryIndexReg(ins) != REG_INVALID() && XED_CATEGORY_WIDENOP != INS_Category(ins)) memoryIndexRegCount++;
+    RTN_Close(rtn);
+  }
 }
 
-VOID Rtn(RTN rtn, VOID * v)
-{
-    string name = RTN_Name(rtn);
-    if (name == "test1") {
-        RTN_Open(rtn);
-        for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins)) {
-            CountsUpdate(ins);
-        }
-        RTN_Close(rtn);
-    }
+VOID Fini(INT32 code, VOID *v) {
+  // "xor eax, eax" & "cmp eax, 0x0" are also counted in fullRegRContainCount
+  TEST(fullRegRContainCount == 3, "INS_FullRegRContain failed");
+  TEST(interruptCount == 1, "INS_IsInterrupt failed");
+  TEST(rdtscCount == 1, "INS_IsRDTSC failed");
+  TEST(sysretCount == 1, "INS_IsSysret failed");
+  TEST(xchgCount == 1, "INS_IsXchg failed");
+  TEST(directFarJumpCount == 1, "INS_GetFarPointer failed");
+  TEST(memoryIndexRegCount == 1, "INS_MemoryIndexReg failed");
 }
 
-VOID Fini(INT32 code, VOID *v)
-{
-    // "xor eax, eax" & "cmp eax, 0x0" are also counted in fullRegRContainCount
-    TEST(fullRegRContainCount == 3, "INS_FullRegRContain failed"); 
-    TEST(interruptCount == 1, "INS_IsInterrupt failed");
-    TEST(rdtscCount == 1, "INS_IsRDTSC failed");
-    TEST(sysretCount == 1, "INS_IsSysret failed");
-    TEST(xchgCount == 1, "INS_IsXchg failed");
-    TEST(directFarJumpCount == 1, "INS_GetFarPointer failed");
-    TEST(memoryIndexRegCount == 1, "INS_MemoryIndexReg failed");
-}
+int main(INT32 argc, CHAR **argv) {
+  PIN_InitSymbols();
+  PIN_Init(argc, argv);
 
-int main(INT32 argc, CHAR **argv)
-{
-    PIN_InitSymbols();
-    PIN_Init(argc, argv);
-    
-    RTN_AddInstrumentFunction(Rtn, 0);
-    PIN_AddFiniFunction(Fini, 0);
-    
-    // Never returns
-    PIN_StartProgram();
-    
-    return 0;
+  RTN_AddInstrumentFunction(Rtn, 0);
+  PIN_AddFiniFunction(Fini, 0);
+
+  // Never returns
+  PIN_StartProgram();
+
+  return 0;
 }

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -32,35 +32,35 @@ END_LEGAL */
  *  Print a detailed disassemble data on each IMG, loops run backward.
  */
 
-#include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <iostream>
+
 #include "pin.H"
 
 using namespace std;
-ofstream *out=0;
+ofstream *out = 0;
 
-KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
-    "o", "imageloadbackward.out", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o",
+                            "imageloadbackward.out",
+                            "specify output file name");
 
-VOID ImageLoad(IMG img, VOID * v)
-{
-    *out << "Tool loading " << IMG_Name(img) << " at " << IMG_LoadOffset(img) << endl;
-    for (SEC sec = IMG_SecTail(img); SEC_Valid(sec); sec = SEC_Prev(sec))
-    {
-        *out << "  sec " << SEC_Name(sec) << " " << SEC_Address(sec) << ":" << SEC_Size(sec) << endl;
-        for (RTN rtn = SEC_RtnTail(sec); RTN_Valid(rtn); rtn = RTN_Prev(rtn))
-        {
-            *out << "    rtn " << RTN_Name(rtn) << " " << RTN_Address(rtn) << ":" << RTN_Size(rtn) << endl;
+VOID ImageLoad(IMG img, VOID *v) {
+  *out << "Tool loading " << IMG_Name(img) << " at " << IMG_LoadOffset(img)
+       << endl;
+  for (SEC sec = IMG_SecTail(img); SEC_Valid(sec); sec = SEC_Prev(sec)) {
+    *out << "  sec " << SEC_Name(sec) << " " << SEC_Address(sec) << ":"
+         << SEC_Size(sec) << endl;
+    for (RTN rtn = SEC_RtnTail(sec); RTN_Valid(rtn); rtn = RTN_Prev(rtn)) {
+      *out << "    rtn " << RTN_Name(rtn) << " " << RTN_Address(rtn) << ":"
+           << RTN_Size(rtn) << endl;
 
-            RTN_Open(rtn);
-            
-            for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins))
-            {
-                // Just print first and last
-                if (!INS_Valid(INS_Prev(ins)) || !INS_Valid(INS_Next(ins)))
-                {
-                    *out << "      " << INS_Address(ins);
+      RTN_Open(rtn);
+
+      for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins)) {
+        // Just print first and last
+        if (!INS_Valid(INS_Prev(ins)) || !INS_Valid(INS_Next(ins))) {
+          *out << "      " << INS_Address(ins);
 
 #if 0
                     *out << " " << INS_Disassemble(ins) << " read:";
@@ -74,63 +74,55 @@ VOID ImageLoad(IMG img, VOID * v)
                     {
                         *out << " " << REG_StringShort(INS_RegW(ins, i));
                     }
-#endif                    
+#endif
 
-                    *out <<  endl;
-                }
-            }
-
-            RTN_Close(rtn);
+          *out << endl;
         }
+      }
+
+      RTN_Close(rtn);
     }
+  }
 }
 
-VOID ImageUnload(IMG img, VOID * v)
-{
-    *out << "Tool unloading " << IMG_Name(img) << " at " << IMG_LoadOffset(img) << endl;
+VOID ImageUnload(IMG img, VOID *v) {
+  *out << "Tool unloading " << IMG_Name(img) << " at " << IMG_LoadOffset(img)
+       << endl;
 }
 
-VOID Trace(TRACE trace, VOID *v)
-{
-    INS head = BBL_InsHead(TRACE_BblHead(trace));
-    
-    INT32 line;
-    INT32 column;
-    string file;
+VOID Trace(TRACE trace, VOID *v) {
+  INS head = BBL_InsHead(TRACE_BblHead(trace));
 
-    PIN_GetSourceLocation(INS_Address(head), &column, &line, &file);
-    if (file != "")
-    {
-        *out << file << ":" << dec << line << ":" << column << " " << hex;
-    }
+  INT32 line;
+  INT32 column;
+  string file;
 
-    RTN rtn = RTN_FindByAddress(INS_Address(head));
+  PIN_GetSourceLocation(INS_Address(head), &column, &line, &file);
+  if (file != "") {
+    *out << file << ":" << dec << line << ":" << column << " " << hex;
+  }
 
-    if (RTN_Valid(rtn))
-        *out << IMG_Name(SEC_Img(RTN_Sec(rtn)))
-             << ":"
-             << RTN_Name(rtn)
-             << "+"
-             << INS_Address(head) - RTN_Address(rtn)
-             << " "
-             << INS_Disassemble(head)
-             << endl;
+  RTN rtn = RTN_FindByAddress(INS_Address(head));
+
+  if (RTN_Valid(rtn))
+    *out << IMG_Name(SEC_Img(RTN_Sec(rtn))) << ":" << RTN_Name(rtn) << "+"
+         << INS_Address(head) - RTN_Address(rtn) << " " << INS_Disassemble(head)
+         << endl;
 }
 
-int main(INT32 argc, CHAR **argv)
-{
-    out = new ofstream(KnobOutputFile.Value().c_str());
-    *out << hex << showbase;
-    
-    PIN_InitSymbols();
-    PIN_Init(argc, argv);
-    
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-    IMG_AddUnloadFunction(ImageUnload, 0);
-    TRACE_AddInstrumentFunction(Trace, 0);
-    
-    // Never returns
-    PIN_StartProgram();
-    
-    return 0;
+int main(INT32 argc, CHAR **argv) {
+  out = new ofstream(KnobOutputFile.Value().c_str());
+  *out << hex << showbase;
+
+  PIN_InitSymbols();
+  PIN_Init(argc, argv);
+
+  IMG_AddInstrumentFunction(ImageLoad, 0);
+  IMG_AddUnloadFunction(ImageUnload, 0);
+  TRACE_AddInstrumentFunction(Trace, 0);
+
+  // Never returns
+  PIN_StartProgram();
+
+  return 0;
 }

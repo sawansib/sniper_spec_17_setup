@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,88 +29,82 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 /*
-   Test the scenario where Pin attaches to an application, using the command line,
-   which one of its secondary thread is a zombie thread
-   Pin wouldn't attach the zombie thread and wouldn't give a thread detach callbacks
-   on detach to the zombie thread.
+   Test the scenario where Pin attaches to an application, using the command
+   line, which one of its secondary thread is a zombie thread Pin wouldn't
+   attach the zombie thread and wouldn't give a thread detach callbacks on
+   detach to the zombie thread.
 */
 
-#include <stdio.h>
+#include <assert.h>
 #include <pthread.h>
+#include <sched.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <assert.h>
-#include <stdlib.h>
-#include <sched.h>
-#include <string.h>
+
 #include <iostream>
+
 #include "zombie_utils.h"
 
 static int pipefd[2];
 
-void* SecondaryThreadMain(void* v)
-{
-    close(pipefd[0]); // Close child's read end
-    write(pipefd[1], const_cast<char *>("NotifyParent"), strlen(const_cast<char *>("NotifyParent")));
-    close(pipefd[1]);// Close parent's write end
-    pthread_exit(0);
+void *SecondaryThreadMain(void *v) {
+  close(pipefd[0]);  // Close child's read end
+  write(pipefd[1], const_cast<char *>("NotifyParent"),
+        strlen(const_cast<char *>("NotifyParent")));
+  close(pipefd[1]);  // Close parent's write end
+  pthread_exit(0);
 }
-
 
 // Expected argv arguments:
 // [1] pin executable
 // [2] -slow_assert
 // [3] tool
-// [4] output file	
-int main(int argc, char *argv[])
-{    
-    if(argc!=5)
-    {
-       fprintf(stderr, "Not enough arguments\n" );
-       fflush(stderr);
-       exit(RES_INVALID_ARGS);
-    }
-    
-    if( pipe(pipefd)== -1)         
-    {         
-        fprintf(stderr, "Pipe Failed.\n");  
-        return RES_PIPE_CREATION_ERROR;
-    } 
+// [4] output file
+int main(int argc, char *argv[]) {
+  if (argc != 5) {
+    fprintf(stderr, "Not enough arguments\n");
+    fflush(stderr);
+    exit(RES_INVALID_ARGS);
+  }
 
-    // The pipe is used to transfer information from the
-    // child process to the secondary thread.
-    pid_t child_pid;
-    pid_t parentPid = getpid();
+  if (pipe(pipefd) == -1) {
+    fprintf(stderr, "Pipe Failed.\n");
+    return RES_PIPE_CREATION_ERROR;
+  }
 
-    child_pid = fork ();
-    
-    if (child_pid > 0) 
-    {  
-        pthread_t tid; 
-        pthread_create(&tid, NULL, SecondaryThreadMain, NULL);       
-        while(1) sleep(1);
-    }
-    else 
-    {  
-        // In child
-        char attachPid[MAX_SIZE];
-        snprintf(attachPid ,MAX_SIZE , "%d", parentPid);
-        
-        close(pipefd[1]);// Close parent's write end
-        int buf[2];
-        if (read(pipefd[0], buf, 1) < 0)
-        {
-            exit(RES_PIPE_ERROR);
-        }
+  // The pipe is used to transfer information from the
+  // child process to the secondary thread.
+  pid_t child_pid;
+  pid_t parentPid = getpid();
 
-        close(pipefd[0]);// Close parent's write end.
+  child_pid = fork();
 
-        // Pin attaches to the application.
-        execl(argv[1], argv[1], argv[2], "-probe","-pid", attachPid,  "-t",  argv[3], "-o", argv[4], NULL); // never return
-        
-        exit(RES_EXEC_FAILED);
-       
+  if (child_pid > 0) {
+    pthread_t tid;
+    pthread_create(&tid, NULL, SecondaryThreadMain, NULL);
+    while (1) sleep(1);
+  } else {
+    // In child
+    char attachPid[MAX_SIZE];
+    snprintf(attachPid, MAX_SIZE, "%d", parentPid);
+
+    close(pipefd[1]);  // Close parent's write end
+    int buf[2];
+    if (read(pipefd[0], buf, 1) < 0) {
+      exit(RES_PIPE_ERROR);
     }
 
-    return RES_SUCCESS;
+    close(pipefd[0]);  // Close parent's write end.
+
+    // Pin attaches to the application.
+    execl(argv[1], argv[1], argv[2], "-probe", "-pid", attachPid, "-t", argv[3],
+          "-o", argv[4], NULL);  // never return
+
+    exit(RES_EXEC_FAILED);
+  }
+
+  return RES_SUCCESS;
 }

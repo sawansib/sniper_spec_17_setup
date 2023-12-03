@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -32,40 +32,37 @@ END_LEGAL */
 #define _CRT_SECURE_NO_DEPRECATE
 
 #include <Windows.h>
+
 #include <iostream>
 #include <string>
 using namespace std;
 
 // launch given application, write application's PID to stdout
 
-int main(int argc, char * argv[], char * envp[])
-{
-    string cmdLine = "";
-    // Build command line
-    for(int i = 1; i < argc; i++)
-    {
-        cmdLine += string(argv[i]);
-        if(i != argc - 1)
-        {
-            cmdLine +=  string(" ");
-        }
+int main(int argc, char* argv[], char* envp[]) {
+  string cmdLine = "";
+  // Build command line
+  for (int i = 1; i < argc; i++) {
+    cmdLine += string(argv[i]);
+    if (i != argc - 1) {
+      cmdLine += string(" ");
     }
-    
-    // Invoke Application
-    STARTUPINFO         si;
-    PROCESS_INFORMATION  pi;
-    memset(&si, 0, sizeof(si));
-    si.cb = sizeof(STARTUPINFO);
-    memset(&pi, 0, sizeof(pi));
-    if (!CreateProcess(NULL, (LPSTR)cmdLine.c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
-    {
-        cout <<  "0" << endl;
-        cerr <<  "Failed to create " << cmdLine << endl;
-        exit(-1);
-    }
-    
-    char digitBuffer[64];
-    cout << itoa(pi.dwProcessId, digitBuffer, 10);    
-    return 0;
-}
+  }
 
+  // Invoke Application
+  STARTUPINFO si;
+  PROCESS_INFORMATION pi;
+  memset(&si, 0, sizeof(si));
+  si.cb = sizeof(STARTUPINFO);
+  memset(&pi, 0, sizeof(pi));
+  if (!CreateProcess(NULL, (LPSTR)cmdLine.c_str(), NULL, NULL, TRUE, 0, NULL,
+                     NULL, &si, &pi)) {
+    cout << "0" << endl;
+    cerr << "Failed to create " << cmdLine << endl;
+    exit(-1);
+  }
+
+  char digitBuffer[64];
+  cout << itoa(pi.dwProcessId, digitBuffer, 10);
+  return 0;
+}

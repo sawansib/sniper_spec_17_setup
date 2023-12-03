@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,80 +29,73 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 #include <stdio.h>
-#include "pin.H"
 
+#include "pin.H"
 
 #define DF_MASK 0x400
 #define DF_POS 10
 #if defined(__cplusplus)
 extern "C"
 #endif
-int source[4] = {1,1,1,1};
+    int source[4] = {1, 1, 1, 1};
 #if defined(__cplusplus)
 extern "C"
 #endif
-int dest[4]   = {0,0,0,0};
+    int dest[4] = {0, 0, 0, 0};
 
 // This function is called before every instruction is executed
 // it should move source[1] and source[2] into dest[1] and dest[2] respectively
 // The movsd is the first instruction to access the flags
-// If there is a bug anf the DF is set - then it will  move source[1] and source[0] into dest[1] 
-// and dest[0] respectively 
-// In the Fini function we check that dest has it's expected values 
+// If there is a bug anf the DF is set - then it will  move source[1] and
+// source[0] into dest[1] and dest[0] respectively In the Fini function we check
+// that dest has it's expected values
 #if defined(__cplusplus)
 extern "C"
 #endif
-VOID TestDfByMovsd ();
+    VOID
+    TestDfByMovsd();
 
-    
 // Pin calls this function every time a new instruction is encountered
-VOID Instruction(INS ins, VOID *v)
-{
-    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)TestDfByMovsd, IARG_END);
+VOID Instruction(INS ins, VOID *v) {
+  INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)TestDfByMovsd, IARG_END);
 }
 
 // This function is called when the application exits
-VOID Fini(INT32 code, VOID *v)
-{
-    BOOL hadFailure = false;
-    if (dest[0]!=0)
-    {
-        printf ("Unexpected value of dest[0] %d\n", dest[0]);
-        hadFailure = true;
-    }
-    if (dest[1]!=1)
-    {
-        printf ("Unexpected value of dest[1] %d\n", dest[1]);
-        hadFailure = true;
-    }
-    if (dest[2]!=1)
-    {
-        printf ("Unexpected value of dest[2] %d\n", dest[2]);
-        hadFailure = true;
-    }
-    if (dest[3]!=0)
-    {
-        printf ("Unexpected value of dest[3] %d\n", dest[3]);
-        hadFailure = true;
-    }
-    printf ("Finished: hadFailure  %d\n", hadFailure);
-    fflush (stdout);
+VOID Fini(INT32 code, VOID *v) {
+  BOOL hadFailure = false;
+  if (dest[0] != 0) {
+    printf("Unexpected value of dest[0] %d\n", dest[0]);
+    hadFailure = true;
+  }
+  if (dest[1] != 1) {
+    printf("Unexpected value of dest[1] %d\n", dest[1]);
+    hadFailure = true;
+  }
+  if (dest[2] != 1) {
+    printf("Unexpected value of dest[2] %d\n", dest[2]);
+    hadFailure = true;
+  }
+  if (dest[3] != 0) {
+    printf("Unexpected value of dest[3] %d\n", dest[3]);
+    hadFailure = true;
+  }
+  printf("Finished: hadFailure  %d\n", hadFailure);
+  fflush(stdout);
 }
 
 // argc, argv are the entire command line, including pin -t <toolname> -- ...
-int main(int argc, char * argv[])
-{
-    // Initialize pin
-    PIN_Init(argc, argv);
+int main(int argc, char *argv[]) {
+  // Initialize pin
+  PIN_Init(argc, argv);
 
-    // Register Instruction to be called to instrument instructions
-    INS_AddInstrumentFunction(Instruction, 0);
+  // Register Instruction to be called to instrument instructions
+  INS_AddInstrumentFunction(Instruction, 0);
 
-    // Register Fini to be called when the application exits
-    PIN_AddFiniFunction(Fini, 0);
-    
-    // Start the program, never returns
-    PIN_StartProgram();
-    
-    return 0;
+  // Register Fini to be called when the application exits
+  PIN_AddFiniFunction(Fini, 0);
+
+  // Start the program, never returns
+  PIN_StartProgram();
+
+  return 0;
 }

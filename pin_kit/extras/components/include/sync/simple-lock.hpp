@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -35,7 +35,6 @@ END_LEGAL */
 #ifndef SYNC_SIMPLE_LOCK_HPP
 #define SYNC_SIMPLE_LOCK_HPP
 
-
 namespace SYNC {
 
 /*!
@@ -47,55 +46,54 @@ namespace SYNC {
  * concrete implementations of SIMPLE_LOCK (e.g. POD and SAFEPOD) do not derive
  * from this base class.  See \ref SYNC_POD for a description.
  */
-class /*<UTILITY>*/ SIMPLE_LOCK
-{
-public:
-    /*!
-     * Initialize the lock before its first use.  This method is provided
-     * for implementations of SIMPLE_LOCK that could fail during initialization.
-     * Implementations which cannot fail during initialization are fully
-     * initialized by their constructor, but they still provide a dummy version
-     * of Initialize().
-     *
-     * @return  TRUE on success.
-     */
-    virtual bool Initialize() = 0;
+class /*<UTILITY>*/ SIMPLE_LOCK {
+ public:
+  /*!
+   * Initialize the lock before its first use.  This method is provided
+   * for implementations of SIMPLE_LOCK that could fail during initialization.
+   * Implementations which cannot fail during initialization are fully
+   * initialized by their constructor, but they still provide a dummy version
+   * of Initialize().
+   *
+   * @return  TRUE on success.
+   */
+  virtual bool Initialize() = 0;
 
-    /*!
-     * It is usually not necessary to call this method because the destructor
-     * will destroy the lock.  Calling Destroy() will cause the lock to be
-     * uninitialized, but you may call Initialize() to re-initialize the object
-     * later.  The Destroy() method is provided mostly to retain symmetry with
-     * the POD and SAFEPOD implementations of SIMPLE_LOCK.
-     */
-    virtual void Destroy() = 0;
+  /*!
+   * It is usually not necessary to call this method because the destructor
+   * will destroy the lock.  Calling Destroy() will cause the lock to be
+   * uninitialized, but you may call Initialize() to re-initialize the object
+   * later.  The Destroy() method is provided mostly to retain symmetry with
+   * the POD and SAFEPOD implementations of SIMPLE_LOCK.
+   */
+  virtual void Destroy() = 0;
 
-    /*!
-     * Set the state of the lock to "not locked", even if the calling thread
-     * does not own the lock.  This method may only be called on a lock that is
-     * already initialized.
-     */
-    virtual void Reset() = 0;
+  /*!
+   * Set the state of the lock to "not locked", even if the calling thread
+   * does not own the lock.  This method may only be called on a lock that is
+   * already initialized.
+   */
+  virtual void Reset() = 0;
 
-    /*!
-     * Blocks the caller until the lock can be acquired.
-     */
-    virtual void Lock() = 0;
+  /*!
+   * Blocks the caller until the lock can be acquired.
+   */
+  virtual void Lock() = 0;
 
-    /*!
-     * Releases the lock.
-     */
-    virtual void Unlock() = 0;
+  /*!
+   * Releases the lock.
+   */
+  virtual void Unlock() = 0;
 
-    /*!
-     * Attempts to acquire the lock, but does not block the caller.
-     *
-     * @return  Returns TRUE if the lock is acquired, FALSE if not.
-     */
-    virtual bool TryLock() = 0;
+  /*!
+   * Attempts to acquire the lock, but does not block the caller.
+   *
+   * @return  Returns TRUE if the lock is acquired, FALSE if not.
+   */
+  virtual bool TryLock() = 0;
 
-    virtual ~SIMPLE_LOCK() {}
+  virtual ~SIMPLE_LOCK() {}
 };
 
-} // namespace
-#endif // file guard
+}  // namespace SYNC
+#endif  // file guard

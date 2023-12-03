@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -28,60 +28,48 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
-#include <iostream>
-#include <fstream>
 #include <assert.h>
-#include "pin.H"
 
+#include <fstream>
+#include <iostream>
 
 #include "instrumentation_order_app.h"
-
-
+#include "pin.H"
 
 static ofstream outstream("instrumentation_order18.out");
-    
 
+void Emit(char const *message) { outstream << message << endl; }
 
-void Emit(char const* message)
-{
-    outstream << message << endl;
+static VOID Rtn(RTN rtn, VOID *v) {
+  if (!RTN_Valid(rtn) || RTN_Name(rtn) != watch_rtn) {
+    return;
+  }
+  printf("Rtn Instrumenting %s\n", watch_rtn);
+  RTN_Open(rtn);
+  INS ins = RTN_InsHeadOnly(rtn);
+  ASSERTX(INS_Valid(ins));
+
+  RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(Emit), IARG_PTR,
+                 "RTN instrumentation1", IARG_CALL_ORDER, CALL_ORDER_FIRST + 3,
+                 IARG_END);
+  INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(Emit), IARG_PTR,
+                 "RTN instrumentation2", IARG_CALL_ORDER, CALL_ORDER_FIRST + 3,
+                 IARG_END);
+  RTN_Close(rtn);
 }
 
-static VOID Rtn(RTN rtn, VOID *v)
-{
-    if (!RTN_Valid(rtn) || RTN_Name(rtn) != watch_rtn)
-    {
-        return;
-    }
-    printf("Rtn Instrumenting %s\n", watch_rtn);
-    RTN_Open(rtn);
-    INS ins = RTN_InsHeadOnly(rtn);
-    ASSERTX (INS_Valid(ins));
-    
-    RTN_InsertCall(rtn, IPOINT_BEFORE, AFUNPTR(Emit),
-                             IARG_PTR, "RTN instrumentation1",  IARG_CALL_ORDER, CALL_ORDER_FIRST+3, IARG_END);
-    INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(Emit),
-                             IARG_PTR, "RTN instrumentation2",  IARG_CALL_ORDER, CALL_ORDER_FIRST+3, IARG_END);
-    RTN_Close(rtn);
-}
+static VOID Fini(INT32 code, VOID *v) { outstream.close(); }
 
+int main(int argc, char *argv[]) {
+  PIN_InitSymbols();
+  PIN_Init(argc, argv);
 
-static VOID Fini(INT32 code, VOID *v)
-{
-    outstream.close();
-}
+  RTN_AddInstrumentFunction(Rtn, 0);
 
-int main(int argc, char * argv[])
-{
-    PIN_InitSymbols();
-    PIN_Init(argc, argv);
+  PIN_AddFiniFunction(Fini, 0);
 
-    RTN_AddInstrumentFunction(Rtn, 0);
+  // Start the program, never returns
+  PIN_StartProgram();
 
-    PIN_AddFiniFunction(Fini, 0);
-
-    // Start the program, never returns
-    PIN_StartProgram();
-    
-    return 0;
+  return 0;
 }

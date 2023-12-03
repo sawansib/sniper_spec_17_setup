@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -36,10 +36,9 @@ END_LEGAL */
 #define FUND_HPP
 
 #if defined(__GNUC__)
-#   include <stdint.h>
+#include <stdint.h>
 #endif
 #include "fund/config.h"
-
 
 /*!
  * The FUND namespace provides a small set of fundamental types that are used
@@ -86,17 +85,21 @@ namespace FUND {
 
 // Microsoft Visual C/C++ compiler
 
-typedef unsigned __int8 UINT8;      ///< 8-bit unsigned integer
-typedef unsigned __int16 UINT16;    ///< 16-bit unsigned integer
-typedef unsigned __int32 UINT32;    ///< 32-bit unsigned integer
-typedef unsigned __int64 UINT64;    ///< 64-bit unsigned integer
-typedef __int8 INT8;                ///< 8-bit signed integer
-typedef __int16 INT16;              ///< 16-bit signed integer
-typedef __int32 INT32;              ///< 32-bit signed integer
-typedef __int64 INT64;              ///< 64-bit signed integer
+typedef unsigned __int8 UINT8;    ///< 8-bit unsigned integer
+typedef unsigned __int16 UINT16;  ///< 16-bit unsigned integer
+typedef unsigned __int32 UINT32;  ///< 32-bit unsigned integer
+typedef unsigned __int64 UINT64;  ///< 64-bit unsigned integer
+typedef __int8 INT8;              ///< 8-bit signed integer
+typedef __int16 INT16;            ///< 16-bit signed integer
+typedef __int32 INT32;            ///< 32-bit signed integer
+typedef __int64 INT64;            ///< 64-bit signed integer
 
-#define FUND_EXPORT __declspec(dllexport)   ///< Use this when defining a symbol that should be exported from a DLL.
-#define FUND_IMPORT __declspec(dllimport)   ///< Use this when defining a symbol that should be imported from a DLL.
+#define FUND_EXPORT \
+  __declspec(dllexport)  ///< Use this when defining a symbol that should be
+                         ///< exported from a DLL.
+#define FUND_IMPORT \
+  __declspec(dllimport)  ///< Use this when defining a symbol that should be
+                         ///< imported from a DLL.
 
 /*!
  * Minimum alignment required by a type (t).
@@ -107,17 +110,19 @@ typedef __int64 INT64;              ///< 64-bit signed integer
 
 // GNU C/C++ compiler
 
-typedef uint8_t  UINT8;             ///< 8-bit unsigned integer
-typedef uint16_t UINT16;            ///< 16-bit unsigned integer
-typedef uint32_t UINT32;            ///< 32-bit unsigned integer
-typedef uint64_t UINT64;            ///< 64-bit unsigned integer
-typedef int8_t  INT8;               ///< 8-bit signed integer
-typedef int16_t INT16;              ///< 16-bit signed integer
-typedef int32_t INT32;              ///< 32-bit signed integer
-typedef int64_t INT64;              ///< 64-bit signed integer
+typedef uint8_t UINT8;    ///< 8-bit unsigned integer
+typedef uint16_t UINT16;  ///< 16-bit unsigned integer
+typedef uint32_t UINT32;  ///< 32-bit unsigned integer
+typedef uint64_t UINT64;  ///< 64-bit unsigned integer
+typedef int8_t INT8;      ///< 8-bit signed integer
+typedef int16_t INT16;    ///< 16-bit signed integer
+typedef int32_t INT32;    ///< 32-bit signed integer
+typedef int64_t INT64;    ///< 64-bit signed integer
 
-#define FUND_EXPORT     ///< Use this when defining a symbol that should be exported from a DLL.
-#define FUND_IMPORT     ///< Use this when defining a symbol that should be imported from a DLL.
+#define FUND_EXPORT  ///< Use this when defining a symbol that should be
+                     ///< exported from a DLL.
+#define FUND_IMPORT  ///< Use this when defining a symbol that should be
+                     ///< imported from a DLL.
 
 /*!
  * Minimum alignment required by a type (t).
@@ -125,7 +130,6 @@ typedef int64_t INT64;              ///< 64-bit signed integer
 #define FUND_ALIGNMENT_OF(t) __alignof__(t)
 
 #endif
-
 
 #if defined(FUND_HOST_IA32)
 
@@ -137,7 +141,8 @@ typedef int64_t INT64;              ///< 64-bit signed integer
 typedef UINT32 PTRINT;
 #define FUND_PTRINT_SIZE 32
 
-#elif defined(FUND_HOST_INTEL64) || defined(FUND_HOST_IA64) || defined(FUND_HOST_MIC)
+#elif defined(FUND_HOST_INTEL64) || defined(FUND_HOST_IA64) || \
+    defined(FUND_HOST_MIC)
 
 /*!
  * Unsigned integer of the same size as a pointer on the host system
@@ -149,45 +154,45 @@ typedef UINT64 PTRINT;
 
 #endif
 
-
 #if defined(FUND_TARGET_IA32)
 
 /*!
  * Unsigned integer of the same size as a pointer on the target system.
  * The concept of "target" system makes sense only for programs that analyze or
  * generate code.  Consider a cross-compiler as an example that runs on system
- * X and generates code for system Y.  In this example, PTRINT represents a pointer
- * on system X (the host system) and ADDRINT represents a pointer on system Y (the
- * target system).
+ * X and generates code for system Y.  In this example, PTRINT represents a
+ * pointer on system X (the host system) and ADDRINT represents a pointer on
+ * system Y (the target system).
  */
-typedef UINT32  ADDRINT;
+typedef UINT32 ADDRINT;
 #define FUND_ADDRINT_SIZE 32
 
-#elif defined(FUND_TARGET_INTEL64) || defined(FUND_TARGET_IA64) || defined(FUND_TARGET_MIC)
+#elif defined(FUND_TARGET_INTEL64) || defined(FUND_TARGET_IA64) || \
+    defined(FUND_TARGET_MIC)
 
 /*!
  * Unsigned integer of the same size as a pointer on the target system.
  * The concept of "target" system makes sense only for programs that analyze or
  * generate code.  Consider a cross-compiler as an example that runs on system
- * X and generates code for system Y.  In this example, PTRINT represents a pointer
- * on system X (the host system) and ADDRINT represents a pointer on system Y (the
- * target system).
+ * X and generates code for system Y.  In this example, PTRINT represents a
+ * pointer on system X (the host system) and ADDRINT represents a pointer on
+ * system Y (the target system).
  */
-typedef UINT64  ADDRINT;
+typedef UINT64 ADDRINT;
 #define FUND_ADDRINT_SIZE 64
 
 #endif
 
 /*!
  * If a project has the concept of a "target" system and that system is known at
- * compile time, you can compiled with FUND_TARGET_* set and use the ADDRINT type
- * to represent addresses on the target.  However, if the target system is not known
- * until runtime, you can use the ANYADDR type to represent addresses on the target.
- * This type is large enough to hold an address on any supported system.  Theoretically,
- * this type could be widened in the future, so code should avoid assumptions on the
- * current width.
+ * compile time, you can compiled with FUND_TARGET_* set and use the ADDRINT
+ * type to represent addresses on the target.  However, if the target system is
+ * not known until runtime, you can use the ANYADDR type to represent addresses
+ * on the target. This type is large enough to hold an address on any supported
+ * system.  Theoretically, this type could be widened in the future, so code
+ * should avoid assumptions on the current width.
  */
-typedef UINT64  ANYADDR;
+typedef UINT64 ANYADDR;
 
-} // namespace
-#endif // file guard
+}  // namespace FUND
+#endif  // file guard

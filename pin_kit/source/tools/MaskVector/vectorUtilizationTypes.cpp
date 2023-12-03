@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -31,11 +31,11 @@ END_LEGAL */
 #include "vectorUtilizationTypes.h"
 
 string internalResultString[IR_SIZE] = {
-    "No internal error.",                                       // IR_SUCCESS
-    "Cannot find vector operand.",                              // IR_VECTOR_OPERAND_NOT_FOUND
-    "Cannot find second vector operand."                        // IR_SECOND_VECTOR_OPERAND_NOT_FOUND
-    "Got zero width for vector element.",                       // IR_ZERO_VECTOR_ELEMENT_WIDTH
-    "Invalid number of vector elements.",                       // IR_INVALID_NUMBER_OF_VECTOR_ELEMENTS
-    "Internal error enum last."                                 // IR_LAST
-    "Internal error enum size."                                 // IR_SIZE
+    "No internal error.",                  // IR_SUCCESS
+    "Cannot find vector operand.",         // IR_VECTOR_OPERAND_NOT_FOUND
+    "Cannot find second vector operand."   // IR_SECOND_VECTOR_OPERAND_NOT_FOUND
+    "Got zero width for vector element.",  // IR_ZERO_VECTOR_ELEMENT_WIDTH
+    "Invalid number of vector elements.",  // IR_INVALID_NUMBER_OF_VECTOR_ELEMENTS
+    "Internal error enum last."            // IR_LAST
+    "Internal error enum size."            // IR_SIZE
 };

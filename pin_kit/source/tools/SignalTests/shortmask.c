@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -38,39 +38,35 @@ END_LEGAL */
  * old-style system calls any more.
  */
 
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
-#include <signal.h>
-#include <unistd.h>
 #include <sys/syscall.h>
+#include <unistd.h>
 
+int main() {
+  char mask1[8];
+  char mask2[8];
 
-int main()
-{
-    char mask1[8];
-    char mask2[8];
-
-    memset(mask1, 0, sizeof(mask1));
-    memset(mask2, 0, sizeof(mask2));
+  memset(mask1, 0, sizeof(mask1));
+  memset(mask2, 0, sizeof(mask2));
 #ifdef SYS_sigprocmask
-    syscall(SYS_sigprocmask, SIG_SETMASK, 0, mask1);
+  syscall(SYS_sigprocmask, SIG_SETMASK, 0, mask1);
 #endif
-    if (memcmp(mask1+4, mask2+4, sizeof(mask1)-4) != 0)
-    {
-        printf("SYS_sigprocmask wrote beyond end of signal mask\n");
-        return 1;
-    }
+  if (memcmp(mask1 + 4, mask2 + 4, sizeof(mask1) - 4) != 0) {
+    printf("SYS_sigprocmask wrote beyond end of signal mask\n");
+    return 1;
+  }
 
-    memset(mask1, 0xff, sizeof(mask1));
-    memset(mask2, 0xff, sizeof(mask2));
+  memset(mask1, 0xff, sizeof(mask1));
+  memset(mask2, 0xff, sizeof(mask2));
 #ifdef SYS_sigprocmask
-    syscall(SYS_sigprocmask, SIG_SETMASK, 0, mask1);
+  syscall(SYS_sigprocmask, SIG_SETMASK, 0, mask1);
 #endif
-    if (memcmp(mask1+4, mask2+4, sizeof(mask1)-4) != 0)
-    {
-        printf("SYS_sigprocmask wrote beyond end of signal mask\n");
-        return 1;
-    }
+  if (memcmp(mask1 + 4, mask2 + 4, sizeof(mask1) - 4) != 0) {
+    printf("SYS_sigprocmask wrote beyond end of signal mask\n");
+    return 1;
+  }
 
-    return 0;
+  return 0;
 }

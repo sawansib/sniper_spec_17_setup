@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -31,13 +31,11 @@ END_LEGAL */
 #ifndef REGISTER_MODIFICATION_UTILS_H
 #define REGISTER_MODIFICATION_UTILS_H
 
-
 /////////////////////
 // INCLUDES
 /////////////////////
 
 #include "regvalue_test_utils.h"
-
 
 /////////////////////
 // FUNCTION DECLARATIONS
@@ -45,14 +43,18 @@ END_LEGAL */
 
 ///// Test Logic
 
-// The regvalue_app application stores the register values after the ChangeRegs routine completes. The tool can then
-// inspect these values to check whether value replacement was successful. This function is an analysis routine for
-// the SaveAppPointers() function defined in the regvalue_app application. It is used to save these pointers.
-void ToolSaveAppPointers(void * gprptr, void * stptr, void * fpptr1, void * fpptr2, void* /* ostream* */ ostptr);
+// The regvalue_app application stores the register values after the ChangeRegs
+// routine completes. The tool can then inspect these values to check whether
+// value replacement was successful. This function is an analysis routine for
+// the SaveAppPointers() function defined in the regvalue_app application. It is
+// used to save these pointers.
+void ToolSaveAppPointers(void* gprptr, void* stptr, void* fpptr1, void* fpptr2,
+                         void* /* ostream* */ ostptr);
 
-// Analysis routine for the SaveRegsToMem() function defined in the regvalue_app application. This routine compares the
-// register values stored by the application after the ChangeRegs routine with the expected tool-assigned values defined
-// in regvalues.h.
-void CheckToolModifiedValues(CONTEXT * ctxt, void* /* ostream* */ ostptr);
+// Analysis routine for the SaveRegsToMem() function defined in the regvalue_app
+// application. This routine compares the register values stored by the
+// application after the ChangeRegs routine with the expected tool-assigned
+// values defined in regvalues.h.
+void CheckToolModifiedValues(CONTEXT* ctxt, void* /* ostream* */ ostptr);
 
-#endif // REGISTER_MODIFICATION_UTILS_H
+#endif  // REGISTER_MODIFICATION_UTILS_H

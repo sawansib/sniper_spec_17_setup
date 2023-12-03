@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -41,32 +41,29 @@ END_LEGAL */
 
 BOOL test = true;
 
-VOID ImgFirst(IMG img, VOID * v)
-{
-    if (!test)
-        return;
-    test = false;
+VOID ImgFirst(IMG img, VOID *v) {
+  if (!test) return;
+  test = false;
 
-    SYM sym = IMG_RegsymHead(img);
-    TEST(SYM_Valid(sym), "IMG_RegsymHead failed");
-    UINT32 headIndex = SYM_Index(sym);
+  SYM sym = IMG_RegsymHead(img);
+  TEST(SYM_Valid(sym), "IMG_RegsymHead failed");
+  UINT32 headIndex = SYM_Index(sym);
 
-    sym = SYM_Next(sym);
-    TEST(SYM_Valid(sym) && SYM_Index(sym) > headIndex, "SYM_Index failed");
+  sym = SYM_Next(sym);
+  TEST(SYM_Valid(sym) && SYM_Index(sym) > headIndex, "SYM_Index failed");
 
-    sym = SYM_Prev(IMG_RegsymHead(img));
-    TEST(sym == SYM_Invalid(), "SYM_Prev failed");
+  sym = SYM_Prev(IMG_RegsymHead(img));
+  TEST(sym == SYM_Invalid(), "SYM_Prev failed");
 }
 
-int main(INT32 argc, CHAR **argv)
-{
-    PIN_InitSymbols();
-    PIN_Init(argc, argv);
-    
-    IMG_AddInstrumentFunction(ImgFirst, 0);
-    
-    // Never returns
-    PIN_StartProgram();
-    
-    return 0;
+int main(INT32 argc, CHAR **argv) {
+  PIN_InitSymbols();
+  PIN_Init(argc, argv);
+
+  IMG_AddInstrumentFunction(ImgFirst, 0);
+
+  // Never returns
+  PIN_StartProgram();
+
+  return 0;
 }

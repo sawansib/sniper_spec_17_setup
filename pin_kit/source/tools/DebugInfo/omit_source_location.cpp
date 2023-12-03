@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -36,17 +36,19 @@ END_LEGAL */
  * line argument "-e" and can assume 3 possible values:
  * 0 - No assertion triggered
  * 1 - Triggers the assertion: IARG_MEMORY*_EA is only valid at IPOINT_BEFORE
- * 2 - Triggers the assertion: IARG_MEMORYOP_EA/IARG_MEMORYOP_MASKED_ON invalid memory operand index
+ * 2 - Triggers the assertion: IARG_MEMORYOP_EA/IARG_MEMORYOP_MASKED_ON invalid
+ memory operand index
    ===================================================================== */
 
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <string>
+
 #include "pin.H"
 
-KNOB<int> KnobAssertionNumber(KNOB_MODE_WRITEONCE, "pintool",
-    "e", "0", "specify assertion number to trigger (0 - 2)");
+KNOB<int> KnobAssertionNumber(KNOB_MODE_WRITEONCE, "pintool", "e", "0",
+                              "specify assertion number to trigger (0 - 2)");
 ofstream OutFile;
 
 static UINT64 icount = 0;
@@ -56,58 +58,53 @@ VOID docount() { icount++; }
 using namespace std;
 
 // Pin calls this function every time a new instruction is encountered
-VOID Instruction(INS ins, VOID *v)
-{
-    switch (KnobAssertionNumber.Value())
-    {
-        case 0:
-            // No assertion triggered
-            INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount, IARG_END);
-            break;
-        case 1:
-            // Triggers the assertion: IARG_MEMORY*_EA is only valid at IPOINT_BEFORE
-            if (INS_IsMemoryRead(ins))
-            {
-                INS_InsertCall(ins, IPOINT_AFTER, (AFUNPTR)docount, IARG_MEMORYREAD_EA, IARG_END);
-            }
-            break;
-        case 2:
-            // Triggers the assertion: IARG_MEMORYOP_EA/IARG_MEMORYOP_MASKED_ON invalid memory operand index
-            // by trying to pass an out of range operand number to the analysis routine
-            if (INS_IsMemoryRead(ins))
-            {
-                INS_InsertCall(ins, IPOINT_AFTER, (AFUNPTR)docount, IARG_MEMORYOP_EA, INS_MemoryOperandCount(ins) + 1, IARG_END);
-            }
-            break;
-    }
+VOID Instruction(INS ins, VOID *v) {
+  switch (KnobAssertionNumber.Value()) {
+    case 0:
+      // No assertion triggered
+      INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount, IARG_END);
+      break;
+    case 1:
+      // Triggers the assertion: IARG_MEMORY*_EA is only valid at IPOINT_BEFORE
+      if (INS_IsMemoryRead(ins)) {
+        INS_InsertCall(ins, IPOINT_AFTER, (AFUNPTR)docount, IARG_MEMORYREAD_EA,
+                       IARG_END);
+      }
+      break;
+    case 2:
+      // Triggers the assertion: IARG_MEMORYOP_EA/IARG_MEMORYOP_MASKED_ON
+      // invalid memory operand index by trying to pass an out of range operand
+      // number to the analysis routine
+      if (INS_IsMemoryRead(ins)) {
+        INS_InsertCall(ins, IPOINT_AFTER, (AFUNPTR)docount, IARG_MEMORYOP_EA,
+                       INS_MemoryOperandCount(ins) + 1, IARG_END);
+      }
+      break;
+  }
 }
 
 /* ===================================================================== */
 /* Print Help Message                                                    */
 /* ===================================================================== */
 
-INT32 Usage()
-{
-    cerr << "This tool triggers an assertion in various ways" << endl;
-    cerr << endl << KNOB_BASE::StringKnobSummary() << endl;
-    return -1;
+INT32 Usage() {
+  cerr << "This tool triggers an assertion in various ways" << endl;
+  cerr << endl << KNOB_BASE::StringKnobSummary() << endl;
+  return -1;
 }
 
-int main(int argc, char **argv)
-{
-    if (PIN_Init(argc, argv))
-    {
-        Usage();
-        return EXIT_FAILURE;
-    }
-    if (KnobAssertionNumber.Value() < 0 || KnobAssertionNumber.Value() > 2)
-    {
-        cerr << "Assertion number must be between 0 to 2" << endl;
-        return EXIT_FAILURE;
-    }
-
-    INS_AddInstrumentFunction(Instruction, NULL);
-
-    PIN_StartProgram();
+int main(int argc, char **argv) {
+  if (PIN_Init(argc, argv)) {
+    Usage();
     return EXIT_FAILURE;
+  }
+  if (KnobAssertionNumber.Value() < 0 || KnobAssertionNumber.Value() > 2) {
+    cerr << "Assertion number must be between 0 to 2" << endl;
+    return EXIT_FAILURE;
+  }
+
+  INS_AddInstrumentFunction(Instruction, NULL);
+
+  PIN_StartProgram();
+  return EXIT_FAILURE;
 }

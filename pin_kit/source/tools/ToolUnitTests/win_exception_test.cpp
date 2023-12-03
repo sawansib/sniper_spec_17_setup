@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,46 +29,40 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 
-#include <iostream>
-#include <sstream>
-#include <cstdlib>
-#include <cstring>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <sstream>
+
 #include "windows.h"
 
-
 static int enteredFilter = 0;
-static int MyExceptionFilter(LPEXCEPTION_POINTERS exceptPtr)
-{
-    enteredFilter = 1;
-    return EXCEPTION_EXECUTE_HANDLER;
-
+static int MyExceptionFilter(LPEXCEPTION_POINTERS exceptPtr) {
+  enteredFilter = 1;
+  return EXCEPTION_EXECUTE_HANDLER;
 }
 
-int main( int argc, char * argv[] )
-{
-__try
+int main(int argc, char* argv[]) {
+  __try {
+    __asm
     {
-        __asm
-        {
             xor ebx, ebx
-            mov eax, dword ptr [ebx]  // test verifies that Pin does NOT optimize away this instruction
-                                      // which would mean the exception is not generated
+            mov eax, dword ptr [ebx]  // test verifies that Pin does NOT optimize away this
+                       // instruction which would mean the exception is not
+                       // generated
             xor eax, eax              // makes previous load of eax dead - make sure
-				                      // pin does not optimize away that load which would
-									  // cause the exception not to occur.
-         }
+                       // pin does not optimize away that load which would
+                       // cause the exception not to occur.
     }
-    __except (MyExceptionFilter(GetExceptionInformation()))
-    {
-    }
-	if (!enteredFilter)
-    {
-        printf( "FAILURE: MyExceptionFilter not entered\n");
-		fflush (stdout);
-		return (-1);
-    }
-    return 0;
-    
+  } __except (MyExceptionFilter(GetExceptionInformation())) {
+  }
+  if (!enteredFilter) {
+    printf("FAILURE: MyExceptionFilter not entered\n");
+    fflush(stdout);
+    return (-1);
+  }
+  return 0;
 }

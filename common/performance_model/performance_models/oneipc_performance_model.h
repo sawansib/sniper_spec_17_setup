@@ -3,22 +3,21 @@
 
 #include "performance_model.h"
 
-class OneIPCPerformanceModel : public PerformanceModel
-{
-public:
-   OneIPCPerformanceModel(Core *core);
-   ~OneIPCPerformanceModel();
+class OneIPCPerformanceModel : public PerformanceModel {
+ public:
+  OneIPCPerformanceModel(Core *core);
+  ~OneIPCPerformanceModel();
 
-private:
-   void handleInstruction(DynamicInstruction *instruction);
+ private:
+  void handleInstruction(DynamicInstruction *instruction);
 
-   bool isModeled(Instruction const* instruction) const;
+  bool isModeled(Instruction const *instruction) const;
 
-   UInt64 m_latency_cutoff;
+  UInt64 m_latency_cutoff;
 
-   SubsecondTime m_cpiBase;
-   SubsecondTime m_cpiBranchPredictor;
-   std::vector<SubsecondTime> m_cpiDataCache;
+  SubsecondTime m_cpiBase;
+  SubsecondTime m_cpiBranchPredictor;
+  std::vector<SubsecondTime> m_cpiDataCache;
 };
 
-#endif // ONEIPC_PERFORMANCE_MODEL_H
+#endif  // ONEIPC_PERFORMANCE_MODEL_H

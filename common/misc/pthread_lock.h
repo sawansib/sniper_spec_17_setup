@@ -1,21 +1,20 @@
 #ifndef PTHREAD_LOCK_H
 #define PTHREAD_LOCK_H
 
-#include "lock.h"
-
 #include <pthread.h>
 
-class PthreadLock : public LockImplementation
-{
-public:
-   PthreadLock();
-   ~PthreadLock();
+#include "lock.h"
 
-   void acquire();
-   void release();
+class PthreadLock : public LockImplementation {
+ public:
+  PthreadLock();
+  ~PthreadLock();
 
-private:
-   pthread_mutex_t _mutx;
+  void acquire();
+  void release();
+
+ private:
+  pthread_mutex_t _mutx;
 };
 
-#endif // PTHREAD_LOCK_H
+#endif  // PTHREAD_LOCK_H

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -31,14 +31,16 @@ END_LEGAL */
 
 /* ===================================================================== */
 /*! @file
-  Replaces probed_func that has a branch within the bytes which must be overwritten
+  Replaces probed_func that has a branch within the bytes which must be
+  overwritten
  */
 
 #include <stdlib.h>
- 
-#include "pin.H"
-#include <iostream>
+
 #include <fstream>
+#include <iostream>
+
+#include "pin.H"
 
 using namespace std;
 
@@ -46,81 +48,65 @@ using namespace std;
 /* Global Variables */
 /* ===================================================================== */
 
-
 typedef int (*FUNCPTR)(int);
 static int (*pf_jmp_in_probe)(int num);
 
+/* ===================================================================== */
+
+INT32 Usage() {
+  cerr << "This pin tool replaces probed_func()\n"
+          "\n";
+  cerr << KNOB_BASE::StringKnobSummary();
+  cerr << endl;
+  return -1;
+}
 
 /* ===================================================================== */
 
-INT32 Usage()
-{
-    cerr <<
-        "This pin tool replaces probed_func()\n"
-        "\n";
-    cerr << KNOB_BASE::StringKnobSummary();
-    cerr << endl;
-    return -1;
+int ToolReplacementFunc(int num) {
+  cout << "ToolReplacementFunc: calling probed_func()" << endl << flush;
+  int retVal = (pf_jmp_in_probe)(num);
+  cout << "ToolReplacementFunc: back from probed_func()" << endl << flush;
+  return retVal;
 }
-
-
-/* ===================================================================== */
-
-int ToolReplacementFunc(int num)
-{
-    cout << "ToolReplacementFunc: calling probed_func()" << endl << flush;
-    int retVal = (pf_jmp_in_probe)(num);
-    cout << "ToolReplacementFunc: back from probed_func()" << endl << flush;
-    return retVal;
-}
-
 
 /* ===================================================================== */
 
 // Called every time a new image is loaded.
 // Look for routines that we want to replace.
-VOID ImageLoad(IMG img, VOID *v)
-{
-    RTN rtn = RTN_FindByName(img, "probed_func");
+VOID ImageLoad(IMG img, VOID *v) {
+  RTN rtn = RTN_FindByName(img, "probed_func");
 
-    if ( RTN_Valid(rtn))
-    {
-        if ( RTN_IsSafeForProbedReplacementEx(rtn, PROBE_MODE_ALLOW_RELOCATION) )
-        {
-            
-            // Save the function pointer that points to the new location of
-            // the entry point of the original exit in this image.
-            //
-            pf_jmp_in_probe = (FUNCPTR)RTN_ReplaceProbedEx( rtn, PROBE_MODE_ALLOW_RELOCATION, 
-                            AFUNPTR( ToolReplacementFunc ));
-            
-            cout << "ImageLoad: Replaced probed_func() in:"  << IMG_Name(img) << endl;
-        }
-        else
-        {
-            cout << "ImageLocad: Can't replace probed_func() in:"  << IMG_Name(img) << endl;
-            exit(-1);
-        }
+  if (RTN_Valid(rtn)) {
+    if (RTN_IsSafeForProbedReplacementEx(rtn, PROBE_MODE_ALLOW_RELOCATION)) {
+      // Save the function pointer that points to the new location of
+      // the entry point of the original exit in this image.
+      //
+      pf_jmp_in_probe = (FUNCPTR)RTN_ReplaceProbedEx(
+          rtn, PROBE_MODE_ALLOW_RELOCATION, AFUNPTR(ToolReplacementFunc));
+
+      cout << "ImageLoad: Replaced probed_func() in:" << IMG_Name(img) << endl;
+    } else {
+      cout << "ImageLocad: Can't replace probed_func() in:" << IMG_Name(img)
+           << endl;
+      exit(-1);
     }
+  }
 }
-
 
 /* ===================================================================== */
 
-int main(int argc, CHAR *argv[])
-{
-    PIN_InitSymbols();
+int main(int argc, CHAR *argv[]) {
+  PIN_InitSymbols();
 
-    if( PIN_Init(argc,argv) )
-        return Usage();
+  if (PIN_Init(argc, argv)) return Usage();
 
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-    
-    PIN_StartProgramProbed();
-    
-    return 0;
+  IMG_AddInstrumentFunction(ImageLoad, 0);
+
+  PIN_StartProgramProbed();
+
+  return 0;
 }
-
 
 /* ===================================================================== */
 /* eof */

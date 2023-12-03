@@ -1,7 +1,6 @@
 
 /* Thread and interpreter state structures and their interfaces */
 
-
 #ifndef Py_PYSTATE_H
 #define Py_PYSTATE_H
 #ifdef __cplusplus
@@ -14,28 +13,26 @@ struct _ts; /* Forward */
 struct _is; /* Forward */
 
 typedef struct _is {
+  struct _is *next;
+  struct _ts *tstate_head;
 
-    struct _is *next;
-    struct _ts *tstate_head;
+  PyObject *modules;
+  PyObject *sysdict;
+  PyObject *builtins;
+  PyObject *modules_reloading;
 
-    PyObject *modules;
-    PyObject *sysdict;
-    PyObject *builtins;
-    PyObject *modules_reloading;
-
-    PyObject *codec_search_path;
-    PyObject *codec_search_cache;
-    PyObject *codec_error_registry;
+  PyObject *codec_search_path;
+  PyObject *codec_search_cache;
+  PyObject *codec_error_registry;
 
 #ifdef HAVE_DLOPEN
-    int dlopenflags;
+  int dlopenflags;
 #endif
 #ifdef WITH_TSC
-    int tscdump;
+  int tscdump;
 #endif
 
 } PyInterpreterState;
-
 
 /* State unique per thread */
 
@@ -54,51 +51,50 @@ typedef int (*Py_tracefunc)(PyObject *, struct _frame *, int, PyObject *);
 #define PyTrace_C_RETURN 6
 
 typedef struct _ts {
-    /* See Python/ceval.c for comments explaining most fields */
+  /* See Python/ceval.c for comments explaining most fields */
 
-    struct _ts *next;
-    PyInterpreterState *interp;
+  struct _ts *next;
+  PyInterpreterState *interp;
 
-    struct _frame *frame;
-    int recursion_depth;
-    /* 'tracing' keeps track of the execution depth when tracing/profiling.
-       This is to prevent the actual trace/profile code from being recorded in
-       the trace/profile. */
-    int tracing;
-    int use_tracing;
+  struct _frame *frame;
+  int recursion_depth;
+  /* 'tracing' keeps track of the execution depth when tracing/profiling.
+     This is to prevent the actual trace/profile code from being recorded in
+     the trace/profile. */
+  int tracing;
+  int use_tracing;
 
-    Py_tracefunc c_profilefunc;
-    Py_tracefunc c_tracefunc;
-    PyObject *c_profileobj;
-    PyObject *c_traceobj;
+  Py_tracefunc c_profilefunc;
+  Py_tracefunc c_tracefunc;
+  PyObject *c_profileobj;
+  PyObject *c_traceobj;
 
-    PyObject *curexc_type;
-    PyObject *curexc_value;
-    PyObject *curexc_traceback;
+  PyObject *curexc_type;
+  PyObject *curexc_value;
+  PyObject *curexc_traceback;
 
-    PyObject *exc_type;
-    PyObject *exc_value;
-    PyObject *exc_traceback;
+  PyObject *exc_type;
+  PyObject *exc_value;
+  PyObject *exc_traceback;
 
-    PyObject *dict;  /* Stores per-thread state */
+  PyObject *dict; /* Stores per-thread state */
 
-    /* tick_counter is incremented whenever the check_interval ticker
-     * reaches zero. The purpose is to give a useful measure of the number
-     * of interpreted bytecode instructions in a given thread.  This
-     * extremely lightweight statistic collector may be of interest to
-     * profilers (like psyco.jit()), although nothing in the core uses it.
-     */
-    int tick_counter;
+  /* tick_counter is incremented whenever the check_interval ticker
+   * reaches zero. The purpose is to give a useful measure of the number
+   * of interpreted bytecode instructions in a given thread.  This
+   * extremely lightweight statistic collector may be of interest to
+   * profilers (like psyco.jit()), although nothing in the core uses it.
+   */
+  int tick_counter;
 
-    int gilstate_counter;
+  int gilstate_counter;
 
-    PyObject *async_exc; /* Asynchronous exception to raise */
-    long thread_id; /* Thread id where this tstate was created */
+  PyObject *async_exc; /* Asynchronous exception to raise */
+  long thread_id;      /* Thread id where this tstate was created */
 
-    /* XXX signal handlers should also be here */
+  /* XXX signal handlers should also be here */
 
 } PyThreadState;
-
 
 PyAPI_FUNC(PyInterpreterState *) PyInterpreterState_New(void);
 PyAPI_FUNC(void) PyInterpreterState_Clear(PyInterpreterState *);
@@ -119,7 +115,6 @@ PyAPI_FUNC(PyThreadState *) PyThreadState_Swap(PyThreadState *);
 PyAPI_FUNC(PyObject *) PyThreadState_GetDict(void);
 PyAPI_FUNC(int) PyThreadState_SetAsyncExc(long, PyObject *);
 
-
 /* Variable and macro for in-line access to current thread state */
 
 PyAPI_DATA(PyThreadState *) _PyThreadState_Current;
@@ -130,9 +125,7 @@ PyAPI_DATA(PyThreadState *) _PyThreadState_Current;
 #define PyThreadState_GET() (_PyThreadState_Current)
 #endif
 
-typedef
-    enum {PyGILState_LOCKED, PyGILState_UNLOCKED}
-        PyGILState_STATE;
+typedef enum { PyGILState_LOCKED, PyGILState_UNLOCKED } PyGILState_STATE;
 
 /* Ensure that the current thread is ready to call the Python
    C API, regardless of the current state of Python, or of its

@@ -5,20 +5,19 @@
 #include "fixed_types.h"
 #include "network.h"
 
-class CoreThread : public Runnable
-{
-public:
-   CoreThread();
-   ~CoreThread();
+class CoreThread : public Runnable {
+ public:
+  CoreThread();
+  ~CoreThread();
 
-   void spawn();
+  void spawn();
 
-private:
-   void run();
+ private:
+  void run();
 
-   static void terminateFunc(void *vp, NetPacket pkt);
+  static void terminateFunc(void *vp, NetPacket pkt);
 
-   _Thread *m_thread;
+  _Thread *m_thread;
 };
 
-#endif // CORE_THREAD_H
+#endif  // CORE_THREAD_H

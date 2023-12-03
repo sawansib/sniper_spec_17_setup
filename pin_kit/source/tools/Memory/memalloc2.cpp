@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -30,32 +30,31 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 #include <stdio.h>
 #include <stdlib.h>
-#include "pin.H"
 
+#include "pin.H"
 
 /* ===================================================================== */
 /* Commandline Switches */
 /* ===================================================================== */
 
-KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE,    "pintool",
-    "o", "memalloc2.out", "specify memalloc2 file name");
-
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o",
+                            "memalloc2.out", "specify memalloc2 file name");
 
 /* ===================================================================== */
 /* Globals */
 /* ===================================================================== */
 
 void* globalReserve = NULL;
-static const size_t ReserveSize = 256*1024*1024;
+static const size_t ReserveSize = 256 * 1024 * 1024;
 volatile BOOL isOutOfMemCalled = FALSE;
-FILE * out;
+FILE* out;
 
 /* ===================================================================== */
-// Specific Linux code - 
+// Specific Linux code -
 // On fc5, we found that when running out of memory, the kernal memory
 // was also exausted and the process was killed by SIGKILL.
-// Therefore, use getrlimit64/setrlimit64 in order to make sure kernel 
-// memory is not exausted. This limitation is also valuable for 64-bit 
+// Therefore, use getrlimit64/setrlimit64 in order to make sure kernel
+// memory is not exausted. This limitation is also valuable for 64-bit
 // Linux systems in order to prevent memory trashing
 //
 // On FreeBSD we found the system to hang when kern.maxswzone isn't large
@@ -82,132 +81,113 @@ typedef struct rlimit rlimit_t;
 #if defined(TARGET_LINUX) && !defined(TARGET_ANDROID)
 #include <sys/sysinfo.h>
 
-UINT64 GetTotalSwap()
-{
-    struct sysinfo info;
+UINT64 GetTotalSwap() {
+  struct sysinfo info;
 
-    if(sysinfo(&info) < 0)
-        return 0;
+  if (sysinfo(&info) < 0) return 0;
 
-	return (UINT64)info.totalswap * info.mem_unit;
+  return (UINT64)info.totalswap * info.mem_unit;
 }
 
 #else
-UINT64 GetTotalSwap()
-{
-	// Not supported on FreeBSD
-	return 0;
+UINT64 GetTotalSwap() {
+  // Not supported on FreeBSD
+  return 0;
 }
 #endif
 
 #include <sys/resource.h>
 
-#define TOP_LIMIT (1024*1024*1024)
+#define TOP_LIMIT (1024 * 1024 * 1024)
 
-void LimitAvailableSpace()
-{
-    UINT64 myLimit;
-    rlimit_t rlim;
+void LimitAvailableSpace() {
+  UINT64 myLimit;
+  rlimit_t rlim;
 
-    // Get total swap in bytes (originally it is in mem units).
-	UINT64 totalswap = GetTotalSwap();
+  // Get total swap in bytes (originally it is in mem units).
+  UINT64 totalswap = GetTotalSwap();
 
-    // Make the limit at most 40% of total swap area or 400Mb
-    if(totalswap == 0)
-    {
-        myLimit = (TOP_LIMIT / 10) * 4;
+  // Make the limit at most 40% of total swap area or 400Mb
+  if (totalswap == 0) {
+    myLimit = (TOP_LIMIT / 10) * 4;
+  } else {
+    if (totalswap > (UINT64)(TOP_LIMIT)) {
+      myLimit = (TOP_LIMIT / 10) * 4;
+    } else {
+      myLimit = (totalswap / 10) * 4;
     }
-    else
-    {
-        if(totalswap > (UINT64)(TOP_LIMIT))
-        {
-            myLimit = (TOP_LIMIT / 10) * 4;
-        }
-        else
-        {
-            myLimit = (totalswap / 10) * 4;
-        }
-    }
+  }
 
-    if(GETRLIMIT(RLIMIT_AS, &rlim) < 0)
-    {
-        fprintf(out, "failed to getrlimit: continue...\n");
-        return;
-    }
+  if (GETRLIMIT(RLIMIT_AS, &rlim) < 0) {
+    fprintf(out, "failed to getrlimit: continue...\n");
+    return;
+  }
 
-    if ((size_t)rlim.rlim_cur > myLimit);
-    {
-        rlim.rlim_cur = myLimit;
-    }
+  if ((size_t)rlim.rlim_cur > myLimit)
+    ;
+  { rlim.rlim_cur = myLimit; }
 
-    if(SETRLIMIT(RLIMIT_AS, &rlim) < 0)
-    {
-        fprintf(out, "failed to setrlimit: continue...\n");
-        return;
-    }
+  if (SETRLIMIT(RLIMIT_AS, &rlim) < 0) {
+    fprintf(out, "failed to setrlimit: continue...\n");
+    return;
+  }
 }
 #endif
 
-VOID Fini(INT32 code, VOID *v)
-{
-    char *ptr;
-    do
-    {
-        ptr = (char *)malloc(1024);
-    } while ((ptr != NULL) && (isOutOfMemCalled == FALSE));
-    if(isOutOfMemCalled == FALSE)
-    {
-        fprintf(out, "Got NULL while trying to allocate memory, test failure.\n");
-    } else
-    {
-        fprintf(out, "OutOfMem was called while trying to allocate memory, test successful.\n");
-    }
-    fclose(out);
+VOID Fini(INT32 code, VOID* v) {
+  char* ptr;
+  do {
+    ptr = (char*)malloc(1024);
+  } while ((ptr != NULL) && (isOutOfMemCalled == FALSE));
+  if (isOutOfMemCalled == FALSE) {
+    fprintf(out, "Got NULL while trying to allocate memory, test failure.\n");
+  } else {
+    fprintf(out,
+            "OutOfMem was called while trying to allocate memory, test "
+            "successful.\n");
+  }
+  fclose(out);
 }
 
 // This callback function should never be called.
-VOID Assert(size_t size, VOID* v)
-{
-    fprintf(out, "test failure.\n");
-    exit(-1);
+VOID Assert(size_t size, VOID* v) {
+  fprintf(out, "test failure.\n");
+  exit(-1);
 }
 
 // This callback function is not serialized by Pin.
 // pin tool writer should serialize it if it is needed (for MT applications).
-VOID OutOfMem(size_t size, VOID* v)
-{
-    //First thing - free memory
-    if(globalReserve != NULL)
-    {
-        free(globalReserve);
-        globalReserve = NULL;
+VOID OutOfMem(size_t size, VOID* v) {
+  // First thing - free memory
+  if (globalReserve != NULL) {
+    free(globalReserve);
+    globalReserve = NULL;
 
-        isOutOfMemCalled = TRUE;
-        //Calling malloc() in here can cause an infinite recursion, try to avoid it.
-        //if(size < (ReserveSize / 2))
-        //{
-        //    globalReserve = malloc(ReserveSize / 2);
-        //}
-    }
+    isOutOfMemCalled = TRUE;
+    // Calling malloc() in here can cause an infinite recursion, try to avoid
+    // it. if(size < (ReserveSize / 2))
+    //{
+    //     globalReserve = malloc(ReserveSize / 2);
+    // }
+  }
 }
 
-int main(int argc, char * argv[])
-{    
-    PIN_Init(argc, argv);
-    PIN_InitSymbols();
+int main(int argc, char* argv[]) {
+  PIN_Init(argc, argv);
+  PIN_InitSymbols();
 
-    globalReserve = malloc(ReserveSize);
-    PIN_AddOutOfMemoryFunction(Assert, 0);
-    PIN_AddOutOfMemoryFunction(OutOfMem, 0);
+  globalReserve = malloc(ReserveSize);
+  PIN_AddOutOfMemoryFunction(Assert, 0);
+  PIN_AddOutOfMemoryFunction(OutOfMem, 0);
 
 #if defined(TARGET_LINUX) || defined(TARGET_MAC)
-    LimitAvailableSpace();
+  LimitAvailableSpace();
 #endif
 
-    out = fopen(KnobOutputFile.Value().c_str(), "w");
+  out = fopen(KnobOutputFile.Value().c_str(), "w");
 
-    PIN_AddFiniFunction(Fini, 0);
-    PIN_StartProgram();
- 
-    return 0;
+  PIN_AddFiniFunction(Fini, 0);
+  PIN_StartProgram();
+
+  return 0;
 }

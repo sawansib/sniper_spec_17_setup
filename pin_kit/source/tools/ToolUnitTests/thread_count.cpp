@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,48 +29,45 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 #include <stdio.h>
+
 #include "pin.H"
 
-FILE * out;
+FILE *out;
 PIN_LOCK lock;
 INT32 threadCreated = 0;
 INT32 threadEnded = 0;
 
-VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v)
-{
-    PIN_GetLock(&lock, PIN_GetTid());
-    threadCreated++;
-    PIN_ReleaseLock(&lock);
+VOID ThreadStart(THREADID threadid, CONTEXT *ctxt, INT32 flags, VOID *v) {
+  PIN_GetLock(&lock, PIN_GetTid());
+  threadCreated++;
+  PIN_ReleaseLock(&lock);
 }
 
-VOID ThreadFini(THREADID threadid, const CONTEXT *ctxt, INT32 code, VOID *v)
-{
-    PIN_GetLock(&lock, PIN_GetTid());
-    threadEnded++;
-    PIN_ReleaseLock(&lock);
+VOID ThreadFini(THREADID threadid, const CONTEXT *ctxt, INT32 code, VOID *v) {
+  PIN_GetLock(&lock, PIN_GetTid());
+  threadEnded++;
+  PIN_ReleaseLock(&lock);
 }
 
-VOID Fini(INT32 code, VOID *v)
-{
-    fprintf(out, "Number of threads created  - %d\n", (int)threadCreated);
-    fprintf(out, "Number of threads terminated  - %d\n", (int)threadEnded);
-    fclose(out);
+VOID Fini(INT32 code, VOID *v) {
+  fprintf(out, "Number of threads created  - %d\n", (int)threadCreated);
+  fprintf(out, "Number of threads terminated  - %d\n", (int)threadEnded);
+  fclose(out);
 }
 
-int main(INT32 argc, CHAR **argv)
-{
-    PIN_InitLock(&lock);
+int main(INT32 argc, CHAR **argv) {
+  PIN_InitLock(&lock);
 
-    out = fopen("thread_count.out", "w");
+  out = fopen("thread_count.out", "w");
 
-    PIN_Init(argc, argv);
+  PIN_Init(argc, argv);
 
-    PIN_AddThreadStartFunction(ThreadStart, 0);
-    PIN_AddThreadFiniFunction(ThreadFini, 0);
-    PIN_AddFiniFunction(Fini, 0);
+  PIN_AddThreadStartFunction(ThreadStart, 0);
+  PIN_AddThreadFiniFunction(ThreadFini, 0);
+  PIN_AddFiniFunction(Fini, 0);
 
-    // Never returns
-    PIN_StartProgram();
+  // Never returns
+  PIN_StartProgram();
 
-    return 0;
+  return 0;
 }

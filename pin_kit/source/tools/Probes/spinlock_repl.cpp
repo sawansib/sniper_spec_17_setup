@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -35,10 +35,11 @@ END_LEGAL */
  */
 
 #include <stdlib.h>
- 
-#include "pin.H"
-#include <iostream>
+
 #include <fstream>
+#include <iostream>
+
+#include "pin.H"
 
 using namespace std;
 
@@ -47,78 +48,64 @@ using namespace std;
 /* ===================================================================== */
 
 typedef int (*FUNCPTR)(pthread_spinlock_t *);
-static int (*pf_spinlock)(pthread_spinlock_t * lock);
-
-
-/* ===================================================================== */
-
-INT32 Usage()
-{
-    cerr <<
-        "This pin tool replaces pthread_spin_lock()\n"
-        "\n";
-    cerr << KNOB_BASE::StringKnobSummary();
-    cerr << endl;
-    return -1;
-}
-
+static int (*pf_spinlock)(pthread_spinlock_t *lock);
 
 /* ===================================================================== */
 
-int SpinLock(pthread_spinlock_t * lock)
-{
-    cout << "SpinLock: calling pthread_spin_lock()" << endl;
-
-    return (pf_spinlock)(lock);
+INT32 Usage() {
+  cerr << "This pin tool replaces pthread_spin_lock()\n"
+          "\n";
+  cerr << KNOB_BASE::StringKnobSummary();
+  cerr << endl;
+  return -1;
 }
 
+/* ===================================================================== */
+
+int SpinLock(pthread_spinlock_t *lock) {
+  cout << "SpinLock: calling pthread_spin_lock()" << endl;
+
+  return (pf_spinlock)(lock);
+}
 
 /* ===================================================================== */
 
 // Called every time a new image is loaded.
 // Look for routines that we want to replace.
-VOID ImageLoad(IMG img, VOID *v)
-{
-    RTN rtn = RTN_FindByName(img, "pthread_spin_lock");
+VOID ImageLoad(IMG img, VOID *v) {
+  RTN rtn = RTN_FindByName(img, "pthread_spin_lock");
 
-    if ( RTN_Valid(rtn))
-    {
-        if ( RTN_IsSafeForProbedReplacementEx(rtn, PROBE_MODE_ALLOW_RELOCATION) )
-        {
-            
-            // Save the function pointer that points to the new location of
-            // the entry point of the original exit in this image.
-            //
-            pf_spinlock = (FUNCPTR)RTN_ReplaceProbedEx( rtn, PROBE_MODE_ALLOW_RELOCATION, 
-                            AFUNPTR( SpinLock ));
-            
-            cout << "ImageLoad: Replaced pthread_spin_lock() in:"  << IMG_Name(img) << endl;
-        }
-        else
-        {
-            cout << "ImageLocad: Can't replace pthread_spin_lock() in:"  << IMG_Name(img) << endl;
-            exit(-1);
-        }
+  if (RTN_Valid(rtn)) {
+    if (RTN_IsSafeForProbedReplacementEx(rtn, PROBE_MODE_ALLOW_RELOCATION)) {
+      // Save the function pointer that points to the new location of
+      // the entry point of the original exit in this image.
+      //
+      pf_spinlock = (FUNCPTR)RTN_ReplaceProbedEx(
+          rtn, PROBE_MODE_ALLOW_RELOCATION, AFUNPTR(SpinLock));
+
+      cout << "ImageLoad: Replaced pthread_spin_lock() in:" << IMG_Name(img)
+           << endl;
+    } else {
+      cout << "ImageLocad: Can't replace pthread_spin_lock() in:"
+           << IMG_Name(img) << endl;
+      exit(-1);
     }
+  }
 }
-
 
 /* ===================================================================== */
 
-int main(int argc, CHAR *argv[])
-{
-    PIN_InitSymbols();
+int main(int argc, CHAR *argv[]) {
+  PIN_InitSymbols();
 
-    if( PIN_Init(argc,argv) )
-        return Usage();
+  if (PIN_Init(argc, argv)) return Usage();
 
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-    
-    PIN_StartProgramProbed();
-    
-    return 0;
+  IMG_AddInstrumentFunction(ImageLoad, 0);
+
+  PIN_StartProgramProbed();
+
+  return 0;
 }
-
 
 /* ===================================================================== */
 /* eof */

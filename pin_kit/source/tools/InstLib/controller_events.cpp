@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,57 +29,55 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 
-#include <sstream> 
 #include "controller_events.H"
+
+#include <sstream>
 
 using namespace CONTROLLER;
 
-CONTROLLER_EVENTS::CONTROLLER_EVENTS(){
-    _events["invalid"] = EVENT_INVALID;
-    _events["precond"] = EVENT_PRECOND;
-    _events["start"] = EVENT_START;
-    _events["stop"] = EVENT_STOP;
-    _events["threaid"] = EVENT_THREADID;
-    _events["warmup-start"] = EVENT_WARMUP_START;
-    _events["warmup-stop"] = EVENT_WARMUP_STOP;
-    _events["prolog-start"] = EVENT_PROLOG_START;
-    _events["prolog-stop"] = EVENT_PROLOG_STOP;
-    _events["epilog-start"] = EVENT_EPILOG_START;
-    _events["epilog-stop"] = EVENT_EPILOG_STOP;
-    _events["stats-emit"] = EVENT_STATS_EMIT;
-    _events["stats-reset"] = EVENT_STATS_RESET;
+CONTROLLER_EVENTS::CONTROLLER_EVENTS() {
+  _events["invalid"] = EVENT_INVALID;
+  _events["precond"] = EVENT_PRECOND;
+  _events["start"] = EVENT_START;
+  _events["stop"] = EVENT_STOP;
+  _events["threaid"] = EVENT_THREADID;
+  _events["warmup-start"] = EVENT_WARMUP_START;
+  _events["warmup-stop"] = EVENT_WARMUP_STOP;
+  _events["prolog-start"] = EVENT_PROLOG_START;
+  _events["prolog-stop"] = EVENT_PROLOG_STOP;
+  _events["epilog-start"] = EVENT_EPILOG_START;
+  _events["epilog-stop"] = EVENT_EPILOG_STOP;
+  _events["stats-emit"] = EVENT_STATS_EMIT;
+  _events["stats-reset"] = EVENT_STATS_RESET;
 }
 
-EVENT_TYPE CONTROLLER_EVENTS::AddEvent(const string& event_name){
-    map<string,EVENT_TYPE>::iterator iter = _events.find(event_name);
-    if (iter != _events.end()){
-        ASSERT(FALSE,"event: " + event_name + " already exists");
+EVENT_TYPE CONTROLLER_EVENTS::AddEvent(const string& event_name) {
+  map<string, EVENT_TYPE>::iterator iter = _events.find(event_name);
+  if (iter != _events.end()) {
+    ASSERT(FALSE, "event: " + event_name + " already exists");
+  }
+
+  ASSERT(_events.size() < _max_user_ev, "not enough events");
+  EVENT_TYPE ev = static_cast<EVENT_TYPE>(_events.size());
+  _events[event_name] = ev;
+  return ev;
+}
+
+string CONTROLLER_EVENTS::IDToString(EVENT_TYPE id) {
+  map<string, EVENT_TYPE>::iterator iter = _events.begin();
+  for (; iter != _events.end(); iter++) {
+    if (iter->second == id) {
+      return iter->first;
     }
-    
-    ASSERT(_events.size() < _max_user_ev, "not enough events");
-    EVENT_TYPE ev = static_cast<EVENT_TYPE>(_events.size());
-    _events[event_name] = ev;
-    return ev;
- 
+  }
+
+  return "invalid";
 }
 
-string CONTROLLER_EVENTS::IDToString(EVENT_TYPE id){
-    map<string,EVENT_TYPE>::iterator iter = _events.begin();
-    for (;iter != _events.end(); iter++){
-        if (iter->second == id){
-            return iter->first;
-        }
-    }
-    
-    return "invalid";
-    
+EVENT_TYPE CONTROLLER_EVENTS::EventStringToType(const string& event_name) {
+  map<string, EVENT_TYPE>::iterator iter = _events.find(event_name);
+  if (iter == _events.end()) {
+    ASSERT(FALSE, "Unsupported event" + event_name);
+  }
+  return iter->second;
 }
-
-EVENT_TYPE CONTROLLER_EVENTS::EventStringToType(const string& event_name){
-    map<string,EVENT_TYPE>::iterator iter = _events.find(event_name);
-    if (iter == _events.end()){
-        ASSERT(FALSE,"Unsupported event" + event_name);
-    }
-    return iter->second;
-}
-

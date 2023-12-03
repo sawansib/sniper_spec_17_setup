@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,38 +29,33 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 
-
 #include <assert.h>
 #include <stdio.h>
+
 #include "pin.H"
 
 KNOB<BOOL> KnobUseIargConstContext(KNOB_MODE_WRITEONCE, "pintool",
-                                   "const_context", "0", "use IARG_CONST_CONTEXT");
-
+                                   "const_context", "0",
+                                   "use IARG_CONST_CONTEXT");
 
 ADDRINT globX87Val;
 
-VOID AnalysisFunc(CONTEXT *context)
-{
-    globX87Val = PIN_GetContextReg(context, REG_X87);
+VOID AnalysisFunc(CONTEXT *context) {
+  globX87Val = PIN_GetContextReg(context, REG_X87);
 }
 
-VOID Instruction(INS ins, VOID *v)
-{
-  	INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)AnalysisFunc, 
-                   (KnobUseIargConstContext)?IARG_CONST_CONTEXT:IARG_CONTEXT,
-                   IARG_END);
-    
+VOID Instruction(INS ins, VOID *v) {
+  INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)AnalysisFunc,
+                 (KnobUseIargConstContext) ? IARG_CONST_CONTEXT : IARG_CONTEXT,
+                 IARG_END);
 }
 
+int main(int argc, char *argv[]) {
+  PIN_Init(argc, argv);
 
-int main(int argc, char * argv[])
-{
-    PIN_Init(argc, argv);
+  INS_AddInstrumentFunction(Instruction, 0);
 
-    INS_AddInstrumentFunction(Instruction, 0);
+  PIN_StartProgram();
 
-    PIN_StartProgram();
-    
-    return 0;
+  return 0;
 }

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -28,13 +28,13 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <string>
+
 #include "pin.H"
 
 using namespace std;
-
 
 /* ===================================================================== */
 /* Global Variables and Definitions */
@@ -50,57 +50,46 @@ std::ofstream trace;
 
 /* ===================================================================== */
 
-VOID ImageLoad(IMG img, VOID * v)
-{
-    // Looking for main symbol only in main image
-    IMG_TYPE imgType = IMG_Type(img);
-    if(imgType ==  IMG_TYPE_STATIC || imgType == IMG_TYPE_SHARED)
-    {
-        for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec))
-        {
-            for (RTN rtn = SEC_RtnHead(sec); RTN_Valid(rtn); rtn = RTN_Next(rtn))
-            {
-                if (RTN_Name(rtn) == MAINNAME)
-                {
-                    string  filePath;
-                    INT32 line;
-                    PIN_GetSourceLocation(RTN_Address(rtn), NULL, &line, &filePath);
+VOID ImageLoad(IMG img, VOID *v) {
+  // Looking for main symbol only in main image
+  IMG_TYPE imgType = IMG_Type(img);
+  if (imgType == IMG_TYPE_STATIC || imgType == IMG_TYPE_SHARED) {
+    for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec)) {
+      for (RTN rtn = SEC_RtnHead(sec); RTN_Valid(rtn); rtn = RTN_Next(rtn)) {
+        if (RTN_Name(rtn) == MAINNAME) {
+          string filePath;
+          INT32 line;
+          PIN_GetSourceLocation(RTN_Address(rtn), NULL, &line, &filePath);
 
-                    if (filePath != "")
-                    {
-                        string::size_type index = filePath.find("hello");
-                        if(index != string::npos)
-                        {
-                            string file =  filePath.substr(index);
-                            trace << "File " << file << " line " << line << endl;
-                        }
-                    }
-
-                    //Test the case where all output parametrs are NULL
-                    PIN_GetSourceLocation(RTN_Address(rtn), NULL, NULL, NULL);
-                }
+          if (filePath != "") {
+            string::size_type index = filePath.find("hello");
+            if (index != string::npos) {
+              string file = filePath.substr(index);
+              trace << "File " << file << " line " << line << endl;
             }
+          }
+
+          // Test the case where all output parametrs are NULL
+          PIN_GetSourceLocation(RTN_Address(rtn), NULL, NULL, NULL);
         }
+      }
     }
+  }
 }
 
-VOID Fini(INT32 code, VOID *)
-{
-    trace.close();
-}
+VOID Fini(INT32 code, VOID *) { trace.close(); }
 
-int main(INT32 argc, CHAR **argv)
-{
-    trace.open("line.output");
+int main(INT32 argc, CHAR **argv) {
+  trace.open("line.output");
 
-    PIN_InitSymbols();
-    PIN_Init(argc, argv);
-    
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-    PIN_AddFiniFunction(Fini, 0);
-    
-    // Never returns
-    PIN_StartProgram();
-    
-    return 0;
+  PIN_InitSymbols();
+  PIN_Init(argc, argv);
+
+  IMG_AddInstrumentFunction(ImageLoad, 0);
+  PIN_AddFiniFunction(Fini, 0);
+
+  // Never returns
+  PIN_StartProgram();
+
+  return 0;
 }

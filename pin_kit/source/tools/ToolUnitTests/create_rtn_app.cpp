@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -33,20 +33,22 @@ END_LEGAL */
 #include <config.h>
 #endif
 
-#include <iostream>
 #include <cstdlib>
+#include <iostream>
 
 #ifdef TARGET_LINUX
-#define DATA_SECTION(secName) __attribute__ ((section (secName)))
+#define DATA_SECTION(secName) __attribute__((section(secName)))
 #define SECTION_END
 
 #else
-#define PUSH_SECTIONS__ __pragma(code_seg(push)) __pragma(data_seg(push)) __pragma(const_seg(push))
-#define POP_SECTIONS__  __pragma(code_seg(pop))  __pragma(data_seg(pop))  __pragma(const_seg(pop))
+#define PUSH_SECTIONS__ \
+  __pragma(code_seg(push)) __pragma(data_seg(push)) __pragma(const_seg(push))
+#define POP_SECTIONS__ \
+  __pragma(code_seg(pop)) __pragma(data_seg(pop)) __pragma(const_seg(pop))
 
-#define DATA_SECTION(secName) PUSH_SECTIONS__  __pragma(data_seg(secName))
-#define SECTION_END           POP_SECTIONS__
-#endif 
+#define DATA_SECTION(secName) PUSH_SECTIONS__ __pragma(data_seg(secName))
+#define SECTION_END POP_SECTIONS__
+#endif
 
 using namespace std;
 
@@ -57,10 +59,9 @@ static int Proc2();
 #pragma code_seg(push)
 #pragma code_seg("mySpecialSegment$a")
 #endif
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   cout << "Hello, world!" << endl;
-  
+
   Proc1();
   Proc2();
 
@@ -73,38 +74,33 @@ int main(int argc, char *argv[])
 #if _MSC_VER && !__INTEL_COMPILER
 #pragma code_seg("mySpecialSegment$b")
 #endif
-int Proc1()
-{
-    int n = 15;
-    int i = 0;
-    for (; i<10; i++)
-    {
-        cout << ".";
-        n--;
-    }
-    cout << endl;
-    return i + n;
+int Proc1() {
+  int n = 15;
+  int i = 0;
+  for (; i < 10; i++) {
+    cout << ".";
+    n--;
+  }
+  cout << endl;
+  return i + n;
 }
 #if _MSC_VER && !__INTEL_COMPILER
 #pragma code_seg("mySpecialSegment$c")
 #endif
-int Proc2()
-{
-    int n = 15;
-    int i = 0;
-    for (; i<10; i++)
-    {
-        cout << ".";
-        n++;
-    }
-    cout << endl;
-    return n - i;
+int Proc2() {
+  int n = 15;
+  int i = 0;
+  for (; i < 10; i++) {
+    cout << ".";
+    n++;
+  }
+  cout << endl;
+  return n - i;
 }
 #if _MSC_VER && !__INTEL_COMPILER
 #pragma code_seg(pop)
 #endif
 
-
 DATA_SECTION(".fTable")
-const char *ptr[2] = { (const char *)&Proc1, (const char *)&Proc2 };
+const char *ptr[2] = {(const char *)&Proc1, (const char *)&Proc2};
 SECTION_END

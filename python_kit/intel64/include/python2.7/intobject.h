@@ -21,19 +21,18 @@ extern "C" {
 #endif
 
 typedef struct {
-    PyObject_HEAD
-    long ob_ival;
+  PyObject_HEAD long ob_ival;
 } PyIntObject;
 
 PyAPI_DATA(PyTypeObject) PyInt_Type;
 
 #define PyInt_Check(op) \
-		 PyType_FastSubclass((op)->ob_type, Py_TPFLAGS_INT_SUBCLASS)
+  PyType_FastSubclass((op)->ob_type, Py_TPFLAGS_INT_SUBCLASS)
 #define PyInt_CheckExact(op) ((op)->ob_type == &PyInt_Type)
 
-PyAPI_FUNC(PyObject *) PyInt_FromString(char*, char**, int);
+PyAPI_FUNC(PyObject *) PyInt_FromString(char *, char **, int);
 #ifdef Py_USING_UNICODE
-PyAPI_FUNC(PyObject *) PyInt_FromUnicode(Py_UNICODE*, Py_ssize_t, int);
+PyAPI_FUNC(PyObject *) PyInt_FromUnicode(Py_UNICODE *, Py_ssize_t, int);
 #endif
 PyAPI_FUNC(PyObject *) PyInt_FromLong(long);
 PyAPI_FUNC(PyObject *) PyInt_FromSize_t(size_t);
@@ -66,13 +65,12 @@ PyAPI_FUNC(int) PyInt_ClearFreeList(void);
    If base is 2, 8 or 16, add the proper prefix '0b', '0o' or '0x'.
    If newstyle is zero, then use the pre-2.6 behavior of octal having
    a leading "0" */
-PyAPI_FUNC(PyObject*) _PyInt_Format(PyIntObject* v, int base, int newstyle);
+PyAPI_FUNC(PyObject *) _PyInt_Format(PyIntObject *v, int base, int newstyle);
 
 /* Format the object based on the format_spec, as defined in PEP 3101
    (Advanced String Formatting). */
-PyAPI_FUNC(PyObject *) _PyInt_FormatAdvanced(PyObject *obj,
-					     char *format_spec,
-					     Py_ssize_t format_spec_len);
+PyAPI_FUNC(PyObject *) _PyInt_FormatAdvanced(PyObject *obj, char *format_spec,
+                                             Py_ssize_t format_spec_len);
 
 #ifdef __cplusplus
 }

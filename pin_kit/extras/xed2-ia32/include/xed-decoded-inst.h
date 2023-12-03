@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,24 +29,23 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 /// @file xed-decoded-inst.h
-/// 
+///
 
 #if !defined(_XED_DECODER_STATE_H_)
-# define _XED_DECODER_STATE_H_
-#include "xed-common-hdrs.h"
+#define _XED_DECODER_STATE_H_
 #include "xed-common-defs.h"
-#include "xed-portability.h"
-#include "xed-util.h"
-#include "xed-types.h"
-#include "xed-inst.h"
+#include "xed-common-hdrs.h"
 #include "xed-flags.h"
+#include "xed-inst.h"
+#include "xed-portability.h"
+#include "xed-types.h"
+#include "xed-util.h"
 #if defined(XED_ENCODER)
-# include "xed-encoder-gen-defs.h" //generated
+#include "xed-encoder-gen-defs.h"  //generated
 #endif
-#include "xed-chip-enum.h" //generated
-#include "xed-operand-element-type-enum.h" // a generated file
-#include "xed-operand-storage.h" // a generated file
-
+#include "xed-chip-enum.h"                  //generated
+#include "xed-operand-element-type-enum.h"  // a generated file
+#include "xed-operand-storage.h"            // a generated file
 
 struct xed_encoder_vars_s;
 struct xed_decoder_vars_s;
@@ -55,46 +54,44 @@ struct xed_decoder_vars_s;
 /// operands with derived information from decode and also valid
 /// #xed_inst_t pointer which describes the operand templates and the
 /// operand order.  See @ref DEC for API documentation.
-typedef struct xed_decoded_inst_s  {
-    /// Storage for information discovered during decoding. Also used by
-    /// encode.
-    xed_operand_storage_t _operands;
+typedef struct xed_decoded_inst_s {
+  /// Storage for information discovered during decoding. Also used by
+  /// encode.
+  xed_operand_storage_t _operands;
 
 #if defined(XED_ENCODER)
-    /// Used for encode operand ordering. Not set by decode.
-    xed_uint8_t _operand_order[XED_ENCODE_ORDER_MAX_OPERANDS];
-    /// Length of the _operand_order[] array.
-    xed_uint8_t _n_operand_order; 
+  /// Used for encode operand ordering. Not set by decode.
+  xed_uint8_t _operand_order[XED_ENCODE_ORDER_MAX_OPERANDS];
+  /// Length of the _operand_order[] array.
+  xed_uint8_t _n_operand_order;
 #endif
-    xed_uint8_t _decoded_length;
+  xed_uint8_t _decoded_length;
 
-    /// when we decode an instruction, we set the _inst and get the
-    /// properites of that instruction here. This also points to the
-    /// operands template array.
-    const xed_inst_t* _inst;
+  /// when we decode an instruction, we set the _inst and get the
+  /// properites of that instruction here. This also points to the
+  /// operands template array.
+  const xed_inst_t* _inst;
 
-    // decoder does not change it, encoder does    
-    union {
-        xed_uint8_t* _enc;
-        const xed_uint8_t* _dec;
-    } _byte_array; 
+  // decoder does not change it, encoder does
+  union {
+    xed_uint8_t* _enc;
+    const xed_uint8_t* _dec;
+  } _byte_array;
 
-    // The ev field is stack allocated by xed_encode(). It is per-encode
-    // transitory data.
-    union {
-        /* user_data is available as a user data storage field after
-         * decoding. It does not live across re-encodes or re-decodes. */
-        xed_uint64_t user_data; 
+  // The ev field is stack allocated by xed_encode(). It is per-encode
+  // transitory data.
+  union {
+    /* user_data is available as a user data storage field after
+     * decoding. It does not live across re-encodes or re-decodes. */
+    xed_uint64_t user_data;
 #if defined(XED_ENCODER)
-        struct xed_encoder_vars_s* ev;
+    struct xed_encoder_vars_s* ev;
 #endif
-    } u;
-    
+  } u;
+
 } xed_decoded_inst_t;
 
 typedef xed_decoded_inst_t xed_operand_values_t;
 
-
 //@}
 #endif
-

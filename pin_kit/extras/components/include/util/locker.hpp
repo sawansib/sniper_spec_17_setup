@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -38,131 +38,120 @@ END_LEGAL */
 namespace UTIL {
 
 /*!
- * A simple utility that manages a mutex lock.  The lock is automatically acquired on
- * entry to the scope and released on exit.
+ * A simple utility that manages a mutex lock.  The lock is automatically
+ * acquired on entry to the scope and released on exit.
  *
- *  @param LOCK     Any type that supports Lock() and Unlock() methods with the usual semantics.
+ *  @param LOCK     Any type that supports Lock() and Unlock() methods with the
+ * usual semantics.
  */
-template<class LOCK> class /*<UTILITY>*/ LOCKER
-{
-public:
-    /*!
-     *  @param[in] lock     The lock to acquire.
-     *  @param[in] acquire  If TRUE, the constructor acquires the lock.
-     */
-    LOCKER(LOCK *lock, bool acquire = true) : _lock(lock), _isLocked(acquire)
-    {
-        if (acquire)
-            _lock->Lock();
-    }
+template <class LOCK>
+class /*<UTILITY>*/ LOCKER {
+ public:
+  /*!
+   *  @param[in] lock     The lock to acquire.
+   *  @param[in] acquire  If TRUE, the constructor acquires the lock.
+   */
+  LOCKER(LOCK *lock, bool acquire = true) : _lock(lock), _isLocked(acquire) {
+    if (acquire) _lock->Lock();
+  }
 
-    /*!
-     * The destructor releases the lock unless it was manually released via Unlock().
-     */
-    ~LOCKER()
-    {
-        if (_isLocked)
-            _lock->Unlock();
-    }
+  /*!
+   * The destructor releases the lock unless it was manually released via
+   * Unlock().
+   */
+  ~LOCKER() {
+    if (_isLocked) _lock->Unlock();
+  }
 
-    /*!
-     * Manually release the lock.
-     */
-    void Unlock()
-    {
-        _lock->Unlock();
-        _isLocked = false;
-    }
+  /*!
+   * Manually release the lock.
+   */
+  void Unlock() {
+    _lock->Unlock();
+    _isLocked = false;
+  }
 
-    /*!
-     * Manually acquire the lock.  This only makes sense if the lock was manually released
-     * via Unlock().  No error checking is done to prevent self-deadlock.
-     */
-    void Lock()
-    {
-        _lock->Lock();
-        _isLocked = true;
-    }
+  /*!
+   * Manually acquire the lock.  This only makes sense if the lock was manually
+   * released via Unlock().  No error checking is done to prevent self-deadlock.
+   */
+  void Lock() {
+    _lock->Lock();
+    _isLocked = true;
+  }
 
-    /*!
-     * Indicate that the lock has been acquired or released outside of this wrapper.
-     *
-     *  @param[in] isLocked     TRUE if the lock has been acquired.
-     */
-    void SetLocked(bool isLocked)
-    {
-        _isLocked = isLocked;
-    }
+  /*!
+   * Indicate that the lock has been acquired or released outside of this
+   * wrapper.
+   *
+   *  @param[in] isLocked     TRUE if the lock has been acquired.
+   */
+  void SetLocked(bool isLocked) { _isLocked = isLocked; }
 
-private:
-    LOCK *_lock;
-    bool _isLocked;
+ private:
+  LOCK *_lock;
+  bool _isLocked;
 };
-
 
 /*!
- * A simple utility that manages a Microsoft CRITICAL_SECTION.  The critical section
- * is automatically acquired on entry to the scope and released on exit.
+ * A simple utility that manages a Microsoft CRITICAL_SECTION.  The critical
+ * section is automatically acquired on entry to the scope and released on exit.
  *
- *  @param CSTYPE   Usually this is the Microsoft CRITICAL_SECTION type, but you can
- *                   use any type that works with functions named EnterCriticalSection()
- *                   and LeaveCriticalSection().
+ *  @param CSTYPE   Usually this is the Microsoft CRITICAL_SECTION type, but you
+ * can use any type that works with functions named EnterCriticalSection() and
+ * LeaveCriticalSection().
  */
-template <typename CSTYPE> class /*<UTILITY>*/ SCOPED_CRITICAL_SECTION
-{
-public:
-    /*!
-     *  @param[in] cs       The critical section to acquire.
-     *  @param[in] acquire  If TRUE, the constructor acquires the critical section.
-     */
-    SCOPED_CRITICAL_SECTION(CSTYPE *cs, bool acquire = true) : _cs(cs), _isLocked(acquire)
-    {
-        if (acquire)
-            EnterCriticalSection(cs);
-    }
+template <typename CSTYPE>
+class /*<UTILITY>*/ SCOPED_CRITICAL_SECTION {
+ public:
+  /*!
+   *  @param[in] cs       The critical section to acquire.
+   *  @param[in] acquire  If TRUE, the constructor acquires the critical
+   * section.
+   */
+  SCOPED_CRITICAL_SECTION(CSTYPE *cs, bool acquire = true)
+      : _cs(cs), _isLocked(acquire) {
+    if (acquire) EnterCriticalSection(cs);
+  }
 
-    /*!
-     * The destructor releases the critical section unless it was manually released via Unlock().
-     */
-    ~SCOPED_CRITICAL_SECTION()
-    {
-        if (_isLocked)
-            LeaveCriticalSection(_cs);
-    }
+  /*!
+   * The destructor releases the critical section unless it was manually
+   * released via Unlock().
+   */
+  ~SCOPED_CRITICAL_SECTION() {
+    if (_isLocked) LeaveCriticalSection(_cs);
+  }
 
-    /*!
-     * Manually release the critical section.
-     */
-    void Unlock()
-    {
-        LeaveCriticalSection(_cs);
-        _isLocked = false;
-    }
+  /*!
+   * Manually release the critical section.
+   */
+  void Unlock() {
+    LeaveCriticalSection(_cs);
+    _isLocked = false;
+  }
 
-    /*!
-     * Manually acquire the critical section.  This only makes sense if the critical section
-     * was manually released via Unlock().  No error checking is done to prevent self-deadlock.
-     */
-    void Lock()
-    {
-        EnterCriticalSection(_cs);
-        _isLocked = true;
-    }
+  /*!
+   * Manually acquire the critical section.  This only makes sense if the
+   * critical section was manually released via Unlock().  No error checking is
+   * done to prevent self-deadlock.
+   */
+  void Lock() {
+    EnterCriticalSection(_cs);
+    _isLocked = true;
+  }
 
-    /*!
-     * Indicate that the critical section has been acquired or released outside of this wrapper.
-     *
-     *  @param[in] isLocked     TRUE if the critical section has been acquired.
-     */
-    void SetLocked(bool isLocked)
-    {
-        _isLocked = isLocked;
-    }
+  /*!
+   * Indicate that the critical section has been acquired or released outside of
+   * this wrapper.
+   *
+   *  @param[in] isLocked     TRUE if the critical section has been acquired.
+   */
+  void SetLocked(bool isLocked) { _isLocked = isLocked; }
 
-private:
-    CSTYPE *_cs;
-    bool _isLocked;
+ private:
+  CSTYPE *_cs;
+  bool _isLocked;
 };
 
-} // namespace
-#endif // file guard
+}  // namespace UTIL
+#endif  // file guard

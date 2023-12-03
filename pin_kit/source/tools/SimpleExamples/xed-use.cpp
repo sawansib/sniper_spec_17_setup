@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -38,9 +38,9 @@ END_LEGAL */
 extern "C" {
 #include "xed-interface.h"
 }
-#include <iostream>
-#include <iomanip>
 #include <fstream>
+#include <iomanip>
+#include <iostream>
 
 std::ofstream* out = 0;
 
@@ -48,48 +48,42 @@ std::ofstream* out = 0;
 /* Print Help Message                                                    */
 /* ===================================================================== */
 
-INT32 Usage()
-{
-    cerr << "This tool prints IA-32 and Intel(R) 64 instructions" << endl;
-    cerr << KNOB_BASE::StringKnobSummary() << endl;
-    return -1;
+INT32 Usage() {
+  cerr << "This tool prints IA-32 and Intel(R) 64 instructions" << endl;
+  cerr << KNOB_BASE::StringKnobSummary() << endl;
+  return -1;
 }
 
-VOID Instruction(INS ins, VOID *v)
-{
-    xed_decoded_inst_t* xedd = INS_XedDec(ins);
-    // To print out the gory details uncomment this:
-    // char buf[2048];
-    // xed_decoded_inst_dump(xedd, buf, 2048);
-    // *out << buf << endl;
+VOID Instruction(INS ins, VOID* v) {
+  xed_decoded_inst_t* xedd = INS_XedDec(ins);
+  // To print out the gory details uncomment this:
+  // char buf[2048];
+  // xed_decoded_inst_dump(xedd, buf, 2048);
+  // *out << buf << endl;
 
-    xed_syntax_enum_t syntax = XED_SYNTAX_INTEL;  // XED_SYNTAX_ATT, XED_SYNTAX_XED
-    const UINT32 BUFLEN = 100;
-    char buffer[BUFLEN];
-    ADDRINT addr = INS_Address(ins);
-    BOOL ok = xed_format_context(syntax, xedd, buffer, BUFLEN, static_cast<UINT64>(addr), 0, 0);
-    if (ok)
-    {
-        *out << setw(sizeof(ADDRINT)*2) 
-             << hex << addr << dec << " "  << buffer << endl;
-    }
-    else
-    {
-        *out << "disas-error @" << hex << addr << dec << endl;
-    }
+  xed_syntax_enum_t syntax =
+      XED_SYNTAX_INTEL;  // XED_SYNTAX_ATT, XED_SYNTAX_XED
+  const UINT32 BUFLEN = 100;
+  char buffer[BUFLEN];
+  ADDRINT addr = INS_Address(ins);
+  BOOL ok = xed_format_context(syntax, xedd, buffer, BUFLEN,
+                               static_cast<UINT64>(addr), 0, 0);
+  if (ok) {
+    *out << setw(sizeof(ADDRINT) * 2) << hex << addr << dec << " " << buffer
+         << endl;
+  } else {
+    *out << "disas-error @" << hex << addr << dec << endl;
+  }
 }
 
 /* ===================================================================== */
 /* Main                                                                  */
 /* ===================================================================== */
 
-int main(int argc, char *argv[])
-{
-    out = new std::ofstream("xed-use.out");
-    if( PIN_Init(argc,argv) )
-        return Usage();
-    INS_AddInstrumentFunction(Instruction, 0);
-    PIN_StartProgram();    // Never returns
-    return 0;
+int main(int argc, char* argv[]) {
+  out = new std::ofstream("xed-use.out");
+  if (PIN_Init(argc, argv)) return Usage();
+  INS_AddInstrumentFunction(Instruction, 0);
+  PIN_StartProgram();  // Never returns
+  return 0;
 }
-

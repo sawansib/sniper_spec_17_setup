@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -31,72 +31,57 @@ END_LEGAL */
 #include <Windows.h>
 #include <stdio.h>
 
-//TlS usage in application
+// TlS usage in application
 static const int RESEREVED_TLS = 100;
 DWORD tlsIndexes[RESEREVED_TLS];
- 
-BOOL DllMain(HANDLE hDll, DWORD dwReason, LPVOID lpReserved)
-{
-    switch (dwReason) 
-    {
-      case DLL_PROCESS_ATTACH:
-      {
-          for(int i = 0; i < RESEREVED_TLS; i++)
-          {
-              tlsIndexes[i] = TlsAlloc();
-              if(tlsIndexes[i] == TLS_OUT_OF_INDEXES)
-              {
-                  fprintf(stderr, "Failed to allocate tls index number %d\n", i);
-                  return FALSE;
-              }
-          }
-          break;
-      }  
-      case DLL_THREAD_ATTACH:
-      {
-          for(int i = 0; i < RESEREVED_TLS; i++)
-          {
-              bool res = TlsSetValue(tlsIndexes[i], reinterpret_cast<LPVOID>(i));
-              if(res == FALSE)
-              {
-                  fprintf(stderr, "Failed to set tls index number %d\n", i);
-                  return FALSE;
-              }
-          }
-          break;
+
+BOOL DllMain(HANDLE hDll, DWORD dwReason, LPVOID lpReserved) {
+  switch (dwReason) {
+    case DLL_PROCESS_ATTACH: {
+      for (int i = 0; i < RESEREVED_TLS; i++) {
+        tlsIndexes[i] = TlsAlloc();
+        if (tlsIndexes[i] == TLS_OUT_OF_INDEXES) {
+          fprintf(stderr, "Failed to allocate tls index number %d\n", i);
+          return FALSE;
+        }
       }
-      case DLL_THREAD_DETACH: 
-      {
-          for(int i = 0; i < RESEREVED_TLS; i++)
-          {
-              int val = reinterpret_cast<int>(TlsGetValue(tlsIndexes[i]));
-              if(val != i)
-              {
-                  fprintf(stderr, "Failed to get tls index number %d\n", i);
-                  return FALSE;
-              }
-          }
-          break;
+      break;
+    }
+    case DLL_THREAD_ATTACH: {
+      for (int i = 0; i < RESEREVED_TLS; i++) {
+        bool res = TlsSetValue(tlsIndexes[i], reinterpret_cast<LPVOID>(i));
+        if (res == FALSE) {
+          fprintf(stderr, "Failed to set tls index number %d\n", i);
+          return FALSE;
+        }
       }
-      case DLL_PROCESS_DETACH:
-       {
-           for(int i = 0; i < RESEREVED_TLS; i++)
-           {
-               BOOL res = TlsFree(tlsIndexes[i]);
-               if(res == FALSE)
-               {
-                   fprintf(stderr, "Failed to free tls index number %d\n", i);
-                   return FALSE;
-               }
-           }
-          break;
+      break;
+    }
+    case DLL_THREAD_DETACH: {
+      for (int i = 0; i < RESEREVED_TLS; i++) {
+        int val = reinterpret_cast<int>(TlsGetValue(tlsIndexes[i]));
+        if (val != i) {
+          fprintf(stderr, "Failed to get tls index number %d\n", i);
+          return FALSE;
+        }
       }
-      default:
-      {
-          break; 
+      break;
+    }
+    case DLL_PROCESS_DETACH: {
+      for (int i = 0; i < RESEREVED_TLS; i++) {
+        BOOL res = TlsFree(tlsIndexes[i]);
+        if (res == FALSE) {
+          fprintf(stderr, "Failed to free tls index number %d\n", i);
+          return FALSE;
+        }
       }
-    } 
-    return TRUE; 
+      break;
+    }
+    default: {
+      break;
+    }
+  }
+  return TRUE;
 }
 
 extern "C" __declspec(dllexport) void Nothing() {}

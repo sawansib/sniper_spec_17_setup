@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -30,45 +30,41 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 #include <iostream>
 
-#include "pin.H"
 #include "instlib.H"
+#include "pin.H"
 
-KNOB<BOOL> KnobReps(KNOB_MODE_WRITEONCE, "pintool", "reps", "0", 
-                    "add count with REP prefixed instructions counted only once");
+KNOB<BOOL> KnobReps(
+    KNOB_MODE_WRITEONCE, "pintool", "reps", "0",
+    "add count with REP prefixed instructions counted only once");
 
 INSTLIB::ICOUNT icount;
 
 // This function is called when the application exits
-VOID Fini(INT32 code, VOID *v)
-{
-    std::cerr << "Count " << icount.Count() << endl;
-    if (KnobReps)
-        std::cerr << "Count (single REPs) " << icount.CountWithoutRep() << endl;
+VOID Fini(INT32 code, VOID *v) {
+  std::cerr << "Count " << icount.Count() << endl;
+  if (KnobReps)
+    std::cerr << "Count (single REPs) " << icount.CountWithoutRep() << endl;
 }
 
 // argc, argv are the entire command line, including pin -t <toolname> -- ...
-int main(int argc, char * argv[])
-{
-    // Initialize pin
-    if (PIN_Init(argc, argv))
-    {
-        PIN_ERROR("Count executed instructions.\n"
-                  + KNOB_BASE::StringKnobSummary() + "\n");
-    }
+int main(int argc, char *argv[]) {
+  // Initialize pin
+  if (PIN_Init(argc, argv)) {
+    PIN_ERROR("Count executed instructions.\n" +
+              KNOB_BASE::StringKnobSummary() + "\n");
+  }
 
-    // Activate instruction counter
-    if (KnobReps)
-        icount.Activate(INSTLIB::ICOUNT::ModeBoth);
-    else
-        icount.Activate(INSTLIB::ICOUNT::ModeNormal);
-        
-    // Register Fini to be called when the application exits
-    PIN_AddFiniFunction(Fini, 0);
-    
-    // Start the program, never returns
-    PIN_StartProgram();
-    
-    return 0;
+  // Activate instruction counter
+  if (KnobReps)
+    icount.Activate(INSTLIB::ICOUNT::ModeBoth);
+  else
+    icount.Activate(INSTLIB::ICOUNT::ModeNormal);
+
+  // Register Fini to be called when the application exits
+  PIN_AddFiniFunction(Fini, 0);
+
+  // Start the program, never returns
+  PIN_StartProgram();
+
+  return 0;
 }
-
-

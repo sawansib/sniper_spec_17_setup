@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -38,9 +38,7 @@ END_LEGAL */
 #include "atomic.hpp"
 #include "sync/simple-lock.hpp"
 
-
 namespace SYNC {
-
 
 /*!
  * This is a SAFEPOD implementation of SIMPLE_LOCK_FUTEX.  See \ref SYNC_POD
@@ -54,125 +52,116 @@ namespace SYNC {
  *                           before attempting to block.  Each of these
  *                           iterations has an exponentially increasing delay.
  */
-template<typename OS, unsigned SPIN_ITERATIONS = 4> class /*<POD>*/ SIMPLE_LOCK_SAFEPOD_FUTEX
-{
-public:
-    /*!
-     * Initialize the lock before its first use.
-     *
-     * @return  Always returns TRUE.
-     */
-    bool Initialize()
-    {
-        _state = STATE_UNLOCKED;
-        return true;
-    }
+template <typename OS, unsigned SPIN_ITERATIONS = 4>
+class /*<POD>*/ SIMPLE_LOCK_SAFEPOD_FUTEX {
+ public:
+  /*!
+   * Initialize the lock before its first use.
+   *
+   * @return  Always returns TRUE.
+   */
+  bool Initialize() {
+    _state = STATE_UNLOCKED;
+    return true;
+  }
 
-    /*!
-     * It is not necessary to call this method.  It is provided only for symmetry.
-     */
-    void Destroy() {}
+  /*!
+   * It is not necessary to call this method.  It is provided only for symmetry.
+   */
+  void Destroy() {}
 
-    /*!
-     * Set the state of the lock to "not locked", even if the calling thread
-     * does not own the lock.
-     */
-    void Reset()
-    {
-        _state = STATE_UNLOCKED;
-    }
+  /*!
+   * Set the state of the lock to "not locked", even if the calling thread
+   * does not own the lock.
+   */
+  void Reset() { _state = STATE_UNLOCKED; }
 
-    /*!
-     * Blocks the caller until the lock can be acquired.
-     */
-    void Lock()
-    {
-        // Try to get the lock.  This succeeds if there is no contention.  The BARRIER_CS_NEXT
-        // assures that we read (and modify) _state before accessing any data that is protected
-        // by the lock.
-        //
-        int s = ATOMIC::OPS::CompareAndSwap<int>(&_state, STATE_UNLOCKED,
-            STATE_LOCKED_NO_WAITERS, ATOMIC::BARRIER_CS_NEXT);
-        if (s == STATE_UNLOCKED)
-            return;
-
-        // If the lock is contended, possibly spin a few times before deciding to block.
-        // This is controled by the SPIN_ITERATIONS template parameter.
-        //
-        ATOMIC::EXPONENTIAL_BACKOFF<> backoff(0);
-        for (unsigned i = 0;  i < SPIN_ITERATIONS;  i++)
-        {
-            backoff.Delay();
-            s = ATOMIC::OPS::CompareAndSwap<int>(&_state, STATE_UNLOCKED,
-                STATE_LOCKED_NO_WAITERS, ATOMIC::BARRIER_CS_NEXT);
-            if (s == STATE_UNLOCKED)
-                return;
-        }
-
-        // Prepare to block by setting the state to MAYBE_WAITERS.
-        //
-        if (s != STATE_LOCKED_MAYBE_WAITERS)
-            s = ATOMIC::OPS::Swap(&_state, STATE_LOCKED_MAYBE_WAITERS, ATOMIC::BARRIER_SWAP_NEXT);
-
-        // Wait on the futex until someone sets it to UNLOCKED.
-        //
-        while (s != STATE_UNLOCKED)
-        {
-            OS::FutexWait(const_cast<int *>(&_state), STATE_LOCKED_MAYBE_WAITERS, 0);
-            s = ATOMIC::OPS::Swap(&_state, STATE_LOCKED_MAYBE_WAITERS, ATOMIC::BARRIER_SWAP_NEXT);
-        }
-    }
-
-
-    /*!
-     * Releases the lock.
-     */
-    void Unlock()
-    {
-        // Decrementing _state will set it to either UNLOCKED or LOCKED_NO_WAITERS.  If we
-        // set it to UNLOCKED, we're done and there's no need to wake anyone up.  The
-        // BARRIER_CS_PREV assures that other processors see all the changes to
-        // protected data before they see that the lock is available.
-        //
-        if (ATOMIC::OPS::Increment<int>(&_state, -1, ATOMIC::BARRIER_CS_PREV) != STATE_LOCKED_NO_WAITERS)
-        {
-            // We get here if there may be waiters on the lock.  Set the _state to UNLOCKED
-            // and wake up one waiter.
-            //
-            ATOMIC::OPS::Store(&_state, STATE_UNLOCKED);
-            OS::FutexWake(const_cast<int *>(&_state), 1);
-        }
-    }
-
-
-    /*!
-     * Attempts to acquire the lock, but does not block the caller.
-     *
-     * @return  Returns TRUE if the lock is acquired, FALSE if not.
-     */
-    bool TryLock()
-    {
-        int s = ATOMIC::OPS::CompareAndSwap<int>(&_state, STATE_UNLOCKED,
-            STATE_LOCKED_NO_WAITERS, ATOMIC::BARRIER_CS_NEXT);
-        return (s == STATE_UNLOCKED);
-    }
-
-public:
-    // This member is public only to make SIMPLE_LOCK_SAFEPOD_FUTEX a POD.
-    // Do not access it directly.  Note that '_state' will be implicitly
-    // initialized as 0 (STATE_UNLOCKED) when SIMPLE_LOCK_SAFEPOD_FUTEX is
-    // declared as a static or global variable.
+  /*!
+   * Blocks the caller until the lock can be acquired.
+   */
+  void Lock() {
+    // Try to get the lock.  This succeeds if there is no contention.  The
+    // BARRIER_CS_NEXT assures that we read (and modify) _state before accessing
+    // any data that is protected by the lock.
     //
-    volatile int _state;
+    int s = ATOMIC::OPS::CompareAndSwap<int>(&_state, STATE_UNLOCKED,
+                                             STATE_LOCKED_NO_WAITERS,
+                                             ATOMIC::BARRIER_CS_NEXT);
+    if (s == STATE_UNLOCKED) return;
 
-    // Possible lock states.  Note that the order of the values is important because we
-    // sometimes changes states via atomic-decrement.
+    // If the lock is contended, possibly spin a few times before deciding to
+    // block. This is controled by the SPIN_ITERATIONS template parameter.
     //
-    static const int STATE_UNLOCKED = 0;
-    static const int STATE_LOCKED_NO_WAITERS = 1;
-    static const int STATE_LOCKED_MAYBE_WAITERS = 2;
+    ATOMIC::EXPONENTIAL_BACKOFF<> backoff(0);
+    for (unsigned i = 0; i < SPIN_ITERATIONS; i++) {
+      backoff.Delay();
+      s = ATOMIC::OPS::CompareAndSwap<int>(&_state, STATE_UNLOCKED,
+                                           STATE_LOCKED_NO_WAITERS,
+                                           ATOMIC::BARRIER_CS_NEXT);
+      if (s == STATE_UNLOCKED) return;
+    }
+
+    // Prepare to block by setting the state to MAYBE_WAITERS.
+    //
+    if (s != STATE_LOCKED_MAYBE_WAITERS)
+      s = ATOMIC::OPS::Swap(&_state, STATE_LOCKED_MAYBE_WAITERS,
+                            ATOMIC::BARRIER_SWAP_NEXT);
+
+    // Wait on the futex until someone sets it to UNLOCKED.
+    //
+    while (s != STATE_UNLOCKED) {
+      OS::FutexWait(const_cast<int *>(&_state), STATE_LOCKED_MAYBE_WAITERS, 0);
+      s = ATOMIC::OPS::Swap(&_state, STATE_LOCKED_MAYBE_WAITERS,
+                            ATOMIC::BARRIER_SWAP_NEXT);
+    }
+  }
+
+  /*!
+   * Releases the lock.
+   */
+  void Unlock() {
+    // Decrementing _state will set it to either UNLOCKED or LOCKED_NO_WAITERS.
+    // If we set it to UNLOCKED, we're done and there's no need to wake anyone
+    // up.  The BARRIER_CS_PREV assures that other processors see all the
+    // changes to protected data before they see that the lock is available.
+    //
+    if (ATOMIC::OPS::Increment<int>(&_state, -1, ATOMIC::BARRIER_CS_PREV) !=
+        STATE_LOCKED_NO_WAITERS) {
+      // We get here if there may be waiters on the lock.  Set the _state to
+      // UNLOCKED and wake up one waiter.
+      //
+      ATOMIC::OPS::Store(&_state, STATE_UNLOCKED);
+      OS::FutexWake(const_cast<int *>(&_state), 1);
+    }
+  }
+
+  /*!
+   * Attempts to acquire the lock, but does not block the caller.
+   *
+   * @return  Returns TRUE if the lock is acquired, FALSE if not.
+   */
+  bool TryLock() {
+    int s = ATOMIC::OPS::CompareAndSwap<int>(&_state, STATE_UNLOCKED,
+                                             STATE_LOCKED_NO_WAITERS,
+                                             ATOMIC::BARRIER_CS_NEXT);
+    return (s == STATE_UNLOCKED);
+  }
+
+ public:
+  // This member is public only to make SIMPLE_LOCK_SAFEPOD_FUTEX a POD.
+  // Do not access it directly.  Note that '_state' will be implicitly
+  // initialized as 0 (STATE_UNLOCKED) when SIMPLE_LOCK_SAFEPOD_FUTEX is
+  // declared as a static or global variable.
+  //
+  volatile int _state;
+
+  // Possible lock states.  Note that the order of the values is important
+  // because we sometimes changes states via atomic-decrement.
+  //
+  static const int STATE_UNLOCKED = 0;
+  static const int STATE_LOCKED_NO_WAITERS = 1;
+  static const int STATE_LOCKED_MAYBE_WAITERS = 2;
 };
-
 
 /*!
  * A simple non-recursive lock that uses Linux "futexes" to place blocked
@@ -190,53 +179,52 @@ public:
  *                           before attempting to block.  Each of these
  *                           iterations has an exponentially increasing delay.
  */
-template<typename OS, unsigned SPIN_ITERATIONS = 4> class /*<UTILITY>*/ SIMPLE_LOCK_FUTEX
-    : public SIMPLE_LOCK
-{
-public:
-    /*!
-     * The initial sate of the lock is "not locked".
-     */
-    SIMPLE_LOCK_FUTEX() {_impl.Initialize();}
+template <typename OS, unsigned SPIN_ITERATIONS = 4>
+class /*<UTILITY>*/ SIMPLE_LOCK_FUTEX : public SIMPLE_LOCK {
+ public:
+  /*!
+   * The initial sate of the lock is "not locked".
+   */
+  SIMPLE_LOCK_FUTEX() { _impl.Initialize(); }
 
-    /*!
-     * It is not necessary to call this method.  It is provided only for symmetry.
-     *
-     * @return  Always returns TRUE.
-     */
-    bool Initialize() {return _impl.Initialize();}
+  /*!
+   * It is not necessary to call this method.  It is provided only for symmetry.
+   *
+   * @return  Always returns TRUE.
+   */
+  bool Initialize() { return _impl.Initialize(); }
 
-    /*!
-     * It is not necessary to call this method.  It is provided only for symmetry.
-     */
-    void Destroy() {}
+  /*!
+   * It is not necessary to call this method.  It is provided only for symmetry.
+   */
+  void Destroy() {}
 
-    /*!
-     * Set the state of the lock to "not locked", even if the calling thread
-     * does not own the lock.
-     */
-    void Reset() {_impl.Reset();}
+  /*!
+   * Set the state of the lock to "not locked", even if the calling thread
+   * does not own the lock.
+   */
+  void Reset() { _impl.Reset(); }
 
-    /*!
-     * Blocks the caller until the lock can be acquired.
-     */
-    void Lock() {_impl.Lock();}
+  /*!
+   * Blocks the caller until the lock can be acquired.
+   */
+  void Lock() { _impl.Lock(); }
 
-    /*!
-     * Releases the lock.
-     */
-    void Unlock() {_impl.Unlock();}
+  /*!
+   * Releases the lock.
+   */
+  void Unlock() { _impl.Unlock(); }
 
-    /*!
-     * Attempts to acquire the lock, but does not block the caller.
-     *
-     * @return  Returns TRUE if the lock is acquired, FALSE if not.
-     */
-    bool TryLock() {return _impl.TryLock();}
+  /*!
+   * Attempts to acquire the lock, but does not block the caller.
+   *
+   * @return  Returns TRUE if the lock is acquired, FALSE if not.
+   */
+  bool TryLock() { return _impl.TryLock(); }
 
-private:
-    SIMPLE_LOCK_SAFEPOD_FUTEX<OS, SPIN_ITERATIONS> _impl;
+ private:
+  SIMPLE_LOCK_SAFEPOD_FUTEX<OS, SPIN_ITERATIONS> _impl;
 };
 
-} // namespace
-#endif // file guard
+}  // namespace SYNC
+#endif  // file guard

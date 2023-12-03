@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -30,30 +30,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 /*
  * Sample buffering tool
- * 
+ *
  * This tool collects an address trace, including PC, read/write EA,
  * and read/write size, by filling a buffer.  When the buffer overflows,
  * the callback writes all of the collected records to a file.
  *
  */
 
+#include <stddef.h>
+#include <stdio.h>
 
+#include <iostream>
 
 #include "pin.H"
-#include <iostream>
-#include <stdio.h>
-#include <stddef.h>
 
 /* Struct for holding memory references.  Rather than having two separate
  * buffers for loads and stores, we just use one struct that includes a
  * flag for type.
  */
-struct MEMREF
-{
-    ADDRINT pc;
-    ADDRINT address;
-    UINT32 size;
-    UINT32 load;
+struct MEMREF {
+  ADDRINT pc;
+  ADDRINT address;
+  UINT32 size;
+  UINT32 load;
 };
 
 FILE *outfile;
@@ -66,61 +65,55 @@ PIN_LOCK fileLock;
 /*!
  *  Print out help message.
  */
-INT32 Usage()
-{
-    cerr << "This tool demonstrates the basic use of the buffering API." << endl << endl;
+INT32 Usage() {
+  cerr << "This tool demonstrates the basic use of the buffering API." << endl
+       << endl;
 
-    return -1;
+  return -1;
 }
 
-VOID Trace(TRACE trace, VOID *v){
+VOID Trace(TRACE trace, VOID *v) {
+  UINT32 refSize;
 
-    UINT32 refSize;
-           
-    for(BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl=BBL_Next(bbl)){
-        for(INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins=INS_Next(ins)){
-            if(INS_IsMemoryRead(ins)){
+  for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl)) {
+    for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins)) {
+      if (INS_IsMemoryRead(ins)) {
+        refSize = INS_MemoryReadSize(ins);
 
-                refSize = INS_MemoryReadSize(ins);
+        INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId1, IARG_INST_PTR,
+                             offsetof(struct MEMREF, pc), IARG_MEMORYREAD_EA,
+                             offsetof(struct MEMREF, address), IARG_UINT32,
+                             refSize, offsetof(struct MEMREF, size),
+                             IARG_UINT32, 1, offsetof(struct MEMREF, load),
+                             IARG_END);
+      }
+      if (INS_HasMemoryRead2(ins)) {
+        refSize = INS_MemoryReadSize(ins);
 
-                INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId1,
-                    IARG_INST_PTR, offsetof(struct MEMREF, pc),
-                    IARG_MEMORYREAD_EA, offsetof(struct MEMREF, address),
-                    IARG_UINT32, refSize, offsetof(struct MEMREF, size), 
-                    IARG_UINT32, 1, offsetof(struct MEMREF, load),
-                    IARG_END);
+        INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId1, IARG_INST_PTR,
+                             offsetof(struct MEMREF, pc), IARG_MEMORYREAD2_EA,
+                             offsetof(struct MEMREF, address), IARG_UINT32,
+                             refSize, offsetof(struct MEMREF, size),
+                             IARG_UINT32, 1, offsetof(struct MEMREF, load),
+                             IARG_END);
+      }
+      if (INS_IsMemoryWrite(ins)) {
+        refSize = INS_MemoryWriteSize(ins);
 
-            }
-            if(INS_HasMemoryRead2(ins)){
-
-                refSize = INS_MemoryReadSize(ins);
-
-                INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId1,
-                    IARG_INST_PTR, offsetof(struct MEMREF, pc),
-                    IARG_MEMORYREAD2_EA, offsetof(struct MEMREF, address),
-                    IARG_UINT32, refSize, offsetof(struct MEMREF, size), 
-                    IARG_UINT32, 1, offsetof(struct MEMREF, load),
-                    IARG_END);
-
-            }
-            if(INS_IsMemoryWrite(ins)){
-
-                refSize = INS_MemoryWriteSize(ins);
-
-                INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId2,
-                    IARG_INST_PTR, offsetof(struct MEMREF, pc),
-                    IARG_MEMORYWRITE_EA, offsetof(struct MEMREF, address),
-                    IARG_UINT32, refSize, offsetof(struct MEMREF, size), 
-                    IARG_UINT32, 0, offsetof(struct MEMREF, load),
-                    IARG_END);
-            }
-        }
+        INS_InsertFillBuffer(ins, IPOINT_BEFORE, bufId2, IARG_INST_PTR,
+                             offsetof(struct MEMREF, pc), IARG_MEMORYWRITE_EA,
+                             offsetof(struct MEMREF, address), IARG_UINT32,
+                             refSize, offsetof(struct MEMREF, size),
+                             IARG_UINT32, 0, offsetof(struct MEMREF, load),
+                             IARG_END);
+      }
     }
+  }
 }
 
 /*!
- * Called when a buffer fills up, or the thread exits, so we can process it or pass it off
- * as we see fit.
+ * Called when a buffer fills up, or the thread exits, so we can process it or
+ * pass it off as we see fit.
  * @param[in] id		buffer handle
  * @param[in] tid		id of owning thread
  * @param[in] ctxt		application context when the buffer filled
@@ -129,30 +122,29 @@ VOID Trace(TRACE trace, VOID *v){
  * @param[in] v			callback value
  * @return  A pointer to the buffer to resume filling.
  */
-VOID * BufferFull1(BUFFER_ID id, THREADID tid, const CONTEXT *ctxt, VOID *buf,
-                   UINT64 numElements, VOID *v)
-{
-    PIN_GetLock(&fileLock, 1);
+VOID *BufferFull1(BUFFER_ID id, THREADID tid, const CONTEXT *ctxt, VOID *buf,
+                  UINT64 numElements, VOID *v) {
+  PIN_GetLock(&fileLock, 1);
 
-    struct MEMREF* reference=(struct MEMREF*)buf;
-    unsigned int i;
+  struct MEMREF *reference = (struct MEMREF *)buf;
+  unsigned int i;
 
-    fprintf( outfile, "Dumping buffer 1 at address %lx\n", (unsigned long)buf);
+  fprintf(outfile, "Dumping buffer 1 at address %lx\n", (unsigned long)buf);
 
-    for(i=0; i<numElements; i++, reference++){
-        fprintf(outfile, "%lx %lx %u %u\n", (unsigned long)reference->pc, (unsigned long)reference->address,
-                reference->size, reference->load);   
-    }
-    fflush(outfile);
-    PIN_ReleaseLock(&fileLock);
+  for (i = 0; i < numElements; i++, reference++) {
+    fprintf(outfile, "%lx %lx %u %u\n", (unsigned long)reference->pc,
+            (unsigned long)reference->address, reference->size,
+            reference->load);
+  }
+  fflush(outfile);
+  PIN_ReleaseLock(&fileLock);
 
-    return buf;
+  return buf;
 }
 
-
 /*!
- * Called when a buffer fills up, or the thread exits, so we can process it or pass it off
- * as we see fit.
+ * Called when a buffer fills up, or the thread exits, so we can process it or
+ * pass it off as we see fit.
  * @param[in] id		buffer handle
  * @param[in] tid		id of owning thread
  * @param[in] ctxt		application context when the buffer filled
@@ -161,91 +153,87 @@ VOID * BufferFull1(BUFFER_ID id, THREADID tid, const CONTEXT *ctxt, VOID *buf,
  * @param[in] v			callback value
  * @return  A pointer to the buffer to resume filling.
  */
-VOID * BufferFull2(BUFFER_ID id, THREADID tid, const CONTEXT *ctxt, VOID *buf,
-                   UINT64 numElements, VOID *v)
-{
-    PIN_GetLock(&fileLock, 1);
+VOID *BufferFull2(BUFFER_ID id, THREADID tid, const CONTEXT *ctxt, VOID *buf,
+                  UINT64 numElements, VOID *v) {
+  PIN_GetLock(&fileLock, 1);
 
-    struct MEMREF* reference=(struct MEMREF*)buf;
-    unsigned int i;
+  struct MEMREF *reference = (struct MEMREF *)buf;
+  unsigned int i;
 
-    fprintf( outfile, "Dumping buffer 2 at address %lx\n", (unsigned long)buf);
-    
-    for(i=0; i<numElements; i++, reference++){
-        fprintf(outfile, "%lx %lx %u %u\n", (unsigned long)reference->pc, (unsigned long)reference->address,
-                reference->size, reference->load);   
-    }
-    fflush(outfile);
-    PIN_ReleaseLock(&fileLock);
+  fprintf(outfile, "Dumping buffer 2 at address %lx\n", (unsigned long)buf);
 
-    return buf;
+  for (i = 0; i < numElements; i++, reference++) {
+    fprintf(outfile, "%lx %lx %u %u\n", (unsigned long)reference->pc,
+            (unsigned long)reference->address, reference->size,
+            reference->load);
+  }
+  fflush(outfile);
+  PIN_ReleaseLock(&fileLock);
+
+  return buf;
 }
 
 /*!
  * Print out analysis results.
  * This function is called when the application exits.
  * @param[in]   code            exit code of the application
- * @param[in]   v               value specified by the tool in the 
+ * @param[in]   v               value specified by the tool in the
  *                              PIN_AddFiniFunction function call
  */
-VOID Fini(INT32 code, VOID *v)
-{
-    PIN_GetLock(&fileLock, 1);
-    fclose(outfile);
-    printf("outfile closed\n");
-    PIN_ReleaseLock(&fileLock);
+VOID Fini(INT32 code, VOID *v) {
+  PIN_GetLock(&fileLock, 1);
+  fclose(outfile);
+  printf("outfile closed\n");
+  PIN_ReleaseLock(&fileLock);
 }
 
 /*!
  * The main procedure of the tool.
- * This function is called when the application image is loaded but not yet started.
+ * This function is called when the application image is loaded but not yet
+ * started.
  * @param[in]   argc            total number of elements in the argv array
- * @param[in]   argv            array of command line arguments, 
+ * @param[in]   argv            array of command line arguments,
  *                              including pin -t <toolname> -- ...
  */
-int main(int argc, char *argv[])
-{
-    // Initialize PIN library. Print help message if -h(elp) is specified
-    // in the command line or the command line is invalid 
-    if( PIN_Init(argc,argv) )
-    {
-        return Usage();
-    }
-    
-    // Initialize the memory reference buffer
-    bufId1 = PIN_DefineTraceBuffer(sizeof(struct MEMREF), NUM_BUF_PAGES,
-                                   BufferFull1, 0);
-    if(bufId1 == BUFFER_ID_INVALID){
-        cerr << "Error allocating initial buffer 1" << endl;
-        return 1;
-    }
-    
-    // Initialize the memory reference buffer
-    bufId2 = PIN_DefineTraceBuffer(sizeof(struct MEMREF), NUM_BUF_PAGES,
-                                   BufferFull2, 0);
-    if(bufId2 == BUFFER_ID_INVALID){
-        cerr << "Error allocating initial buffer 2" << endl;
-        return 1;
-    }
-    
-    outfile = fopen("two_buffers.out", "w");
-    if(!outfile){
-        cerr << "Couldn't open two_buffers.out" << endl;
-        return 1;
-    }
+int main(int argc, char *argv[]) {
+  // Initialize PIN library. Print help message if -h(elp) is specified
+  // in the command line or the command line is invalid
+  if (PIN_Init(argc, argv)) {
+    return Usage();
+  }
 
-    PIN_InitLock(&fileLock);
+  // Initialize the memory reference buffer
+  bufId1 = PIN_DefineTraceBuffer(sizeof(struct MEMREF), NUM_BUF_PAGES,
+                                 BufferFull1, 0);
+  if (bufId1 == BUFFER_ID_INVALID) {
+    cerr << "Error allocating initial buffer 1" << endl;
+    return 1;
+  }
 
-    // add an instrumentation function
-    TRACE_AddInstrumentFunction(Trace, 0);
-    
-    // Register function to be called when the application exits
-    PIN_AddFiniFunction(Fini, 0);
+  // Initialize the memory reference buffer
+  bufId2 = PIN_DefineTraceBuffer(sizeof(struct MEMREF), NUM_BUF_PAGES,
+                                 BufferFull2, 0);
+  if (bufId2 == BUFFER_ID_INVALID) {
+    cerr << "Error allocating initial buffer 2" << endl;
+    return 1;
+  }
 
-    // Start the program, never returns
-    PIN_StartProgram();
-    
-    return 0;
+  outfile = fopen("two_buffers.out", "w");
+  if (!outfile) {
+    cerr << "Couldn't open two_buffers.out" << endl;
+    return 1;
+  }
+
+  PIN_InitLock(&fileLock);
+
+  // add an instrumentation function
+  TRACE_AddInstrumentFunction(Trace, 0);
+
+  // Register function to be called when the application exits
+  PIN_AddFiniFunction(Fini, 0);
+
+  // Start the program, never returns
+  PIN_StartProgram();
+
+  return 0;
 }
-
-

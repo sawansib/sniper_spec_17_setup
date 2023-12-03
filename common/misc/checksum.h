@@ -5,4 +5,4 @@
 
 UInt64 computeCheckSum(const Byte* buffer, UInt32 length);
 
-#endif // __CHECKSUM_H__
+#endif  // __CHECKSUM_H__

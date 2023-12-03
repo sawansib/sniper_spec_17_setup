@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -37,25 +37,24 @@ END_LEGAL */
  */
 
 #include <signal.h>
+
 #include "pin_tests_util.H"
 
-VOID gotSignal(THREADID threadIndex, CONTEXT_CHANGE_REASON reason, const CONTEXT *from,
-               CONTEXT *to, INT32 info, VOID *v)
-{
-    if (info == SIGUSR1) {
-        // the app is in an infinite loop at its exit
-        PIN_ExitProcess(0);
-    }
+VOID gotSignal(THREADID threadIndex, CONTEXT_CHANGE_REASON reason,
+               const CONTEXT *from, CONTEXT *to, INT32 info, VOID *v) {
+  if (info == SIGUSR1) {
+    // the app is in an infinite loop at its exit
+    PIN_ExitProcess(0);
+  }
 }
 
-int main(INT32 argc, CHAR **argv)
-{
-    PIN_Init(argc, argv);
+int main(INT32 argc, CHAR **argv) {
+  PIN_Init(argc, argv);
 
-    PIN_AddContextChangeFunction(gotSignal, 0);
+  PIN_AddContextChangeFunction(gotSignal, 0);
 
-    // Never returns
-    PIN_StartProgram();
-    
-    return 0;
+  // Never returns
+  PIN_StartProgram();
+
+  return 0;
 }

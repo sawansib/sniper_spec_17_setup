@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -37,86 +37,85 @@ END_LEGAL */
  */
 
 #include <fstream>
+
 #include "pin_tests_util.H"
 
-VOID CharsUtilTest()
-{
-   CHAR c = 'a';
-   TEST('A' == CharToUpper(c), "CharToUpper failed");
+VOID CharsUtilTest() {
+  CHAR c = 'a';
+  TEST('A' == CharToUpper(c), "CharToUpper failed");
 
-   TEST(10 == CharToHexDigit(c), "CharToHexDigit failed");
+  TEST(10 == CharToHexDigit(c), "CharToHexDigit failed");
 
-   TEST(false == CharIsSpace(c), "CharIsSpace failed");
-   TEST(true == CharIsSpace(' '), "CharIsSpace failed");
+  TEST(false == CharIsSpace(c), "CharIsSpace failed");
+  TEST(true == CharIsSpace(' '), "CharIsSpace failed");
 
-   //printf("Chars util tests completed\n");
+  // printf("Chars util tests completed\n");
 }
 
-VOID StringsUtilTest()
-{
-    string str = "hello/world";
-    TEST(str == Joinpath("hello", "world"), "Joinpath failed");
-    TEST(str == Joinpath("hello/", "world"), "Joinpath failed");
+VOID StringsUtilTest() {
+  string str = "hello/world";
+  TEST(str == Joinpath("hello", "world"), "Joinpath failed");
+  TEST(str == Joinpath("hello/", "world"), "Joinpath failed");
 
-    TEST(("DD1,234,567,890" == StringBignum(1234567890, 15,'D')), "StringBignum failed");
-    // if digits < len(number), digits and padding are irrelevant
-    TEST("-1,234,567,890" == StringBignum(-1234567890, 7,'B'), "StringBignum failed");
+  TEST(("DD1,234,567,890" == StringBignum(1234567890, 15, 'D')),
+       "StringBignum failed");
+  // if digits < len(number), digits and padding are irrelevant
+  TEST("-1,234,567,890" == StringBignum(-1234567890, 7, 'B'),
+       "StringBignum failed");
 
-    TEST(("T" == StringBool(true)) && ("F" == StringBool(false)), "StringBool failed");
+  TEST(("T" == StringBool(true)) && ("F" == StringBool(false)),
+       "StringBool failed");
 
-    TEST(("Y" == StringTri(TRI_YES)) && ("N" == StringTri(TRI_NO)) &&
-            ("M" == StringTri(TRI_MAYBE)), "StringTri failed");
+  TEST(("Y" == StringTri(TRI_YES)) && ("N" == StringTri(TRI_NO)) &&
+           ("M" == StringTri(TRI_MAYBE)),
+       "StringTri failed");
 
-    TEST(float(100) == FLT64FromString("1.0E2"), "FLT64FromString failed");
-    
-    //printf("Strings util tests completed\n");
+  TEST(float(100) == FLT64FromString("1.0E2"), "FLT64FromString failed");
+
+  // printf("Strings util tests completed\n");
 }
 
-VOID TempFileTest()
-{
-   CHAR tmpl[18] = "/tmp/test.XXXXXX";
-   CHAR* filename = CreateTmpFileName(tmpl);
+VOID TempFileTest() {
+  CHAR tmpl[18] = "/tmp/test.XXXXXX";
+  CHAR* filename = CreateTmpFileName(tmpl);
 
-   fstream tmpStream(filename);
-   TEST(tmpStream.is_open(), "Fail to open "+string(filename)+"\n");
-   //printf("%s is now opened\n", filename);
+  fstream tmpStream(filename);
+  TEST(tmpStream.is_open(), "Fail to open " + string(filename) + "\n");
+  // printf("%s is now opened\n", filename);
 
-   tmpStream.close();
+  tmpStream.close();
 
-   INT32 removed = remove(filename);
-   TEST(removed == 0, "Can't remove tmp file "+string(filename)+"\n");
-   //printf("%s is now removed\n", filename);
+  INT32 removed = remove(filename);
+  TEST(removed == 0, "Can't remove tmp file " + string(filename) + "\n");
+  // printf("%s is now removed\n", filename);
 }
 
-VOID TimeTest()
-{
-    MilliSecondsElapsed();
-    TEST(MilliSecondsElapsed() == 0, "MilliSecondsElapsed failed");
+VOID TimeTest() {
+  MilliSecondsElapsed();
+  TEST(MilliSecondsElapsed() == 0, "MilliSecondsElapsed failed");
 }
 
-VOID PageTest()
-{
-    ADDRINT addr = 0x123456;
-    string pageAddr1 = hexstr(GetPageOfAddr(addr));
-    string pageAddr2 = ptrstr(MemPageRange((void*)addr).Base());
-    TEST(pageAddr1 == pageAddr2, "GetPageOfAddr or MemPageRange failed");
+VOID PageTest() {
+  ADDRINT addr = 0x123456;
+  string pageAddr1 = hexstr(GetPageOfAddr(addr));
+  string pageAddr2 = ptrstr(MemPageRange((void*)addr).Base());
+  TEST(pageAddr1 == pageAddr2, "GetPageOfAddr or MemPageRange failed");
 }
 
-int main(INT32 argc, CHAR **argv)
-{
-    PIN_Init(argc, argv);
+int main(INT32 argc, CHAR** argv) {
+  PIN_Init(argc, argv);
 
-    CharsUtilTest();
-    StringsUtilTest();
-    TempFileTest();
-    TimeTest();
-    PageTest();
+  CharsUtilTest();
+  StringsUtilTest();
+  TempFileTest();
+  TimeTest();
+  PageTest();
 
-    TEST(PIN_VmFullPath() != string(), "PIN_VmFullPath failed"); 
-    BreakMe(); // Empty function
+  TEST(PIN_VmFullPath() != string(), "PIN_VmFullPath failed");
+  BreakMe();  // Empty function
 
-    // Never returns
-    PIN_StartProgram();
-    
-    return 0;
+  // Never returns
+  PIN_StartProgram();
+
+  return 0;
 }

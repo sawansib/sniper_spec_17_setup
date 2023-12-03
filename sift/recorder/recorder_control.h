@@ -1,8 +1,8 @@
 #ifndef __RECORDER_CONTROL_H
 #define __RECORDER_CONTROL_H
 
-#include "sift_format.h"
 #include "pin.H"
+#include "sift_format.h"
 
 void setInstrumentationMode(Sift::Mode mode);
 
@@ -20,4 +20,4 @@ void findMyAppId();
 
 void initRecorderControl();
 
-#endif // __RECORDER_CONTROL_H
+#endif  // __RECORDER_CONTROL_H

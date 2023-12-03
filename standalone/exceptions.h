@@ -3,4 +3,4 @@
 
 void registerExceptionHandler();
 
-#endif // __EXCEPTIONS_H
+#endif  // __EXCEPTIONS_H

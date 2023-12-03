@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -37,8 +37,7 @@ const unsigned SPSIZE = 4;
 const unsigned NUMDPELEMENTS = VECTORSIZE / DPSIZE;
 const unsigned NUMSPELEMENTS = VECTORSIZE / SPSIZE;
 
-extern "C"
-{
+extern "C" {
 extern const int gatherMask;
 extern const int scatterMask;
 extern const int fullmask;
@@ -48,4 +47,4 @@ extern const unsigned int dpIndices[NUMDPELEMENTS];
 extern const unsigned int spIndices[NUMSPELEMENTS];
 }  // extern "C"
 
-#endif // VECTOR_VALUES_H
+#endif  // VECTOR_VALUES_H

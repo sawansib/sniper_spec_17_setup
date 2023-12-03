@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,14 +29,14 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 /*
-This tool is used to output that the child process was created in the correct mode 
-(probe or jit)
+This tool is used to output that the child process was created in the correct
+mode (probe or jit)
 */
 
-#include "pin.H"
 #include <iostream>
-namespace WIND
-{
+
+#include "pin.H"
+namespace WIND {
 #include <windows.h>
 }
 
@@ -44,45 +44,36 @@ using namespace std;
 
 WIND::HANDLE outputMutex;
 
-
 // use mutex to synchronize outputs from multiple instances of this tool
-void MutexWriteToStdout (char *msg)
-{
-    
-    WIND::WaitForSingleObject (outputMutex, INFINITE);
-    
-    printf (msg);
-    
-    fflush (stdout);
-    
-    WIND::ReleaseMutex (outputMutex);
+void MutexWriteToStdout(char *msg) {
+  WIND::WaitForSingleObject(outputMutex, INFINITE);
+
+  printf(msg);
+
+  fflush(stdout);
+
+  WIND::ReleaseMutex(outputMutex);
 }
 
+int main(INT32 argc, CHAR **argv) {
+  outputMutex = WIND::CreateMutex(NULL, false /* not initial owner*/,
+                                  "pin_child_tool_output_mutex");
+  if (outputMutex == NULL) {
+    cout << "failed to create outputMutex\n";
+    exit(0);
+  }
 
-int main(INT32 argc, CHAR **argv)
-{
-    outputMutex = WIND::CreateMutex (NULL, false /* not initial owner*/, "pin_child_tool_output_mutex");
-    if (outputMutex == NULL)
-    {
-        cout << "failed to create outputMutex\n";
-        exit (0);
-    }
+  PIN_InitSymbols();
+  PIN_Init(argc, argv);
 
-    PIN_InitSymbols();
-    PIN_Init(argc, argv);
-    
-    // Never returns
-    if ( PIN_IsProbeMode() )
-    {
-        MutexWriteToStdout ("In follow_child PinTool is probed 1\n");
-        PIN_StartProgramProbed();
-    }
-    else
-    {
-        MutexWriteToStdout ("In follow_child PinTool is probed 0\n");
-        PIN_StartProgram();
-    }
+  // Never returns
+  if (PIN_IsProbeMode()) {
+    MutexWriteToStdout("In follow_child PinTool is probed 1\n");
+    PIN_StartProgramProbed();
+  } else {
+    MutexWriteToStdout("In follow_child PinTool is probed 0\n");
+    PIN_StartProgram();
+  }
 
-    return 0;
+  return 0;
 }
-

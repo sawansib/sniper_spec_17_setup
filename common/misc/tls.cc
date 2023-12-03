@@ -1,9 +1,5 @@
 #include "tls.h"
 
-TLS::TLS()
-{ }
+TLS::TLS() {}
 
-TLS::~TLS()
-{ }
-
-
+TLS::~TLS() {}

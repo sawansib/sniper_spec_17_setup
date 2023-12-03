@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -31,29 +31,24 @@ END_LEGAL */
 #include <stdio.h>
 #include <unistd.h>
 
+int main() {
+  int fd[2];
 
-int main()
-{
-    int fd[2];
+  if (pipe(fd) != 0) {
+    fprintf(stderr, "pipe failed\n");
+    return 1;
+  }
 
-    if (pipe(fd) != 0)
-    {
-        fprintf(stderr, "pipe failed\n");
-        return 1;
-    }
+  printf("Pipe returned file descriptors: %d, %d\n", fd[0], fd[1]);
 
-    printf("Pipe returned file descriptors: %d, %d\n", fd[0], fd[1]);
+  if (close(fd[0]) != 0) {
+    fprintf(stderr, "File descriptor %d is invalid\n", fd[0]);
+    return 1;
+  }
+  if (close(fd[1]) != 0) {
+    fprintf(stderr, "File descriptor %d is invalid\n", fd[1]);
+    return 1;
+  }
 
-    if (close(fd[0]) != 0)
-    {
-        fprintf(stderr, "File descriptor %d is invalid\n", fd[0]);
-        return 1;
-    }
-    if (close(fd[1]) != 0)
-    {
-        fprintf(stderr, "File descriptor %d is invalid\n", fd[1]);
-        return 1;
-    }
-
-    return 0;
+  return 0;
 }

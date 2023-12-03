@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -31,14 +31,12 @@ END_LEGAL */
 #ifndef REGVALUE_TEST_UTILS_H
 #define REGVALUE_TEST_UTILS_H
 
-
 /////////////////////
 // INCLUDES
 /////////////////////
 
-#include "pin.H"
 #include "../Utils/regvalue_utils.h"
-
+#include "pin.H"
 
 /////////////////////
 // GLOBAL VARIABLES
@@ -52,7 +50,6 @@ extern KNOB<bool> KnobTestPartial;
 
 // A knob for specifying whether the SIMD registers should be tested.
 extern KNOB<bool> KnobTestSIMD;
-
 
 /////////////////////
 // FUNCTION DECLARATIONS
@@ -71,20 +68,23 @@ void PrintStoredRegisters(ostream& ost);
 
 ///// Value Queries
 
-// Each tested register is stored in this utilities library. This function retrieves a pointer to it.
+// Each tested register is stored in this utilities library. This function
+// retrieves a pointer to it.
 UINT8* GetRegval(REG reg);
 
-// Get the expected value for a tested register. This is the value that the application assigns in the
-// ChangeRegs function. These values are defined in regvalues.h.
+// Get the expected value for a tested register. This is the value that the
+// application assigns in the ChangeRegs function. These values are defined in
+// regvalues.h.
 const UINT8* GetAppRegisterValue(REG Reg);
 
-// Get the tool assigned value for a tested register. These values are defined in regvalues.h.
+// Get the tool assigned value for a tested register. These values are defined
+// in regvalues.h.
 const UINT8* GetToolRegisterValue(REG reg);
 
 ///// Test Logic
 
-// Compare the stored values of all the tested registers (see the GetTestRegs() function above) with the expected
-// application values defined in regvalues.h.
+// Compare the stored values of all the tested registers (see the GetTestRegs()
+// function above) with the expected application values defined in regvalues.h.
 bool CheckAllExpectedValues(ostream& ost);
 
-#endif // REGVALUE_TEST_UTILS_H
+#endif  // REGVALUE_TEST_UTILS_H

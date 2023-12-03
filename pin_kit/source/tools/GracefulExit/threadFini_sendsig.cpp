@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -32,16 +32,17 @@ END_LEGAL */
  * This program receives a pid as its argument and sends a SIGTERM to it.
  */
 
-#include <cassert>
-#include <cstdlib>
 #include <signal.h>
 #include <sys/types.h>
 
+#include <cassert>
+#include <cstdlib>
+
 // argv[1] is expected to be the pid to kill.
 int main(int argc, char** argv) {
-    assert(argc == 2);
-    int pid = atoi(argv[1]);
-    assert(pid > 1);
-    kill(pid, SIGTERM);
-    return 0;
+  assert(argc == 2);
+  int pid = atoi(argv[1]);
+  assert(pid > 1);
+  kill(pid, SIGTERM);
+  return 0;
 }

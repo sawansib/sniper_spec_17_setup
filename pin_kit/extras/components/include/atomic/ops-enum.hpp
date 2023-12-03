@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -38,47 +38,48 @@ END_LEGAL */
 namespace ATOMIC {
 
 /*!
- * A type that tells the memory ordering semantics for a particular memory operation.  The
- * ordering semantics specify the visibility of this memory operation on other processors
- * w.r.t. other memory operations on this processor.  These enum values are for OPS::CompareAndSwap()
- * operations.
+ * A type that tells the memory ordering semantics for a particular memory
+ * operation.  The ordering semantics specify the visibility of this memory
+ * operation on other processors w.r.t. other memory operations on this
+ * processor.  These enum values are for OPS::CompareAndSwap() operations.
  */
-enum BARRIER_CS
-{
-    BARRIER_CS_NONE,   ///< Compare/swap operation has no special ordering semantics.
-    BARRIER_CS_PREV,   ///< Compare/swap visibile after all previous memory operations from this processor.
-    BARRIER_CS_NEXT    ///< Compare/swap visible before all subsequent memory operations from this processor.
+enum BARRIER_CS {
+  BARRIER_CS_NONE,  ///< Compare/swap operation has no special ordering
+                    ///< semantics.
+  BARRIER_CS_PREV,  ///< Compare/swap visibile after all previous memory
+                    ///< operations from this processor.
+  BARRIER_CS_NEXT   ///< Compare/swap visible before all subsequent memory
+                    ///< operations from this processor.
 };
-
 
 /*!
  * Tells the memory ordering semantics of an OPS::Swap() operation.
  */
-enum BARRIER_SWAP
-{
-    BARRIER_SWAP_NONE,   ///< Swap operation has no special ordering semantics.
-    BARRIER_SWAP_PREV,   ///< Swap visibile after all previous memory operations from this processor.
-    BARRIER_SWAP_NEXT    ///< Swap visible before all subsequent memory operations from this processor.
+enum BARRIER_SWAP {
+  BARRIER_SWAP_NONE,  ///< Swap operation has no special ordering semantics.
+  BARRIER_SWAP_PREV,  ///< Swap visibile after all previous memory operations
+                      ///< from this processor.
+  BARRIER_SWAP_NEXT   ///< Swap visible before all subsequent memory operations
+                      ///< from this processor.
 };
 
 /*!
  * Tells the memory ordering semantics of an OPS::Store() operation.
  */
-enum BARRIER_ST
-{
-    BARRIER_ST_NONE,   ///< Store operation has no special ordering semantics.
-    BARRIER_ST_PREV    ///< Store visibile after all previous memory operations from this processor.
+enum BARRIER_ST {
+  BARRIER_ST_NONE,  ///< Store operation has no special ordering semantics.
+  BARRIER_ST_PREV  ///< Store visibile after all previous memory operations from
+                   ///< this processor.
 };
-
 
 /*!
  * Tells the memory ordering semantics of an OPS::Load() operation.
  */
-enum BARRIER_LD
-{
-    BARRIER_LD_NONE,   ///< Load operation has no special ordering semantics.
-    BARRIER_LD_NEXT    ///< Load gets value before all subsequent memory operations visible from this processor.
+enum BARRIER_LD {
+  BARRIER_LD_NONE,  ///< Load operation has no special ordering semantics.
+  BARRIER_LD_NEXT   ///< Load gets value before all subsequent memory operations
+                    ///< visible from this processor.
 };
 
-} // namespace
-#endif // file guard
+}  // namespace ATOMIC
+#endif  // file guard

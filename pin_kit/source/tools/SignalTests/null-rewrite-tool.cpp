@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,60 +29,50 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 /*
- * This tool rewrites every memory instruction using Pin's INS_RewriteMemoryOperand() API,
- * but all instructions are rewritten to use their original effective addresses.
+ * This tool rewrites every memory instruction using Pin's
+ * INS_RewriteMemoryOperand() API, but all instructions are rewritten to use
+ * their original effective addresses.
  */
 
-#include <iostream>
 #include <pin.H>
 
+#include <iostream>
 
 static void InstrumentIns(INS, VOID *);
 static REG GetScratchReg(UINT32);
 static ADDRINT GetMemAddress(ADDRINT);
 
-
-int main(int argc, char * argv[])
-{
-    PIN_Init(argc, argv);
-    INS_AddInstrumentFunction(InstrumentIns, 0);
-    PIN_StartProgram();
-    return 0;
+int main(int argc, char *argv[]) {
+  PIN_Init(argc, argv);
+  INS_AddInstrumentFunction(InstrumentIns, 0);
+  PIN_StartProgram();
+  return 0;
 }
 
-static void InstrumentIns(INS ins, VOID *)
-{
-    for (UINT32 memIndex = 0;  memIndex < INS_MemoryOperandCount(ins);  memIndex++)
-    {
-        REG scratchReg = GetScratchReg(memIndex);
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(GetMemAddress),
-            IARG_MEMORYOP_EA, memIndex,
-            IARG_RETURN_REGS, scratchReg,
-            IARG_END);
-        INS_RewriteMemoryOperand(ins, memIndex, scratchReg); 
+static void InstrumentIns(INS ins, VOID *) {
+  for (UINT32 memIndex = 0; memIndex < INS_MemoryOperandCount(ins);
+       memIndex++) {
+    REG scratchReg = GetScratchReg(memIndex);
+    INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(GetMemAddress), IARG_MEMORYOP_EA,
+                   memIndex, IARG_RETURN_REGS, scratchReg, IARG_END);
+    INS_RewriteMemoryOperand(ins, memIndex, scratchReg);
+  }
+}
+
+static REG GetScratchReg(UINT32 index) {
+  static std::vector<REG> regs;
+
+  while (index >= regs.size()) {
+    REG reg = PIN_ClaimToolRegister();
+    if (reg == REG_INVALID()) {
+      std::cerr << "*** Ran out of tool registers" << std::endl;
+      PIN_ExitProcess(1);
+      /* does not return */
     }
+    regs.push_back(reg);
+  }
+
+  return regs[index];
 }
 
-static REG GetScratchReg(UINT32 index)
-{
-    static std::vector<REG> regs;
-
-    while (index >= regs.size())
-    {
-        REG reg = PIN_ClaimToolRegister();
-        if (reg == REG_INVALID())
-        {
-            std::cerr << "*** Ran out of tool registers" << std::endl;
-            PIN_ExitProcess(1);
-            /* does not return */
-        }
-        regs.push_back(reg);
-    }
-
-    return regs[index];
-}
-
-static ADDRINT GetMemAddress(ADDRINT ea)
-{
-    return ea;
-}
+static ADDRINT GetMemAddress(ADDRINT ea) { return ea; }

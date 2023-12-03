@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -37,16 +37,14 @@ END_LEGAL */
 
 #include "debugger-protocol.hpp"
 
-
 namespace DEBUGGER_PROTOCOL {
 
-#if defined(DEBUGGER_PROTOCOL_BUILD)    // Library clients should NOT define this.
+#if defined(DEBUGGER_PROTOCOL_BUILD)  // Library clients should NOT define this.
 
 /*!
  * This is the register set GDB uses on IA32 Linux.
  */
-DEBUGGER_PROTOCOL_API REG_DESCRIPTION RegsGdbLinuxIA32[] =
-{
+DEBUGGER_PROTOCOL_API REG_DESCRIPTION RegsGdbLinuxIA32[] = {
     {32, REG_INVALID, false},   // REG_GDB_LINUX_IA32_EAX
     {32, REG_INVALID, false},   // REG_GDB_LINUX_IA32_ECX
     {32, REG_INVALID, false},   // REG_GDB_LINUX_IA32_EDX
@@ -94,66 +92,67 @@ DEBUGGER_PROTOCOL_API REG_DESCRIPTION RegsGdbLinuxIA32[] =
 /*!
  * Number of entries in RegsGdbLinuxIA32.
  */
-DEBUGGER_PROTOCOL_API unsigned RegsGdbLinuxIA32Count = sizeof(RegsGdbLinuxIA32) / sizeof(RegsGdbLinuxIA32[0]);
+DEBUGGER_PROTOCOL_API unsigned RegsGdbLinuxIA32Count =
+    sizeof(RegsGdbLinuxIA32) / sizeof(RegsGdbLinuxIA32[0]);
 
 #else
 
-DEBUGGER_PROTOCOL_API extern REG_DESCRIPTION RegsGdbLinuxIA32[];   ///< GDB's IA32 register set on Linux.
-DEBUGGER_PROTOCOL_API extern unsigned RegsGdbLinuxIA32Count;       ///< Number of entries in RegsGdbLinuxIA32.
+DEBUGGER_PROTOCOL_API extern REG_DESCRIPTION
+    RegsGdbLinuxIA32[];  ///< GDB's IA32 register set on Linux.
+DEBUGGER_PROTOCOL_API extern unsigned
+    RegsGdbLinuxIA32Count;  ///< Number of entries in RegsGdbLinuxIA32.
 
 #endif /*DEBUGGER_PROTOCOL_BUILD*/
-
 
 /*!
  * Convenient identifiers for the registers in this set.
  */
-enum REG_GDB_LINUX_IA32
-{
-    REG_GDB_LINUX_IA32_FIRST = REG_END,
-    REG_GDB_LINUX_IA32_EAX = REG_GDB_LINUX_IA32_FIRST,
-    REG_GDB_LINUX_IA32_ECX,
-    REG_GDB_LINUX_IA32_EDX,
-    REG_GDB_LINUX_IA32_EBX,
-    REG_GDB_LINUX_IA32_ESP,
-    REG_GDB_LINUX_IA32_EBP,
-    REG_GDB_LINUX_IA32_ESI,
-    REG_GDB_LINUX_IA32_EDI,
-    REG_GDB_LINUX_IA32_PC,
-    REG_GDB_LINUX_IA32_EFLAGS,
-    REG_GDB_LINUX_IA32_CS,
-    REG_GDB_LINUX_IA32_SS,
-    REG_GDB_LINUX_IA32_DS,
-    REG_GDB_LINUX_IA32_ES,
-    REG_GDB_LINUX_IA32_FS,
-    REG_GDB_LINUX_IA32_GS,
-    REG_GDB_LINUX_IA32_ST0,
-    REG_GDB_LINUX_IA32_ST1,
-    REG_GDB_LINUX_IA32_ST2,
-    REG_GDB_LINUX_IA32_ST3,
-    REG_GDB_LINUX_IA32_ST4,
-    REG_GDB_LINUX_IA32_ST5,
-    REG_GDB_LINUX_IA32_ST6,
-    REG_GDB_LINUX_IA32_ST7,
-    REG_GDB_LINUX_IA32_FCTRL,
-    REG_GDB_LINUX_IA32_FSTAT,
-    REG_GDB_LINUX_IA32_FTAG_FULL,   // 16-bit "full" encoding
-    REG_GDB_LINUX_IA32_FISEG,
-    REG_GDB_LINUX_IA32_FIOFF,
-    REG_GDB_LINUX_IA32_FOSEG,
-    REG_GDB_LINUX_IA32_FOOFF,
-    REG_GDB_LINUX_IA32_FOP,
-    REG_GDB_LINUX_IA32_XMM0,
-    REG_GDB_LINUX_IA32_XMM1,
-    REG_GDB_LINUX_IA32_XMM2,
-    REG_GDB_LINUX_IA32_XMM3,
-    REG_GDB_LINUX_IA32_XMM4,
-    REG_GDB_LINUX_IA32_XMM5,
-    REG_GDB_LINUX_IA32_XMM6,
-    REG_GDB_LINUX_IA32_XMM7,
-    REG_GDB_LINUX_IA32_MXCSR,
-    REG_GDB_LINUX_IA32_ORIG_EAX,
-    REG_GDB_LINUX_IA32_LAST = REG_GDB_LINUX_IA32_ORIG_EAX
+enum REG_GDB_LINUX_IA32 {
+  REG_GDB_LINUX_IA32_FIRST = REG_END,
+  REG_GDB_LINUX_IA32_EAX = REG_GDB_LINUX_IA32_FIRST,
+  REG_GDB_LINUX_IA32_ECX,
+  REG_GDB_LINUX_IA32_EDX,
+  REG_GDB_LINUX_IA32_EBX,
+  REG_GDB_LINUX_IA32_ESP,
+  REG_GDB_LINUX_IA32_EBP,
+  REG_GDB_LINUX_IA32_ESI,
+  REG_GDB_LINUX_IA32_EDI,
+  REG_GDB_LINUX_IA32_PC,
+  REG_GDB_LINUX_IA32_EFLAGS,
+  REG_GDB_LINUX_IA32_CS,
+  REG_GDB_LINUX_IA32_SS,
+  REG_GDB_LINUX_IA32_DS,
+  REG_GDB_LINUX_IA32_ES,
+  REG_GDB_LINUX_IA32_FS,
+  REG_GDB_LINUX_IA32_GS,
+  REG_GDB_LINUX_IA32_ST0,
+  REG_GDB_LINUX_IA32_ST1,
+  REG_GDB_LINUX_IA32_ST2,
+  REG_GDB_LINUX_IA32_ST3,
+  REG_GDB_LINUX_IA32_ST4,
+  REG_GDB_LINUX_IA32_ST5,
+  REG_GDB_LINUX_IA32_ST6,
+  REG_GDB_LINUX_IA32_ST7,
+  REG_GDB_LINUX_IA32_FCTRL,
+  REG_GDB_LINUX_IA32_FSTAT,
+  REG_GDB_LINUX_IA32_FTAG_FULL,  // 16-bit "full" encoding
+  REG_GDB_LINUX_IA32_FISEG,
+  REG_GDB_LINUX_IA32_FIOFF,
+  REG_GDB_LINUX_IA32_FOSEG,
+  REG_GDB_LINUX_IA32_FOOFF,
+  REG_GDB_LINUX_IA32_FOP,
+  REG_GDB_LINUX_IA32_XMM0,
+  REG_GDB_LINUX_IA32_XMM1,
+  REG_GDB_LINUX_IA32_XMM2,
+  REG_GDB_LINUX_IA32_XMM3,
+  REG_GDB_LINUX_IA32_XMM4,
+  REG_GDB_LINUX_IA32_XMM5,
+  REG_GDB_LINUX_IA32_XMM6,
+  REG_GDB_LINUX_IA32_XMM7,
+  REG_GDB_LINUX_IA32_MXCSR,
+  REG_GDB_LINUX_IA32_ORIG_EAX,
+  REG_GDB_LINUX_IA32_LAST = REG_GDB_LINUX_IA32_ORIG_EAX
 };
 
-} // namespace
-#endif // file guard
+}  // namespace DEBUGGER_PROTOCOL
+#endif  // file guard

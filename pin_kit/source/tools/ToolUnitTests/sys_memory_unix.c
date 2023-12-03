@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -30,59 +30,51 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 
 /*! @file
- *  Implementation of the memory management API in Unix. 
+ *  Implementation of the memory management API in Unix.
  */
-#include "sys_memory.h"
-#include <unistd.h>
 #include <sys/mman.h>
+#include <unistd.h>
+
+#include "sys_memory.h"
 
 /*!
- *  Given a MEM_PROTECTION attribute, return corresponding Unix protection flags. 
+ *  Given a MEM_PROTECTION attribute, return corresponding Unix protection
+ * flags.
  */
-static int SysProtection(MEM_PROTECTION protect)
-{
-    switch (protect)
-    {
+static int SysProtection(MEM_PROTECTION protect) {
+  switch (protect) {
     case MEM_READ_EXEC:
-        return PROT_READ|PROT_EXEC;
+      return PROT_READ | PROT_EXEC;
     case MEM_READ_WRITE_EXEC:
-        return PROT_READ|PROT_WRITE|PROT_EXEC;
+      return PROT_READ | PROT_WRITE | PROT_EXEC;
     default:
-        return PROT_NONE;
-    }
+      return PROT_NONE;
+  }
 }
 
 /*!
- *  Implementation of the memory management API. 
+ *  Implementation of the memory management API.
  */
-size_t GetPageSize()
-{
-    return (size_t)getpagesize();
+size_t GetPageSize() { return (size_t)getpagesize(); }
+
+void MemFree(void* addr, size_t size) { munmap(addr, size); }
+
+BOOL MemProtect(void* addr, size_t size, MEM_PROTECTION protect) {
+  return (-1 != mprotect(addr, size, SysProtection(protect)));
 }
 
-void MemFree(void * addr, size_t size)
-{
-    munmap(addr, size);
-}
-
-BOOL MemProtect(void * addr, size_t size, MEM_PROTECTION protect)
-{
-    
-    return (-1 != mprotect(addr, size, SysProtection(protect)));
-}
-
-void * MemAlloc(size_t size, MEM_PROTECTION protect)
-{
+void* MemAlloc(size_t size, MEM_PROTECTION protect) {
 #if defined(TARGET_MAC) || defined(TARGET_BSD)
-    void * addr = mmap(0, size, SysProtection(protect), MAP_ANON | MAP_PRIVATE, -1, 0);
+  void* addr =
+      mmap(0, size, SysProtection(protect), MAP_ANON | MAP_PRIVATE, -1, 0);
 #else
-    void * addr = mmap(0, size, SysProtection(protect), MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
+  void* addr =
+      mmap(0, size, SysProtection(protect), MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
 #endif
-    if (addr != MAP_FAILED)
-    {
-        return addr;
-    }
-    return 0;
+  if (addr != MAP_FAILED) {
+    return addr;
+  }
+  return 0;
 }
 
 /* ===================================================================== */

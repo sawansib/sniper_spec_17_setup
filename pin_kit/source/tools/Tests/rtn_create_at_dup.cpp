@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -31,37 +31,37 @@ END_LEGAL */
 /*!
  * This is a test for mantis 2575 and was updated for Mantis 3116.
  *
- * This tests verifies that RTN_CreateAt replaces that RTN when used on an address
- * which already has an RTN. See Mantis 3116 for more details.
+ * This tests verifies that RTN_CreateAt replaces that RTN when used on an
+ * address which already has an RTN. See Mantis 3116 for more details.
  *
  */
 
 #include <iostream>
+
 #include "pin.H"
 
-using std::cout;
 using std::cerr;
+using std::cout;
 using std::endl;
 
-static VOID ImageLoad(IMG img, VOID * v) {
-    // For simplicity, instrument only the main image. This can be extended to any other image of course.
-    if (IMG_IsMainExecutable(img)) {
+static VOID ImageLoad(IMG img, VOID *v) {
+  // For simplicity, instrument only the main image. This can be extended to any
+  // other image of course.
+  if (IMG_IsMainExecutable(img)) {
+    for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec)) {
+      // For each section, process all RTNs.
+      RTN rtn = SEC_RtnHead(sec);
 
-        for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec)) {
+      if (!RTN_Valid(rtn)) continue;
 
-            // For each section, process all RTNs.
-            RTN rtn = SEC_RtnHead(sec);
-
-            if (!RTN_Valid(rtn)) continue;
-
-            // There is already an RTN object associated with this address so RTN_CreateAt
-            // should replace this RTN
-            //
-            string oldName = RTN_Name(rtn);
-            rtn = RTN_CreateAt(RTN_Address(rtn), "NEWNAME");
-            ASSERT(oldName != RTN_Name(rtn), "FAILED");
-        }
+      // There is already an RTN object associated with this address so
+      // RTN_CreateAt should replace this RTN
+      //
+      string oldName = RTN_Name(rtn);
+      rtn = RTN_CreateAt(RTN_Address(rtn), "NEWNAME");
+      ASSERT(oldName != RTN_Name(rtn), "FAILED");
     }
+  }
 }
 
 /* ===================================================================== */
@@ -69,14 +69,14 @@ static VOID ImageLoad(IMG img, VOID * v) {
 /* ===================================================================== */
 
 int main(INT32 argc, CHAR **argv) {
-    PIN_InitSymbols();
+  PIN_InitSymbols();
 
-    PIN_Init(argc,argv);
+  PIN_Init(argc, argv);
 
-    IMG_AddInstrumentFunction(ImageLoad, NULL);
+  IMG_AddInstrumentFunction(ImageLoad, NULL);
 
-    // Never returns
-    PIN_StartProgram();
+  // Never returns
+  PIN_StartProgram();
 
-    return 0;
+  return 0;
 }

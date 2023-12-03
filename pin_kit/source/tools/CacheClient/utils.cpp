@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -31,55 +31,54 @@ END_LEGAL */
 //
 //  ORIGINAL_AUTHOR: Kim Hazelwood
 //
-//  This is a utility file that contains useful routines for 
+//  This is a utility file that contains useful routines for
 //      all cache client tools
 
-#include "pin.H"
 #include "utils.H"
+
 #include <iostream>
+
+#include "pin.H"
 
 using namespace std;
 
 /* ================================================================== */
 /*
-  Convert an unsigned integer (representing bytes) into a string 
+  Convert an unsigned integer (representing bytes) into a string
   that uses KB or MB as necessary
 */
-string BytesToString(UINT32 numBytes)
-{
-    if (numBytes < 10240)
-        return decstr(numBytes) + " bytes"; 
-    else if (numBytes < (1024*10240))
-        return decstr(numBytes>>10) + " KB"; 
-    else 
-        return decstr(numBytes>>20) + " MB"; 
+string BytesToString(UINT32 numBytes) {
+  if (numBytes < 10240)
+    return decstr(numBytes) + " bytes";
+  else if (numBytes < (1024 * 10240))
+    return decstr(numBytes >> 10) + " KB";
+  else
+    return decstr(numBytes >> 20) + " MB";
 }
 
 /* ================================================================== */
 /*
   Print details of a cache initialization
 */
-VOID PrintInitInfo()
-{
-    cout << "Cache Initialization Complete\t";
+VOID PrintInitInfo() {
+  cout << "Cache Initialization Complete\t";
 
-    UINT32 block_size = CODECACHE_BlockSize();
-    UINT32 cache_limit = CODECACHE_CacheSizeLimit();
-    
-    if (cache_limit)
-        cout << "[cache_limit=" << BytesToString(cache_limit) ;
-    else 
-        cout << "[cache_limit=unlimited" ;
-    
-    cout << ", cache_block=" << BytesToString(block_size) << "]" << endl;
+  UINT32 block_size = CODECACHE_BlockSize();
+  UINT32 cache_limit = CODECACHE_CacheSizeLimit();
+
+  if (cache_limit)
+    cout << "[cache_limit=" << BytesToString(cache_limit);
+  else
+    cout << "[cache_limit=unlimited";
+
+  cout << ", cache_block=" << BytesToString(block_size) << "]" << endl;
 }
 
 /* ================================================================== */
 /*
   Print command-line switches on error
 */
-INT32 Usage()
-{
-    cerr << KNOB_BASE::StringKnobSummary() << endl;
-    return -1;
+INT32 Usage() {
+  cerr << KNOB_BASE::StringKnobSummary() << endl;
+  return -1;
 }

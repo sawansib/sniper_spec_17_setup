@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -31,8 +31,8 @@ END_LEGAL */
 #include <iomanip>
 #include <iostream>
 
-#include "pin.H"
 #include "instlib.H"
+#include "pin.H"
 
 using namespace INSTLIB;
 
@@ -41,54 +41,44 @@ FILTER filter;
 
 ofstream out("filter.out");
 
-INT32 Usage()
-{
-    cerr <<
-        "This pin tool demonstrates use of FILTER to identify instrumentation points\n"
-        "\n";
+INT32 Usage() {
+  cerr << "This pin tool demonstrates use of FILTER to identify "
+          "instrumentation points\n"
+          "\n";
 
-    cerr << KNOB_BASE::StringKnobSummary() << endl;
-    return -1;
+  cerr << KNOB_BASE::StringKnobSummary() << endl;
+  return -1;
 }
 
-VOID Trace(TRACE trace, VOID * val)
-{
-    if (!filter.SelectTrace(trace))
-        return;
+VOID Trace(TRACE trace, VOID* val) {
+  if (!filter.SelectTrace(trace)) return;
 
-    for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))
-    {
-        for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins))
-        {
-            out << hex << setw(8) << INS_Address(ins) << " ";
-    
-            RTN rtn = TRACE_Rtn(trace);
-            if (RTN_Valid(rtn))
-            {
-                out << IMG_Name(SEC_Img(RTN_Sec(rtn))) << ":" << RTN_Name(rtn) << " " ;
-            }
-    
-            out << INS_Disassemble(ins) << endl;
-        }
+  for (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl)) {
+    for (INS ins = BBL_InsHead(bbl); INS_Valid(ins); ins = INS_Next(ins)) {
+      out << hex << setw(8) << INS_Address(ins) << " ";
+
+      RTN rtn = TRACE_Rtn(trace);
+      if (RTN_Valid(rtn)) {
+        out << IMG_Name(SEC_Img(RTN_Sec(rtn))) << ":" << RTN_Name(rtn) << " ";
+      }
+
+      out << INS_Disassemble(ins) << endl;
     }
+  }
 }
 
 // argc, argv are the entire command line, including pin -t <toolname> -- ...
-int main(int argc, char * argv[])
-{
-    if( PIN_Init(argc,argv) )
-    {
-        return Usage();
-    }
+int main(int argc, char* argv[]) {
+  if (PIN_Init(argc, argv)) {
+    return Usage();
+  }
 
-    TRACE_AddInstrumentFunction(Trace, 0);
-    
-    filter.Activate();
-    
-    // Start the program, never returns
-    PIN_StartProgram();
-    
-    return 0;
+  TRACE_AddInstrumentFunction(Trace, 0);
+
+  filter.Activate();
+
+  // Start the program, never returns
+  PIN_StartProgram();
+
+  return 0;
 }
-
-

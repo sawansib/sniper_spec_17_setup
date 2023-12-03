@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -31,38 +31,35 @@ END_LEGAL */
 #include <stdio.h>
 
 #if defined(TARGET_WINDOWS)
-#define EXPORT_CSYM  __declspec( dllexport )
+#define EXPORT_CSYM __declspec(dllexport)
 #define NO_INLINE __declspec(noinline)
 #else
-#define EXPORT_CSYM 
-#define NO_INLINE 
+#define EXPORT_CSYM
+#define NO_INLINE
 extern int DoReps();
 #endif
 
-EXPORT_CSYM NO_INLINE void   RepAppAtIpointAfterStarted()
-{
-    printf ("RepAppAtIpointAfterStarted\n");
+EXPORT_CSYM NO_INLINE void RepAppAtIpointAfterStarted() {
+  printf("RepAppAtIpointAfterStarted\n");
 }
 
-int main(int argc, char ** argv)
-{
-    
+int main(int argc, char** argv) {
 #if defined(TARGET_WINDOWS)
-    char stringOne[] = "IAMHEREE";
-    char stringTwo[] = "IWASHERE";
-    char stringThree[] = "ABCDEF20";
-    char stringFour[] =  "BCDEFG21";
-    char stringBlanks[] = "          X";
-    char stringSource[] = "12345678";
-    char stringDest[9];
+  char stringOne[] = "IAMHEREE";
+  char stringTwo[] = "IWASHERE";
+  char stringThree[] = "ABCDEF20";
+  char stringFour[] = "BCDEFG21";
+  char stringBlanks[] = "          X";
+  char stringSource[] = "12345678";
+  char stringDest[9];
 #define length 9
 #define length2 8
 #define length3 12
 #define length4 8
-    int retVal = 0;
-    RepAppAtIpointAfterStarted();
-    printf ("Starting...\n");
-    __asm {
+  int retVal = 0;
+  RepAppAtIpointAfterStarted();
+  printf("Starting...\n");
+  __asm {
         fnop                                      
 	cld
         xor     ebx, ebx                      ; ebx holds test number (used as exit code on failure)
@@ -139,13 +136,13 @@ l2:
     lea	esi, retVal
     mov dword ptr[esi], 1
 end:
-        fnop                                      
-    }
+        fnop
+  }
 #else
-    int retVal;
-    RepAppAtIpointAfterStarted();
-    retVal = DoReps();
+  int retVal;
+  RepAppAtIpointAfterStarted();
+  retVal = DoReps();
 #endif
-    printf ("Ending... retVal %d\n", retVal);
-    return retVal;
+  printf("Ending... retVal %d\n", retVal);
+  return retVal;
 }

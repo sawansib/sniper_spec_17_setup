@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -35,41 +35,38 @@ END_LEGAL */
 // when the tool is loaded (i.e. before pin has a chance to call "main").
 //
 
-#include <iostream>
 #include <errno.h>
 #include <sys/mman.h>
+
+#include <iostream>
+
 #include "pin.H"
 
 static void *gptr = 0;
 
 class TestMMap {
-public:
-    TestMMap() 
-    {
-        gptr = mmap(0, 4*1024, PROT_READ, MAP_PRIVATE|MAP_ANON, -1, 0);
-    }
+ public:
+  TestMMap() {
+    gptr = mmap(0, 4 * 1024, PROT_READ, MAP_PRIVATE | MAP_ANON, -1, 0);
+  }
 };
 
 static TestMMap testMmap;
 
+int main(INT32 argc, CHAR **argv) {
+  PIN_Init(argc, argv);
 
-int main(INT32 argc, CHAR **argv)
-{
-    PIN_Init(argc, argv);
+  void *p = mmap(0, 4 * 1024, PROT_READ, MAP_PRIVATE | MAP_ANON, -1, 0);
+  if (p == MAP_FAILED || gptr == MAP_FAILED) {
+    std::cerr << "mmap has failed" << std::endl;
+    return 1;
+  }
 
-    void *p = mmap(0, 4*1024, PROT_READ, MAP_PRIVATE|MAP_ANON, -1, 0);
-    if (p == MAP_FAILED || gptr == MAP_FAILED)
-    {
-        std::cerr << "mmap has failed" << std::endl;
-        return 1;
-    }
+  if (gptr == 0) {
+    std::cerr << "ctor was not called" << std::endl;
+    return 1;
+  }
 
-    if (gptr == 0)
-    {
-        std::cerr << "ctor was not called" << std::endl;
-        return 1;
-    }
-
-    PIN_StartProgram();
-    return 0;
+  PIN_StartProgram();
+  return 0;
 }

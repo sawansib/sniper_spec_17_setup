@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -42,85 +42,77 @@ static VOID AtTraceOutOfLine();
 static ADDRINT AtTraceIf();
 static VOID AtEnd(INT32 code, VOID *v);
 
+int main(INT32 argc, CHAR **argv) {
+  CheckSPAlign();
+  PIN_Init(argc, argv);
 
-int main(INT32 argc, CHAR **argv)
-{
-    CheckSPAlign();
-    PIN_Init(argc, argv);
+  TRACE_AddInstrumentFunction(InstrumentTrace, 0);
+  PIN_AddFiniFunction(AtEnd, 0);
 
-    TRACE_AddInstrumentFunction(InstrumentTrace, 0);
-    PIN_AddFiniFunction(AtEnd, 0);
-
-    PIN_StartProgram();
-    return 0;
+  PIN_StartProgram();
+  return 0;
 }
 
-static VOID InstrumentTrace(TRACE trace, VOID *v)
-{
-    CheckSPAlign();
+static VOID InstrumentTrace(TRACE trace, VOID *v) {
+  CheckSPAlign();
 
-    static int testNum = 0;
-    switch (testNum++)
-    {
-      case 0:
-        // Test an out-of-line analysis call.
-        //
-        TRACE_InsertCall(trace, IPOINT_BEFORE, AFUNPTR(AtTraceOutOfLine), IARG_END);
-        break;
+  static int testNum = 0;
+  switch (testNum++) {
+    case 0:
+      // Test an out-of-line analysis call.
+      //
+      TRACE_InsertCall(trace, IPOINT_BEFORE, AFUNPTR(AtTraceOutOfLine),
+                       IARG_END);
+      break;
 
-      case 1:
-        // Test an out-of-line "if/then" call.
-        //
-        TRACE_InsertIfCall(trace, IPOINT_BEFORE, AFUNPTR(AtTraceIf), IARG_END);
-        TRACE_InsertThenCall(trace, IPOINT_BEFORE, AFUNPTR(AtTraceOutOfLine), IARG_END);
-        break;
+    case 1:
+      // Test an out-of-line "if/then" call.
+      //
+      TRACE_InsertIfCall(trace, IPOINT_BEFORE, AFUNPTR(AtTraceIf), IARG_END);
+      TRACE_InsertThenCall(trace, IPOINT_BEFORE, AFUNPTR(AtTraceOutOfLine),
+                           IARG_END);
+      break;
 
+    case 2:
+      // Test an inlined analysis call.
+      //
+      TRACE_InsertCall(trace, IPOINT_BEFORE, AFUNPTR(CheckSPAlign), IARG_END);
+      break;
 
-      case 2:
-        // Test an inlined analysis call.
-        //
-        TRACE_InsertCall(trace, IPOINT_BEFORE, AFUNPTR(CheckSPAlign), IARG_END);
-        break;
+    case 3:
+      // Test an "if/then" call where the "then" is inlined.
+      //
+      TRACE_InsertIfCall(trace, IPOINT_BEFORE, AFUNPTR(AtTraceIf), IARG_END);
+      TRACE_InsertThenCall(trace, IPOINT_BEFORE, AFUNPTR(CheckSPAlign),
+                           IARG_END);
+      break;
 
-      case 3:
-        // Test an "if/then" call where the "then" is inlined.
-        //
-        TRACE_InsertIfCall(trace, IPOINT_BEFORE, AFUNPTR(AtTraceIf), IARG_END);
-        TRACE_InsertThenCall(trace, IPOINT_BEFORE, AFUNPTR(CheckSPAlign), IARG_END);
-        break;
+    case 4:
+      // Test an out-of-line analysis call with context argument
+      //
+      TRACE_InsertCall(trace, IPOINT_BEFORE, AFUNPTR(AtTraceOutOfLine),
+                       IARG_CONTEXT, IARG_END);
+      break;
 
-     case 4:
-        // Test an out-of-line analysis call with context argument
-        //
-        TRACE_InsertCall(trace, IPOINT_BEFORE, AFUNPTR(AtTraceOutOfLine), IARG_CONTEXT, IARG_END);
-        break;
+    case 5:
+      // Test an out-of-line "if/then" call with context argument
+      //
+      TRACE_InsertIfCall(trace, IPOINT_BEFORE, AFUNPTR(AtTraceIf), IARG_END);
+      TRACE_InsertThenCall(trace, IPOINT_BEFORE, AFUNPTR(AtTraceOutOfLine),
+                           IARG_CONTEXT, IARG_END);
+      break;
 
-      case 5:
-        // Test an out-of-line "if/then" call with context argument
-        //
-        TRACE_InsertIfCall(trace, IPOINT_BEFORE, AFUNPTR(AtTraceIf), IARG_END);
-        TRACE_InsertThenCall(trace, IPOINT_BEFORE, AFUNPTR(AtTraceOutOfLine), IARG_CONTEXT, IARG_END);
-        break;
-
-
-      default:
-        testNum = 0;
-        break;
-    }
+    default:
+      testNum = 0;
+      break;
+  }
 }
 
-static VOID AtTraceOutOfLine()
-{
-    CheckSPAlign();
+static VOID AtTraceOutOfLine() { CheckSPAlign(); }
+
+static ADDRINT AtTraceIf() {
+  CheckSPAlign();
+  return 1;
 }
 
-static ADDRINT AtTraceIf()
-{
-    CheckSPAlign();
-    return 1;
-}
-
-static VOID AtEnd(INT32 code, VOID *v)
-{
-    CheckSPAlign();
-}
+static VOID AtEnd(INT32 code, VOID *v) { CheckSPAlign(); }

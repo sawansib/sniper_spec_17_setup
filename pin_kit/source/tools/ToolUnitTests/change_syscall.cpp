@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -33,9 +33,10 @@ END_LEGAL */
  * Use in conjuction with the "change_syscall.c" application.
  */
 
-#include <sys/syscall.h>
 #include <signal.h>
 #include <string.h>
+#include <sys/syscall.h>
+
 #include "pin.H"
 
 #ifdef TARGET_ANDROID
@@ -47,70 +48,63 @@ END_LEGAL */
 #define SYS_getpid __NR_getpid
 #endif
 
-BOOL IsSigaction(ADDRINT sysnum)
-{
+BOOL IsSigaction(ADDRINT sysnum) {
 #ifdef SYS_sigaction
-    if (sysnum == SYS_sigaction)
-        return TRUE;
+  if (sysnum == SYS_sigaction) return TRUE;
 #endif
 #ifdef SYS_rt_sigaction
-    if (sysnum == SYS_rt_sigaction)
-        return TRUE;
+  if (sysnum == SYS_rt_sigaction) return TRUE;
 #endif
-    return FALSE;
+  return FALSE;
 }
 
-
-VOID OnSyscallEntry(THREADID threadIndex, CONTEXT *ctxt, SYSCALL_STANDARD std, VOID *v) 
-{
-    ADDRINT sysnum = PIN_GetSyscallNumber(ctxt, std);
-    ADDRINT arg0 = PIN_GetSyscallArgument(ctxt, std, 0);
+VOID OnSyscallEntry(THREADID threadIndex, CONTEXT *ctxt, SYSCALL_STANDARD std,
+                    VOID *v) {
+  ADDRINT sysnum = PIN_GetSyscallNumber(ctxt, std);
+  ADDRINT arg0 = PIN_GetSyscallArgument(ctxt, std, 0);
 
 #if defined(TARGET_MAC)
-# if defined(TARGET_IA32E)
-    // Extract the syscall number without the UNIX mask
-    sysnum = sysnum & (~(0xFF << 24));
-# else
-    // Extract the syscall number without the int80 mask
-    sysnum = sysnum & 0xFFFF;
-# endif
+#if defined(TARGET_IA32E)
+  // Extract the syscall number without the UNIX mask
+  sysnum = sysnum & (~(0xFF << 24));
+#else
+  // Extract the syscall number without the int80 mask
+  sysnum = sysnum & 0xFFFF;
+#endif
 #endif
 
 #ifdef TARGET_BSD
-    // If this is the system call dispatcher, then use arg0 as the system call number
-    if (sysnum == SYS___syscall)
-    {
-        sysnum = arg0;
-        arg0 = PIN_GetSyscallArgument(ctxt, std, 1);
-    }
+  // If this is the system call dispatcher, then use arg0 as the system call
+  // number
+  if (sysnum == SYS___syscall) {
+    sysnum = arg0;
+    arg0 = PIN_GetSyscallArgument(ctxt, std, 1);
+  }
 #endif
 
-    if (sysnum == SYS_open &&
-        strncmp(reinterpret_cast<char *>(arg0), "does-not-exist1", sizeof("does-not-exist1")-1) == 0)
-    {
-        PIN_SetSyscallNumber(ctxt, std, SYS_getpid);
-    }
+  if (sysnum == SYS_open &&
+      strncmp(reinterpret_cast<char *>(arg0), "does-not-exist1",
+              sizeof("does-not-exist1") - 1) == 0) {
+    PIN_SetSyscallNumber(ctxt, std, SYS_getpid);
+  }
 
-    if (IsSigaction(sysnum) && (arg0 == SIGUSR1))
-    {
-        PIN_SetSyscallNumber(ctxt, std, SYS_getpid);
-    }
+  if (IsSigaction(sysnum) && (arg0 == SIGUSR1)) {
+    PIN_SetSyscallNumber(ctxt, std, SYS_getpid);
+  }
 
-    if (sysnum == SYS_open &&
-        strncmp(reinterpret_cast<char *>(arg0), "does-not-exist2", sizeof("does-not-exist2")-1) == 0)
-    {
-        PIN_SetSyscallNumber(ctxt, std, SYS_exit);
-        PIN_SetSyscallArgument(ctxt, std, 0, 0);
-    }
+  if (sysnum == SYS_open &&
+      strncmp(reinterpret_cast<char *>(arg0), "does-not-exist2",
+              sizeof("does-not-exist2") - 1) == 0) {
+    PIN_SetSyscallNumber(ctxt, std, SYS_exit);
+    PIN_SetSyscallArgument(ctxt, std, 0, 0);
+  }
 }
 
+int main(int argc, char *argv[]) {
+  PIN_Init(argc, argv);
 
-int main(int argc, char * argv[])
-{
-    PIN_Init(argc, argv);
+  PIN_AddSyscallEntryFunction(OnSyscallEntry, 0);
 
-    PIN_AddSyscallEntryFunction(OnSyscallEntry, 0);
-
-    PIN_StartProgram();
-    return 0;
+  PIN_StartProgram();
+  return 0;
 }

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,45 +29,39 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 #include <stdlib.h>
-#include <iostream>
+
 #include <fstream>
+#include <iostream>
 using namespace std;
 
-int 
-main(int argc, char** argv)
-{
-    if (argc != 3)
-    {
-        cerr << "Usage: " 
-             << argv[0] << " input-file output-file" << endl;
-        exit(1);
-    }
-    char* ifn = argv[1];
-    char* ofn = argv[2];
+int main(int argc, char** argv) {
+  if (argc != 3) {
+    cerr << "Usage: " << argv[0] << " input-file output-file" << endl;
+    exit(1);
+  }
+  char* ifn = argv[1];
+  char* ofn = argv[2];
 
-    ifstream* i = new ifstream(ifn, ios::in|ios::binary);
+  ifstream* i = new ifstream(ifn, ios::in | ios::binary);
 
-    if (!i) 
-    {
-        cerr << "Could not open input file " << ifn << endl;
-        exit(1);
-    }
+  if (!i) {
+    cerr << "Could not open input file " << ifn << endl;
+    exit(1);
+  }
 
-    ofstream* o = new ofstream(ofn, ios::out|ios::trunc|ios::binary);
-    if (!o)
-    {
-        cerr << "Could not open output file " << ofn << endl;
-        exit(1);
-    }
-    
-    char ch;
-    while(i->get(ch))
-    {
-        *o << ch;
-    }
-    i->close();
-    o->close();
-    //cerr << "Exiting..." << endl;
-    exit(0);
-    //return 0;
+  ofstream* o = new ofstream(ofn, ios::out | ios::trunc | ios::binary);
+  if (!o) {
+    cerr << "Could not open output file " << ofn << endl;
+    exit(1);
+  }
+
+  char ch;
+  while (i->get(ch)) {
+    *o << ch;
+  }
+  i->close();
+  o->close();
+  // cerr << "Exiting..." << endl;
+  exit(0);
+  // return 0;
 }

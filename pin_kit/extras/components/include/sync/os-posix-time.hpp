@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -36,8 +36,8 @@ END_LEGAL */
 #define SYNC_OS_POSIX_TIME_HPP
 
 #include <sys/time.h>
-#include "barecrt.hpp"
 
+#include "barecrt.hpp"
 
 namespace SYNC {
 
@@ -46,79 +46,69 @@ namespace SYNC {
  * which is based on the POSIX "struct timeval" type.  See \ref SYNC_OS for
  * more details on the "OS" template type.
  */
-struct /*<UTILITY>*/ OS_POSIX_TIME
-{
-    struct timeval _time;   ///< Time value.
+struct /*<UTILITY>*/ OS_POSIX_TIME {
+  struct timeval _time;  ///< Time value.
 
-    /*!
-     * Constructor sets the time value to "zero".
-     */
-    OS_POSIX_TIME()
-    {
-        _time.tv_sec = 0;
-        _time.tv_usec = 0;
-    }
+  /*!
+   * Constructor sets the time value to "zero".
+   */
+  OS_POSIX_TIME() {
+    _time.tv_sec = 0;
+    _time.tv_usec = 0;
+  }
 
-    /*!
-     * @param[in] other     New time is a copy of \a other.
-     */
-    OS_POSIX_TIME(const OS_POSIX_TIME &other)
-    {
-        _time.tv_sec = other._time.tv_sec;
-        _time.tv_usec = other._time.tv_usec;
-    }
+  /*!
+   * @param[in] other     New time is a copy of \a other.
+   */
+  OS_POSIX_TIME(const OS_POSIX_TIME &other) {
+    _time.tv_sec = other._time.tv_sec;
+    _time.tv_usec = other._time.tv_usec;
+  }
 
-    /*!
-     * Add milliseconds to "this" time.
-     *
-     *  @param[in] milliseconds     Number of milliseconds to add.
-     */
-    void AddMilliseconds(unsigned milliseconds)
-    {
-        unsigned extraSeconds = milliseconds / 1000;
-        unsigned extraMicroseconds = milliseconds - 1000*extraSeconds;
-        _time.tv_sec += extraSeconds;
-        _time.tv_usec += extraMicroseconds;
-        if (_time.tv_usec > 1000000)
-        {
-            _time.tv_usec -= 1000000;
-            _time.tv_sec++;
-        }
+  /*!
+   * Add milliseconds to "this" time.
+   *
+   *  @param[in] milliseconds     Number of milliseconds to add.
+   */
+  void AddMilliseconds(unsigned milliseconds) {
+    unsigned extraSeconds = milliseconds / 1000;
+    unsigned extraMicroseconds = milliseconds - 1000 * extraSeconds;
+    _time.tv_sec += extraSeconds;
+    _time.tv_usec += extraMicroseconds;
+    if (_time.tv_usec > 1000000) {
+      _time.tv_usec -= 1000000;
+      _time.tv_sec++;
     }
+  }
 
-    /*!
-     * Compare "this" time to \a other.
-     *
-     *  @param[in] other    Time to compare against.
-     *
-     * @return  TRUE if "this" time is less than \a other.
-     */
-    bool operator <(const OS_POSIX_TIME &other)
-    {
-        if (_time.tv_sec < other._time.tv_sec)
-            return true;
-        if (_time.tv_sec > other._time.tv_sec)
-            return false;
-        return (_time.tv_usec < other._time.tv_usec);
-    }
+  /*!
+   * Compare "this" time to \a other.
+   *
+   *  @param[in] other    Time to compare against.
+   *
+   * @return  TRUE if "this" time is less than \a other.
+   */
+  bool operator<(const OS_POSIX_TIME &other) {
+    if (_time.tv_sec < other._time.tv_sec) return true;
+    if (_time.tv_sec > other._time.tv_sec) return false;
+    return (_time.tv_usec < other._time.tv_usec);
+  }
 
-    /*!
-     * Decrement "this" time by \a other.  The \a other time is assumed to be
-     * <= to "this" time.
-     *
-     *  @param[in] other    Time which is subtracted from "this".
-     */
-    void operator -=(const OS_POSIX_TIME &other)
-    {
-        _time.tv_sec -= other._time.tv_sec;
-        if (_time.tv_usec < other._time.tv_usec)
-        {
-            _time.tv_sec--;
-            _time.tv_usec += 1000000;
-        }
-        _time.tv_usec -= other._time.tv_usec;
+  /*!
+   * Decrement "this" time by \a other.  The \a other time is assumed to be
+   * <= to "this" time.
+   *
+   *  @param[in] other    Time which is subtracted from "this".
+   */
+  void operator-=(const OS_POSIX_TIME &other) {
+    _time.tv_sec -= other._time.tv_sec;
+    if (_time.tv_usec < other._time.tv_usec) {
+      _time.tv_sec--;
+      _time.tv_usec += 1000000;
     }
+    _time.tv_usec -= other._time.tv_usec;
+  }
 };
 
-} // namespace
-#endif // file guard
+}  // namespace SYNC
+#endif  // file guard

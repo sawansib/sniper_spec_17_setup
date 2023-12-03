@@ -26,139 +26,117 @@ THE SOFTWARE.
 #ifndef INCLUDE_FSBALLOCATOR_HH
 #define INCLUDE_FSBALLOCATOR_HH
 
-#include "log.h"
-
-#include <new>
-#include <vector>
-#include <typeinfo>
 #include <cxxabi.h>
 
-class UnspecifiedType
-{
-};
+#include <new>
+#include <typeinfo>
+#include <vector>
 
-template<unsigned ElemSize, unsigned MaxElem = 0, typename TypeToAlloc = UnspecifiedType>
-class FSBAllocator_ElemAllocator
-{
-    typedef std::size_t Data_t;
-    static const Data_t BlockElements = 512;
+#include "log.h"
 
-    static const Data_t DSize = sizeof(Data_t);
-    static const Data_t ElemSizeInDSize = (ElemSize + (DSize-1)) / DSize;
-    static const Data_t UnitSizeInDSize = ElemSizeInDSize + 1;
-    static const Data_t BlockSize = BlockElements*UnitSizeInDSize;
+class UnspecifiedType {};
 
-    class MemBlock
-    {
-        Data_t* block;
-        Data_t firstFreeUnitIndex, allocatedElementsAmount, endIndex;
+template <unsigned ElemSize, unsigned MaxElem = 0,
+          typename TypeToAlloc = UnspecifiedType>
+class FSBAllocator_ElemAllocator {
+  typedef std::size_t Data_t;
+  static const Data_t BlockElements = 512;
 
-     public:
-        MemBlock():
-            block(new Data_t[BlockSize]),
-            firstFreeUnitIndex(Data_t(-1)),
-            allocatedElementsAmount(0)
-        {}
+  static const Data_t DSize = sizeof(Data_t);
+  static const Data_t ElemSizeInDSize = (ElemSize + (DSize - 1)) / DSize;
+  static const Data_t UnitSizeInDSize = ElemSizeInDSize + 1;
+  static const Data_t BlockSize = BlockElements * UnitSizeInDSize;
 
-        bool isFull() const
-        {
-            return allocatedElementsAmount == BlockElements;
+  class MemBlock {
+    Data_t* block;
+    Data_t firstFreeUnitIndex, allocatedElementsAmount, endIndex;
+
+   public:
+    MemBlock()
+        : block(new Data_t[BlockSize]),
+          firstFreeUnitIndex(Data_t(-1)),
+          allocatedElementsAmount(0) {}
+
+    bool isFull() const { return allocatedElementsAmount == BlockElements; }
+
+    void clear() { firstFreeUnitIndex = Data_t(-1); }
+
+    void* allocate(Data_t vectorIndex) {
+      if (firstFreeUnitIndex == Data_t(-1)) {
+        if (allocatedElementsAmount == 0) {
+          endIndex = 0;
         }
 
-        void clear()
-        {
-            firstFreeUnitIndex = Data_t(-1);
-        }
+        Data_t* retval = block + endIndex;
+        endIndex += UnitSizeInDSize;
+        retval[ElemSizeInDSize] = vectorIndex;
+        ++allocatedElementsAmount;
+        return retval;
+      } else {
+        Data_t* retval = block + firstFreeUnitIndex;
+        firstFreeUnitIndex = *retval;
+        ++allocatedElementsAmount;
+        return retval;
+      }
+    }
 
-        void* allocate(Data_t vectorIndex)
-        {
-            if(firstFreeUnitIndex == Data_t(-1))
-            {
-                if(allocatedElementsAmount == 0)
-                {
-                    endIndex = 0;
-                }
+    void deallocate(Data_t* ptr) {
+      *ptr = firstFreeUnitIndex;
+      firstFreeUnitIndex = ptr - block;
 
-                Data_t* retval = block + endIndex;
-                endIndex += UnitSizeInDSize;
-                retval[ElemSizeInDSize] = vectorIndex;
-                ++allocatedElementsAmount;
-                return retval;
-            }
-            else
-            {
-                Data_t* retval = block + firstFreeUnitIndex;
-                firstFreeUnitIndex = *retval;
-                ++allocatedElementsAmount;
-                return retval;
-            }
-        }
+      if (--allocatedElementsAmount == 0) clear();
+    }
+  };
 
-        void deallocate(Data_t* ptr)
-        {
-            *ptr = firstFreeUnitIndex;
-            firstFreeUnitIndex = ptr - block;
+  struct BlocksVector {
+    std::vector<MemBlock> data;
 
-            if(--allocatedElementsAmount == 0)
-                clear();
-        }
-    };
+    BlocksVector() { data.reserve(1024); }
 
-    struct BlocksVector
-    {
-        std::vector<MemBlock> data;
+    ~BlocksVector() {
+      for (std::size_t i = 0; i < data.size(); ++i) data[i].clear();
+    }
+  };
 
-        BlocksVector() { data.reserve(1024); }
-
-        ~BlocksVector()
-        {
-            for(std::size_t i = 0; i < data.size(); ++i)
-                data[i].clear();
-        }
-    };
-
-    BlocksVector blocksVector;
-    std::vector<Data_t> blocksWithFree;
+  BlocksVector blocksVector;
+  std::vector<Data_t> blocksWithFree;
 
  public:
-    void* allocate()
-    {
-        if(blocksWithFree.empty())
-        {
-            blocksWithFree.push_back(blocksVector.data.size());
-            blocksVector.data.push_back(MemBlock());
-            if (MaxElem)
-            {
-               int status;
-               char *nameoftype = abi::__cxa_demangle(typeid(TypeToAlloc).name(), 0, 0, &status);
-               LOG_ASSERT_ERROR(blocksVector.data.size() * BlockElements <= MaxElem, "Maximum number of blocks exceeded for allocator of %d-sized objects of %s", ElemSize, nameoftype);
-               free(nameoftype);
-            }
-        }
-
-        const Data_t index = blocksWithFree.back();
-        MemBlock& block = blocksVector.data[index];
-        void* retval = block.allocate(index);
-
-        if(block.isFull())
-            blocksWithFree.pop_back();
-
-        return retval;
+  void* allocate() {
+    if (blocksWithFree.empty()) {
+      blocksWithFree.push_back(blocksVector.data.size());
+      blocksVector.data.push_back(MemBlock());
+      if (MaxElem) {
+        int status;
+        char* nameoftype =
+            abi::__cxa_demangle(typeid(TypeToAlloc).name(), 0, 0, &status);
+        LOG_ASSERT_ERROR(blocksVector.data.size() * BlockElements <= MaxElem,
+                         "Maximum number of blocks exceeded for allocator of "
+                         "%d-sized objects of %s",
+                         ElemSize, nameoftype);
+        free(nameoftype);
+      }
     }
 
-    void deallocate(void* ptr)
-    {
-        if(!ptr) return;
+    const Data_t index = blocksWithFree.back();
+    MemBlock& block = blocksVector.data[index];
+    void* retval = block.allocate(index);
 
-        Data_t* unitPtr = (Data_t*)ptr;
-        const Data_t blockIndex = unitPtr[ElemSizeInDSize];
-        MemBlock& block = blocksVector.data[blockIndex];
+    if (block.isFull()) blocksWithFree.pop_back();
 
-        if(block.isFull())
-            blocksWithFree.push_back(blockIndex);
-        block.deallocate(unitPtr);
-    }
+    return retval;
+  }
+
+  void deallocate(void* ptr) {
+    if (!ptr) return;
+
+    Data_t* unitPtr = (Data_t*)ptr;
+    const Data_t blockIndex = unitPtr[ElemSizeInDSize];
+    MemBlock& block = blocksVector.data[blockIndex];
+
+    if (block.isFull()) blocksWithFree.push_back(blockIndex);
+    block.deallocate(unitPtr);
+  }
 };
-
 
 #endif

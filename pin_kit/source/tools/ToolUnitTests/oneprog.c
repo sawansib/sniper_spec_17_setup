@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -32,24 +32,20 @@ END_LEGAL */
 
 #ifdef TARGET_WINDOWS
 // declare all functions as exported so pin can find them,
-// must be all functions since only way to find end of one function is the begining of the next
-// Another way is to compile application with debug info (Zi) - pdb file, but that causes probelms
-// in the running of the script 
-#define EXPORT_SYM __declspec( dllexport ) 
+// must be all functions since only way to find end of one function is the
+// begining of the next Another way is to compile application with debug info
+// (Zi) - pdb file, but that causes probelms in the running of the script
+#define EXPORT_SYM __declspec(dllexport)
 #else
 #define EXPORT_SYM
 #endif
 #include <stdio.h>
 EXPORT_SYM
-int one()
-{
-    return 1;
-}
+int one() { return 1; }
 
 EXPORT_SYM
-int main()
-{
-    int o = one();
-    printf("Result %d\n", o);
-    return 0;
+int main() {
+  int o = one();
+  printf("Result %d\n", o);
+  return 0;
 }

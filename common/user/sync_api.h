@@ -2,8 +2,8 @@
 #define SYNC_API_H
 #include <stdbool.h>
 
-#include "subsecond_time.h"
 #include "fixed_types.h"
+#include "subsecond_time.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,9 +18,11 @@ typedef SInt32 carbon_barrier_t;
 // Related to Mutexes
 
 void CarbonMutexInit(carbon_mutex_t *mux);
-SubsecondTime CarbonMutexLock(carbon_mutex_t *mux, SubsecondTime delay = SubsecondTime::Zero());
+SubsecondTime CarbonMutexLock(carbon_mutex_t *mux,
+                              SubsecondTime delay = SubsecondTime::Zero());
 SubsecondTime CarbonMutexTrylock(carbon_mutex_t *mux);
-SubsecondTime CarbonMutexUnlock(carbon_mutex_t *mux, SubsecondTime delay = SubsecondTime::Zero());
+SubsecondTime CarbonMutexUnlock(carbon_mutex_t *mux,
+                                SubsecondTime delay = SubsecondTime::Zero());
 bool CarbonIsMutexValid(carbon_mutex_t *mux);
 
 // Related to condition variables

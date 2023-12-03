@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -37,8 +37,8 @@ END_LEGAL */
 // If __USE_GNU is defined, we don't need to do anything.
 // If we defined it ourselves, we need to undefine it later.
 #ifndef __USE_GNU
-    #define __USE_GNU
-    #define APP_UNDEF_USE_GNU
+#define __USE_GNU
+#define APP_UNDEF_USE_GNU
 #endif
 
 #ifdef TARGET_ANDROID
@@ -49,15 +49,15 @@ END_LEGAL */
 
 // If we defined __USE_GNU ourselves, we need to undefine it here.
 #ifdef APP_UNDEF_USE_GNU
-    #undef __USE_GNU
-    #undef APP_UNDEF_USE_GNU
+#undef __USE_GNU
+#undef APP_UNDEF_USE_GNU
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
 #include <assert.h>
 #include <setjmp.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 int p_safe_exit;
 
@@ -78,7 +78,7 @@ void install_signal_handler() {
   sigemptyset(&p_sigaction->sa_mask);
 
   ret_val = sigaction(SIGSEGV, p_sigaction, NULL);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, sigaction failed");
     exit(1);
   }
@@ -89,15 +89,15 @@ void generate_hlt_segv(int val) {
 
   p_safe_exit = (int)&&safe_exit;
 
-  printf("EIP of segfault: 0x%x (only accurate with if compiled with -O)\n", (int)&&hlt_segfault);
+  printf("EIP of segfault: 0x%x (only accurate with if compiled with -O)\n",
+         (int)&&hlt_segfault);
 
- hlt_segfault:
-  __asm__ __volatile__ ("hlt");
-
+hlt_segfault:
+  __asm__ __volatile__("hlt");
 
   printf("ERROR!\n");
 
- safe_exit:
+safe_exit:
   printf("EIP of safe exit: 0x%x\n", p_safe_exit);
 }
 

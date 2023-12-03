@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -28,84 +28,77 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
-#include <iostream>
 #include <stdlib.h>
+
+#include <iostream>
+
 #include "pin.H"
 
-ADDRINT SetVal()
-{
-    return 999;
+ADDRINT SetVal() { return 999; }
 
+VOID CheckVal(INT32 val) {
+  if (val != 999) {
+    cerr << "inline failed, sent 999, received " << val << endl;
+    exit(-1);
+  }
 }
-    
-VOID CheckVal(INT32 val)
-{
-    if (val != 999)
-    {
-        cerr << "inline failed, sent 999, received " << val << endl;
-        exit(-1);
-    }
-}
-    
+
 int a[10];
 int n = 10;
 
-ADDRINT SetValNoInline()
-{
-    for (int i = 0; i < n; i++)
-    {
-        a[i] = i;
-    }
-    
-    return 666;
-}
-    
-VOID CheckValNoInline(INT32 val)
-{
-    if (val != 666)
-    {
-        cerr << "no inline failed, sent 666, received " << val << endl;
-        exit(-1);
-    }
-}
-    
-VOID Instruction(INS ins, VOID *v)
-{
-    static INT32 count = 0;
+ADDRINT SetValNoInline() {
+  for (int i = 0; i < n; i++) {
+    a[i] = i;
+  }
 
-    switch(count)
-    {
-      case 0:
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(SetVal), IARG_RETURN_REGS, REG_INST_G0, IARG_END);
-        break;
-
-      case 1:
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(CheckVal), IARG_REG_VALUE, REG_INST_G0, IARG_END);
-        break;
-
-      case 2:
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(SetValNoInline), IARG_RETURN_REGS, REG_INST_G1, IARG_END);
-        break;
-        
-      case 3:
-        INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(CheckValNoInline), IARG_REG_VALUE, REG_INST_G1, IARG_END);
-        break;
-
-      default:
-        break;
-    }
-    
-    count++;
+  return 666;
 }
 
-int main(int argc, char * argv[])
-{
-    PIN_Init(argc, argv);
+VOID CheckValNoInline(INT32 val) {
+  if (val != 666) {
+    cerr << "no inline failed, sent 666, received " << val << endl;
+    exit(-1);
+  }
+}
 
-    INS_AddInstrumentFunction(Instruction, 0);
-    
-    // Never returns
-    PIN_StartProgram();
-    
-    return 0;
+VOID Instruction(INS ins, VOID *v) {
+  static INT32 count = 0;
+
+  switch (count) {
+    case 0:
+      INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(SetVal), IARG_RETURN_REGS,
+                     REG_INST_G0, IARG_END);
+      break;
+
+    case 1:
+      INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(CheckVal), IARG_REG_VALUE,
+                     REG_INST_G0, IARG_END);
+      break;
+
+    case 2:
+      INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(SetValNoInline),
+                     IARG_RETURN_REGS, REG_INST_G1, IARG_END);
+      break;
+
+    case 3:
+      INS_InsertCall(ins, IPOINT_BEFORE, AFUNPTR(CheckValNoInline),
+                     IARG_REG_VALUE, REG_INST_G1, IARG_END);
+      break;
+
+    default:
+      break;
+  }
+
+  count++;
+}
+
+int main(int argc, char *argv[]) {
+  PIN_Init(argc, argv);
+
+  INS_AddInstrumentFunction(Instruction, 0);
+
+  // Never returns
+  PIN_StartProgram();
+
+  return 0;
 }

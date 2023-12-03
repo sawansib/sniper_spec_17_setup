@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -35,16 +35,15 @@ END_LEGAL */
 #ifndef THREAD_POOL_H
 #define THREAD_POOL_H
 
-#include "runnable.h"
 #include "../Utils/threadlib.h"
+#include "runnable.h"
 
 /*!
  * Runnable object that exits the current thread.
  */
-class EXIT_THREAD_OBJ : public RUNNABLE_OBJ
-{
-public:
-    void Run() {ExitCurrentThread();}
+class EXIT_THREAD_OBJ : public RUNNABLE_OBJ {
+ public:
+  void Run() { ExitCurrentThread(); }
 };
 
 /*!
@@ -52,64 +51,65 @@ public:
  * External access to this singleton must be serialized. It is guaranteed
  * if the thread pool is managed by a single (main) thread of the process.
  */
-class THREAD_POOL
-{
-public:
+class THREAD_POOL {
+ public:
+  // Constructor
+  THREAD_POOL() : m_numThreads(0) {}
 
-    // Constructor
-    THREAD_POOL() : m_numThreads(0) {}
+  // Destructor
+  ~THREAD_POOL() { TerminateAll(); }
 
-    // Destructor
-    ~THREAD_POOL() {TerminateAll();}
+  // Create specified number of new threads in the pool.
+  // @return number of threads created successfully
+  unsigned long Create(unsigned long numThreads);
 
-    // Create specified number of new threads in the pool.
-    // @return number of threads created successfully
-    unsigned long Create(unsigned long numThreads);
+  // Start running the specified object in the specified thread.
+  // The function is non-blocking - it does not wait for the completion
+  // of the RUNNABLE_OBJ::Run() function.
+  // @return TRUE - success, FALSE - failure
+  bool Start(unsigned long tid, RUNNABLE_OBJ *runObj);
 
-    // Start running the specified object in the specified thread.
-    // The function is non-blocking - it does not wait for the completion
-    // of the RUNNABLE_OBJ::Run() function.
-    // @return TRUE - success, FALSE - failure
-    bool Start(unsigned long tid, RUNNABLE_OBJ * runObj); 
+  // Block the current thread until a runnable object, assigned to the specified
+  // thread, completes its function,
+  // @return runnable object assigned to the thread or NULL.
+  RUNNABLE_OBJ *Wait(unsigned long tid);
 
-    // Block the current thread until a runnable object, assigned to the specified thread,
-    // completes its function,
-    // @return runnable object assigned to the thread or NULL.
-    RUNNABLE_OBJ * Wait(unsigned long tid); 
+  unsigned long NumThreads() const { return m_numThreads; }
 
-    unsigned long NumThreads() const {return m_numThreads;}
+  // Terminate all threads in the pool.
+  void TerminateAll();
 
-    // Terminate all threads in the pool.
-    void TerminateAll();
+ private:
+  unsigned long m_numThreads;
 
-private:
-    unsigned long m_numThreads;
+  struct TLS_ELEMENT {
+    THREAD_HANDLE m_handle;
+    RUNNABLE_OBJ *volatile m_runObj;
+    volatile bool m_semaphore;
 
-    struct TLS_ELEMENT
-    {
-        THREAD_HANDLE m_handle;
-        RUNNABLE_OBJ * volatile m_runObj;
-        volatile bool m_semaphore;
+    // Initialize TLS element
+    void Init() {
+      m_handle = 0;
+      m_runObj = 0;
+      m_semaphore = false;
+    }
 
-        // Initialize TLS element
-        void Init() {m_handle = 0; m_runObj = 0; m_semaphore = false;}
+    // Semaphore manipulation functions
+    void SwitchSemaphore(bool semaphoreState);
+    void WaitSemaphore(bool semaphoreState) const;
+    bool CheckSemaphore() const;
 
-        // Semaphore manipulation functions
-        void SwitchSemaphore(bool semaphoreState);
-        void WaitSemaphore(bool semaphoreState) const;
-        bool CheckSemaphore() const;
+  } m_tls[MAXTHREADS];
 
-    }m_tls[MAXTHREADS];
+  // Disable copy constructor and assignment operator
+  THREAD_POOL(const THREAD_POOL &);
+  THREAD_POOL &operator=(const THREAD_POOL &);
 
-    //Disable copy constructor and assignment operator
-    THREAD_POOL(const THREAD_POOL &);
-    THREAD_POOL & operator = (const THREAD_POOL &);
-
-    // Main routine of threads in the pool
-    static void * ThreadRoutine(void * tlsArg);
+  // Main routine of threads in the pool
+  static void *ThreadRoutine(void *tlsArg);
 };
 
-#endif //THREAD_POOL_H
+#endif  // THREAD_POOL_H
 
 /* ===================================================================== */
 /* eof */

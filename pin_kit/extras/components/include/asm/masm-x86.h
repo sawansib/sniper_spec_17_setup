@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -37,38 +37,31 @@ END_LEGAL */
 #ifndef ASM_MASM_X86_H
 #define ASM_MASM_X86_H
 
-
 #if defined(FUND_HOST_IA32)
 
-#define ASM_FILEBEGIN()  \
-.686 ASM_NEWLINE \
-.xmm ASM_NEWLINE \
-.model flat,c
+#define ASM_FILEBEGIN() .686 ASM_NEWLINE.xmm ASM_NEWLINE.model flat, c
 
 #else
-#   define ASM_FILEBEGIN()
+#define ASM_FILEBEGIN()
 #endif
 
-#define ASM_FILEEND()   END
+#define ASM_FILEEND() END
 
+#define ASM_FUNCBEGIN(name, rtype, args) \
+  .CODE ASM_NEWLINE ALIGN 4 ASM_NEWLINE ASM_NAME(name) PROC
 
-#define ASM_FUNCBEGIN(name, rtype, args)    \
-    .CODE ASM_NEWLINE                       \
-    ALIGN 4 ASM_NEWLINE                     \
-    ASM_NAME(name) PROC
+#define ASM_FUNCEND(name) ASM_NAME(name) ENDP
 
-#define ASM_FUNCEND(name)   ASM_NAME(name) ENDP
+#define ASM_HEX(val) 0##val##h
+#define ASM_NAME(name) name
 
-#define ASM_HEX(val)    0##val##h
-#define ASM_NAME(name)  name
+#define ASM_LABDEF(x) $l##x##:
+#define ASM_LABF(x) $l##x
+#define ASM_LABB(x) $l##x
 
-#define ASM_LABDEF(x)   $l##x##:
-#define ASM_LABF(x)     $l##x
-#define ASM_LABB(x)     $l##x
-
-#define ASM_BYTE()      BYTE PTR
-#define ASM_WORD()      WORD PTR
-#define ASM_DWORD()     DWORD PTR
-#define ASM_QWORD()     QWORD PTR
+#define ASM_BYTE() BYTE PTR
+#define ASM_WORD() WORD PTR
+#define ASM_DWORD() DWORD PTR
+#define ASM_QWORD() QWORD PTR
 
 #endif /*file guard*/

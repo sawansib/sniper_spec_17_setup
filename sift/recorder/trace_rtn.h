@@ -5,4 +5,4 @@
 
 void initRoutineTracer();
 
-#endif // __TRACE_RTN_H
+#endif  // __TRACE_RTN_H

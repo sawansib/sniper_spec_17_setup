@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -35,16 +35,18 @@ END_LEGAL */
 
 /* ===================================================================== */
 /*! @file
- *  This file contains a test for the implementation of thenpredicated 
+ *  This file contains a test for the implementation of thenpredicated
  * instrumentation.
  * It tests the condition reported in Mantis 1862 which causes a Pin
- * assertion on this code. 
+ * assertion on this code.
  */
 
-#include "pin.H"
-#include <iostream>
-#include <fstream>
 #include <string.h>
+
+#include <fstream>
+#include <iostream>
+
+#include "pin.H"
 
 /* ===================================================================== */
 /* Global Variables */
@@ -56,76 +58,65 @@ END_LEGAL */
 
 LOCALVAR std::ofstream out;
 
-KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE,         "pintool",
-    "o", "thenpredicated.out", "Output file");
-
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o",
+                            "thenpredicated.out", "Output file");
 
 /* ===================================================================== */
 
-INT32 Usage()
-{
-    cerr << "This tool tests thenpredicated instrumentation" << endl;
-    cerr << KNOB_BASE::StringKnobSummary();
-    cerr << endl;
+INT32 Usage() {
+  cerr << "This tool tests thenpredicated instrumentation" << endl;
+  cerr << KNOB_BASE::StringKnobSummary();
+  cerr << endl;
 
-    return -1;
+  return -1;
 }
 
 /* ===================================================================== */
-static ADDRINT returnArg(ADDRINT arg)
-{
-    return arg;
-}
+static ADDRINT returnArg(ADDRINT arg) { return arg; }
 
 // Not thread safe, but that's not the point of this test.
 static UINT32 predicatedTrueCount = 0;
 
-static VOID countInst()
-{
-    predicatedTrueCount++;
+static VOID countInst() { predicatedTrueCount++; }
+
+/* ===================================================================== */
+
+VOID Instruction(INS ins, VOID *v) {
+  // Find predicated instructions only.
+  if (INS_IsPredicated(ins)) {
+    INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)returnArg, IARG_ADDRINT, 1,
+                     IARG_END);
+    INS_InsertThenPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)countInst,
+                                 IARG_END);
+  }
 }
 
 /* ===================================================================== */
 
-VOID Instruction(INS ins, VOID *v)
-{
-    // Find predicated instructions only.
-    if (INS_IsPredicated(ins))
-    {
-        INS_InsertIfCall (ins, IPOINT_BEFORE, (AFUNPTR)returnArg, IARG_ADDRINT, 1, IARG_END);
-        INS_InsertThenPredicatedCall (ins, IPOINT_BEFORE, (AFUNPTR)countInst, IARG_END);
-    }
+VOID Fini(INT32 code, VOID *v) {
+  out << "Predicated true instructions " << predicatedTrueCount << endl;
+  out.close();
 }
 
 /* ===================================================================== */
 
-VOID Fini(INT32 code, VOID *v)
-{
-    out << "Predicated true instructions " << predicatedTrueCount << endl;
-    out.close();
-}
+int main(int argc, char *argv[]) {
+  if (PIN_Init(argc, argv)) {
+    return Usage();
+  }
 
-/* ===================================================================== */
+  string filename = KnobOutputFile.Value();
 
-int main(int argc, char *argv[])
-{
-    if( PIN_Init(argc,argv) )
-    {
-        return Usage();
-    }
-    
-    string filename =  KnobOutputFile.Value();
-    
-    // Do this before we activate controllers
-    out.open(filename.c_str());
+  // Do this before we activate controllers
+  out.open(filename.c_str());
 
-    INS_AddInstrumentFunction(Instruction, 0);
-    PIN_AddFiniFunction(Fini, 0);
+  INS_AddInstrumentFunction(Instruction, 0);
+  PIN_AddFiniFunction(Fini, 0);
 
-    // Never returns
-    PIN_StartProgram();
-    
-    return 0;
+  // Never returns
+  PIN_StartProgram();
+
+  return 0;
 }
 
 /* ===================================================================== */

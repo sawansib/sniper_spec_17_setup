@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -35,78 +35,74 @@ END_LEGAL */
 #ifndef ATOMIC_PRIVATE_OPS_COMMON_IMPL_HPP
 #define ATOMIC_PRIVATE_OPS_COMMON_IMPL_HPP
 
-#include "fund.hpp"
 #include "atomic/exponential-backoff.hpp"
 #include "atomic/ops-enum.hpp"
-
+#include "fund.hpp"
 
 namespace ATOMIC {
 
 /*
- * Generic implementations of some operations using compare-and-swap.  These implementations
- * are used on architectures that have compare-and-swap, but do not have an instruction that
- * directly implements the operation in question.  Clients should not use this class directly,
- * but should use OPS instead.
+ * Generic implementations of some operations using compare-and-swap.  These
+ * implementations are used on architectures that have compare-and-swap, but do
+ * not have an instruction that directly implements the operation in question.
+ * Clients should not use this class directly, but should use OPS instead.
  */
-namespace OPS_IMPL
-{
-    template<unsigned size> static inline void CompareAndSwap(volatile void *location, const void *oldVal,
-        void *newVal, BARRIER_CS ignored);
+namespace OPS_IMPL {
+template <unsigned size>
+static inline void CompareAndSwap(volatile void *location, const void *oldVal,
+                                  void *newVal, BARRIER_CS ignored);
 
-    template<unsigned size> static inline void Load(volatile const void *location, void *val, BARRIER_LD ignored);
+template <unsigned size>
+static inline void Load(volatile const void *location, void *val,
+                        BARRIER_LD ignored);
 
+// ---------- Swap ----------
 
-    // ---------- Swap ----------
+template <typename T>
+inline void SwapByCompareAndSwap(volatile void *location, void *oldVal,
+                                 const void *newVal, BARRIER_SWAP barrier) {
+  T oldv;
+  T newv;
+  T val = *static_cast<const T *>(newVal);
 
-    template<typename T> inline void SwapByCompareAndSwap(volatile void *location, void *oldVal,
-        const void *newVal, BARRIER_SWAP barrier)
-    {
-        T oldv;
-        T newv;
-        T val = *static_cast<const T *>(newVal);
+  BARRIER_CS myBarrier = (barrier == BARRIER_SWAP_NONE)   ? BARRIER_CS_NONE
+                         : (barrier == BARRIER_SWAP_PREV) ? BARRIER_CS_PREV
+                                                          : BARRIER_CS_NEXT;
 
-        BARRIER_CS myBarrier =
-            (barrier == BARRIER_SWAP_NONE) ? BARRIER_CS_NONE :
-            (barrier == BARRIER_SWAP_PREV) ? BARRIER_CS_PREV :
-            BARRIER_CS_NEXT;
+  EXPONENTIAL_BACKOFF<> backoff;
+  do {
+    backoff.Delay();
+    Load<sizeof(T)>(location, static_cast<void *>(&oldv), BARRIER_LD_NONE);
+    newv = val;
+    CompareAndSwap<sizeof(T)>(location, static_cast<const void *>(&oldv),
+                              static_cast<void *>(&newv), myBarrier);
+  } while (newv != oldv);
 
-        EXPONENTIAL_BACKOFF<> backoff;
-        do
-        {
-            backoff.Delay();
-            Load<sizeof(T)>(location, static_cast<void *>(&oldv), BARRIER_LD_NONE);
-            newv = val;
-            CompareAndSwap<sizeof(T)>(location, static_cast<const void *>(&oldv), static_cast<void *>(&newv), myBarrier);
-        }
-        while (newv != oldv);
-
-        *static_cast<T *>(oldVal) = oldv;
-    }
-
-
-    // ---------- Increment ----------
-
-    template<typename T> static inline void IncrementByCompareAndSwap(volatile void *location,
-        const void *inc, void *oldVal, BARRIER_CS barrier)
-    {
-        T oldv;
-        T newv;
-        T increment = *static_cast<const T *>(inc);
-
-        EXPONENTIAL_BACKOFF<> backoff;
-        do
-        {
-            backoff.Delay();
-            Load<sizeof(T)>(location, static_cast<void *>(&oldv), BARRIER_LD_NONE);
-            newv = oldv + increment;
-            CompareAndSwap<sizeof(T)>(location, static_cast<const void *>(&oldv), static_cast<void *>(&newv), barrier);
-        }
-        while (newv != oldv);
-
-        *static_cast<T *>(oldVal) = oldv;
-    }
+  *static_cast<T *>(oldVal) = oldv;
 }
 
+// ---------- Increment ----------
 
-} // namespace
-#endif // file guard
+template <typename T>
+static inline void IncrementByCompareAndSwap(volatile void *location,
+                                             const void *inc, void *oldVal,
+                                             BARRIER_CS barrier) {
+  T oldv;
+  T newv;
+  T increment = *static_cast<const T *>(inc);
+
+  EXPONENTIAL_BACKOFF<> backoff;
+  do {
+    backoff.Delay();
+    Load<sizeof(T)>(location, static_cast<void *>(&oldv), BARRIER_LD_NONE);
+    newv = oldv + increment;
+    CompareAndSwap<sizeof(T)>(location, static_cast<const void *>(&oldv),
+                              static_cast<void *>(&newv), barrier);
+  } while (newv != oldv);
+
+  *static_cast<T *>(oldVal) = oldv;
+}
+}  // namespace OPS_IMPL
+
+}  // namespace ATOMIC
+#endif  // file guard

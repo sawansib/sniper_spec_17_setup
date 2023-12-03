@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -33,85 +33,74 @@ END_LEGAL */
  * A test for callbacks around fork in jit mode.
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <stdlib.h>
+
+#include <fstream>
+#include <iostream>
 
 #include "pin.H"
 
-#include <iostream>
-#include <fstream>
-
 using namespace std;
 
-
-INT32 Usage()
-{
-    cerr <<
-        "This pin tool registers callbacks around fork().\n"
-        "\n";
-    cerr << KNOB_BASE::StringKnobSummary();
-    cerr << endl;
-    return -1;
+INT32 Usage() {
+  cerr << "This pin tool registers callbacks around fork().\n"
+          "\n";
+  cerr << KNOB_BASE::StringKnobSummary();
+  cerr << endl;
+  return -1;
 }
-
 
 pid_t parent_pid;
 PIN_LOCK lock;
 
-VOID BeforeFork(THREADID threadid, const CONTEXT* ctxt, VOID * arg)
-{
-    PIN_GetLock(&lock, threadid+1);
-    cerr << "TOOL: Before fork." << endl;
-    PIN_ReleaseLock(&lock);
-    parent_pid = PIN_GetPid();
+VOID BeforeFork(THREADID threadid, const CONTEXT* ctxt, VOID* arg) {
+  PIN_GetLock(&lock, threadid + 1);
+  cerr << "TOOL: Before fork." << endl;
+  PIN_ReleaseLock(&lock);
+  parent_pid = PIN_GetPid();
 }
 
-VOID AfterForkInParent(THREADID threadid, const CONTEXT* ctxt, VOID * arg)
-{
-    PIN_GetLock(&lock, threadid+1);
-    cerr << "TOOL: After fork in parent." << endl;
-    PIN_ReleaseLock(&lock);
+VOID AfterForkInParent(THREADID threadid, const CONTEXT* ctxt, VOID* arg) {
+  PIN_GetLock(&lock, threadid + 1);
+  cerr << "TOOL: After fork in parent." << endl;
+  PIN_ReleaseLock(&lock);
 
-    if (PIN_GetPid() != parent_pid)
-    {
-    	cerr << "PIN_GetPid() fails in parent process" << endl;
-        exit(-1);
-    }
+  if (PIN_GetPid() != parent_pid) {
+    cerr << "PIN_GetPid() fails in parent process" << endl;
+    exit(-1);
+  }
 }
 
-VOID AfterForkInChild(THREADID threadid, const CONTEXT* ctxt, VOID * arg)
-{
-    PIN_GetLock(&lock, threadid+1);
-    cerr << "TOOL: After fork in child." << endl;
-    PIN_ReleaseLock(&lock);
-    
-    if ((PIN_GetPid() == parent_pid) || (getppid() != parent_pid))
-    {
-        cerr << "PIN_GetPid() fails in child process" << endl;
-        exit(-1);
-    }
+VOID AfterForkInChild(THREADID threadid, const CONTEXT* ctxt, VOID* arg) {
+  PIN_GetLock(&lock, threadid + 1);
+  cerr << "TOOL: After fork in child." << endl;
+  PIN_ReleaseLock(&lock);
+
+  if ((PIN_GetPid() == parent_pid) || (getppid() != parent_pid)) {
+    cerr << "PIN_GetPid() fails in child process" << endl;
+    exit(-1);
+  }
 }
 
-int main(INT32 argc, CHAR **argv)
-{
-    PIN_InitSymbols();
-    if( PIN_Init(argc,argv) )
-    {
-        return Usage();
-    }
-    
-    // Initialize the pin lock
-    PIN_InitLock(&lock);
-    
-    // Register a notification handler that is called when the application
-    // forks a new process.
-    PIN_AddForkFunction(FPOINT_BEFORE, BeforeFork, 0);	
-    PIN_AddForkFunction(FPOINT_AFTER_IN_PARENT, AfterForkInParent, 0);
-    PIN_AddForkFunction(FPOINT_AFTER_IN_CHILD, AfterForkInChild, 0);
-    
-    // Never returns
-    PIN_StartProgram();
-    
-    return 0;
+int main(INT32 argc, CHAR** argv) {
+  PIN_InitSymbols();
+  if (PIN_Init(argc, argv)) {
+    return Usage();
+  }
+
+  // Initialize the pin lock
+  PIN_InitLock(&lock);
+
+  // Register a notification handler that is called when the application
+  // forks a new process.
+  PIN_AddForkFunction(FPOINT_BEFORE, BeforeFork, 0);
+  PIN_AddForkFunction(FPOINT_AFTER_IN_PARENT, AfterForkInParent, 0);
+  PIN_AddForkFunction(FPOINT_AFTER_IN_CHILD, AfterForkInChild, 0);
+
+  // Never returns
+  PIN_StartProgram();
+
+  return 0;
 }

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -37,7 +37,6 @@ END_LEGAL */
 
 #include "barecrt.hpp"
 
-
 namespace SYNC {
 
 /*!
@@ -45,79 +44,69 @@ namespace SYNC {
  * which is based on the "barecrt" library's BARECRT::TIME type.  See
  * \ref SYNC_OS for more details on the "OS" template type.
  */
-struct /*<UTILITY>*/ OS_BARECRT_TIME
-{
-    BARECRT::TIMEVAL _time;     ///< Time value.
+struct /*<UTILITY>*/ OS_BARECRT_TIME {
+  BARECRT::TIMEVAL _time;  ///< Time value.
 
-    /*!
-     * Constructor sets the time value to "zero".
-     */
-    OS_BARECRT_TIME()
-    {
-        _time._sec = 0;
-        _time._usec = 0;
-    }
+  /*!
+   * Constructor sets the time value to "zero".
+   */
+  OS_BARECRT_TIME() {
+    _time._sec = 0;
+    _time._usec = 0;
+  }
 
-    /*!
-     * @param[in] other     New time is a copy of \a other.
-     */
-    OS_BARECRT_TIME(const OS_BARECRT_TIME &other)
-    {
-        _time._sec = other._time._sec;
-        _time._usec = other._time._usec;
-    }
+  /*!
+   * @param[in] other     New time is a copy of \a other.
+   */
+  OS_BARECRT_TIME(const OS_BARECRT_TIME &other) {
+    _time._sec = other._time._sec;
+    _time._usec = other._time._usec;
+  }
 
-    /*!
-     * Add milliseconds to "this" time.
-     *
-     *  @param[in] milliseconds     Number of milliseconds to add.
-     */
-    void AddMilliseconds(unsigned milliseconds)
-    {
-        unsigned extraSeconds = milliseconds / 1000;
-        unsigned extraMicroseconds = milliseconds - 1000*extraSeconds;
-        _time._sec += extraSeconds;
-        _time._usec += extraMicroseconds;
-        if (_time._usec > 1000000)
-        {
-            _time._usec -= 1000000;
-            _time._sec++;
-        }
+  /*!
+   * Add milliseconds to "this" time.
+   *
+   *  @param[in] milliseconds     Number of milliseconds to add.
+   */
+  void AddMilliseconds(unsigned milliseconds) {
+    unsigned extraSeconds = milliseconds / 1000;
+    unsigned extraMicroseconds = milliseconds - 1000 * extraSeconds;
+    _time._sec += extraSeconds;
+    _time._usec += extraMicroseconds;
+    if (_time._usec > 1000000) {
+      _time._usec -= 1000000;
+      _time._sec++;
     }
+  }
 
-    /*!
-     * Compare "this" time to \a other.
-     *
-     *  @param[in] other    Time to compare against.
-     *
-     * @return  TRUE if "this" time is less than \a other.
-     */
-    bool operator <(const OS_BARECRT_TIME &other)
-    {
-        if (_time._sec < other._time._sec)
-            return true;
-        if (_time._sec > other._time._sec)
-            return false;
-        return (_time._usec < other._time._usec);
-    }
+  /*!
+   * Compare "this" time to \a other.
+   *
+   *  @param[in] other    Time to compare against.
+   *
+   * @return  TRUE if "this" time is less than \a other.
+   */
+  bool operator<(const OS_BARECRT_TIME &other) {
+    if (_time._sec < other._time._sec) return true;
+    if (_time._sec > other._time._sec) return false;
+    return (_time._usec < other._time._usec);
+  }
 
-    /*!
-     * Decrement "this" time by \a other.  The \a other time is assumed to be
-     * <= to "this" time.
-     *
-     *  @param[in] other    Time which is subtracted from "this".
-     */
-    void operator -=(const OS_BARECRT_TIME &other)
-    {
-        _time._sec -= other._time._sec;
-        if (_time._usec < other._time._usec)
-        {
-            _time._sec--;
-            _time._usec += 1000000;
-        }
-        _time._usec -= other._time._usec;
+  /*!
+   * Decrement "this" time by \a other.  The \a other time is assumed to be
+   * <= to "this" time.
+   *
+   *  @param[in] other    Time which is subtracted from "this".
+   */
+  void operator-=(const OS_BARECRT_TIME &other) {
+    _time._sec -= other._time._sec;
+    if (_time._usec < other._time._usec) {
+      _time._sec--;
+      _time._usec += 1000000;
     }
+    _time._usec -= other._time._usec;
+  }
 };
 
-} // namespace
-#endif // file guard
+}  // namespace SYNC
+#endif  // file guard

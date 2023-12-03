@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -28,54 +28,53 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #if defined(__GNUC__)
-# include <stdlib.h>
+#include <stdlib.h>
 #endif
 
 extern int cmpxchg8_base(int *buff);
 extern int cmpxchg8_plus8(int *buff);
 extern int cmpxchg8_esp(int *buff);
 
-main()
-{
-    int arr[4];
-    int res;
-    arr[0] = 1;
-    arr[1] = 1;
-    printf("calling cmpxchg with base array\n");
-    res = cmpxchg8_base(arr);
-    if (res != 1 || arr[0] != 2 || arr[1] != 2)
-    {
-        printf("cmpxchg function failed: expected (2,2) got (%d,%d)\n", arr[0], arr[1]);
-        exit(1);
-    }
+main() {
+  int arr[4];
+  int res;
+  arr[0] = 1;
+  arr[1] = 1;
+  printf("calling cmpxchg with base array\n");
+  res = cmpxchg8_base(arr);
+  if (res != 1 || arr[0] != 2 || arr[1] != 2) {
+    printf("cmpxchg function failed: expected (2,2) got (%d,%d)\n", arr[0],
+           arr[1]);
+    exit(1);
+  }
 
-    printf("cmpxchg function ok (%d,%d)\n", arr[0], arr[1]);
+  printf("cmpxchg function ok (%d,%d)\n", arr[0], arr[1]);
 
-    arr[2] = 1;
-    arr[3] = 1;
-    printf("calling cmpxchg with base plus 8\n");
-    res = cmpxchg8_plus8(arr);
-    if (res != 1 || arr[2] != 2 || arr[3] != 2)
-    {
-        printf("cmpxchg function failed: expected (2,2) got (%d,%d)\n", arr[2], arr[3]);
-        exit(1);
-    }
+  arr[2] = 1;
+  arr[3] = 1;
+  printf("calling cmpxchg with base plus 8\n");
+  res = cmpxchg8_plus8(arr);
+  if (res != 1 || arr[2] != 2 || arr[3] != 2) {
+    printf("cmpxchg function failed: expected (2,2) got (%d,%d)\n", arr[2],
+           arr[3]);
+    exit(1);
+  }
 
-    printf("cmpxchg function ok (%d,%d)\n", arr[2], arr[3]);
+  printf("cmpxchg function ok (%d,%d)\n", arr[2], arr[3]);
 
-    arr[2] = 1;
-    arr[3] = 1;
-    printf("calling cmpxchg with base esp\n");
-    res = cmpxchg8_esp(arr);
-    if (res != 1)
-    {
-        printf("cmpxchg function failed: expected (2,2) got (%d,%d)\n", arr[2], arr[3]);
-        exit(1);
-    }
+  arr[2] = 1;
+  arr[3] = 1;
+  printf("calling cmpxchg with base esp\n");
+  res = cmpxchg8_esp(arr);
+  if (res != 1) {
+    printf("cmpxchg function failed: expected (2,2) got (%d,%d)\n", arr[2],
+           arr[3]);
+    exit(1);
+  }
 
-    printf("cmpxchg function ok\n");
-    exit(0);
+  printf("cmpxchg function ok\n");
+  exit(0);
 }

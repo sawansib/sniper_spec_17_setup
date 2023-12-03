@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -38,10 +38,12 @@ END_LEGAL */
  *  Pin Tool for testing the correctness of "INS_InsertThenCall" function.
  */
 
-#include "pin.H"
-#include <iostream>
-#include <fstream>
 #include <string.h>
+
+#include <fstream>
+#include <iostream>
+
+#include "pin.H"
 
 /* ===================================================================== */
 /* Commandline Switches */
@@ -49,69 +51,58 @@ END_LEGAL */
 
 LOCALVAR std::ofstream out;
 
-KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool",
-    "o", "insert_if_then_call1.out", "Output file");
-
-
-/* ===================================================================== */
-
-static ADDRINT IfFunction()
-{
-    return TRUE;
-}
-
-static VOID ThenFunction (BOOL first)
-{
-    //do nothing
-}
-
-
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o",
+                            "insert_if_then_call1.out", "Output file");
 
 /* ===================================================================== */
 
-VOID Instruction(INS ins, VOID *v)
-{
-    //Should cause an error since Pin does not support IPOINT_ANYWHERE with the function: "INS_InsertThenCall"
-    INS_InsertIfCall(ins, IPOINT_BEFORE , (AFUNPTR)IfFunction, IARG_END);
-    INS_InsertThenCall(ins, IPOINT_ANYWHERE, (AFUNPTR)ThenFunction, IARG_END);
+static ADDRINT IfFunction() { return TRUE; }
+
+static VOID ThenFunction(BOOL first) {
+  // do nothing
 }
 
+/* ===================================================================== */
+
+VOID Instruction(INS ins, VOID *v) {
+  // Should cause an error since Pin does not support IPOINT_ANYWHERE with the
+  // function: "INS_InsertThenCall"
+  INS_InsertIfCall(ins, IPOINT_BEFORE, (AFUNPTR)IfFunction, IARG_END);
+  INS_InsertThenCall(ins, IPOINT_ANYWHERE, (AFUNPTR)ThenFunction, IARG_END);
+}
 
 /* ===================================================================== */
 /* Utilities                                                             */
 /* ===================================================================== */
 
 /*!
-*  Print out help message.
-*/
+ *  Print out help message.
+ */
 
-INT32 Usage()
-{
-	/* Knobs automate the parsing and management of command line switches. 
-     * A command line contains switches for Pin, the tool, and the application. 
-     * The knobs parsing code understands how to separate them. 
-     */
-    cerr << KNOB_BASE::StringKnobSummary() << endl; //   Print out a summary of all the knobs declare
+INT32 Usage() {
+  /* Knobs automate the parsing and management of command line switches.
+   * A command line contains switches for Pin, the tool, and the application.
+   * The knobs parsing code understands how to separate them.
+   */
+  cerr << KNOB_BASE::StringKnobSummary()
+       << endl;  //   Print out a summary of all the knobs declare
 
-    return -1;
+  return -1;
 }
-
 
 /* ===================================================================== */
 
-int main(int argc, char *argv[])
-{
-    if( PIN_Init(argc,argv) )
-    {
-        return Usage();
-    }
+int main(int argc, char *argv[]) {
+  if (PIN_Init(argc, argv)) {
+    return Usage();
+  }
 
-    INS_AddInstrumentFunction(Instruction, 0);
+  INS_AddInstrumentFunction(Instruction, 0);
 
-    // Never returns
-    PIN_StartProgram();
-    
-    return 0;
+  // Never returns
+  PIN_StartProgram();
+
+  return 0;
 }
 
 /* ===================================================================== */

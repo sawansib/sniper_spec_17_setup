@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -28,15 +28,16 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
-#include <iostream>
 #include <stdio.h>
+
+#include <iostream>
 using std::cout;
+using std::dec;
 using std::endl;
 using std::flush;
 using std::hex;
-using std::dec;
 #if defined(TARGET_WINDOWS)
-#include<windows.h>
+#include <windows.h>
 #define EXPORT_SYM extern "C" __declspec(dllexport) __declspec(noinline)
 #else
 #include <sys/mman.h>
@@ -46,30 +47,28 @@ using std::dec;
 const unsigned int arraySize = 1000;
 static char theArray[arraySize];
 
-EXPORT_SYM void AppMarker()
-{
-    cout << "APP: AppMarker executed" << endl << flush;
+EXPORT_SYM void AppMarker() {
+  cout << "APP: AppMarker executed" << endl << flush;
 }
 
-int main()
-{
-    cout << "APP: Begin test" << endl << flush;
-    cout << "APP: calling munmap(" << hex << (void*)theArray << "," << dec << arraySize << ")" << endl << flush;
+int main() {
+  cout << "APP: Begin test" << endl << flush;
+  cout << "APP: calling munmap(" << hex << (void*)theArray << "," << dec
+       << arraySize << ")" << endl
+       << flush;
 #if defined(TARGET_WINDOWS)
-    if (0 != VirtualFree(theArray, arraySize, MEM_RELEASE))
-    {
-        cout << "APP: ERROR: munmap of a variable in the BSS (wrongly) succeeded";
-        return 1;
-    }
+  if (0 != VirtualFree(theArray, arraySize, MEM_RELEASE)) {
+    cout << "APP: ERROR: munmap of a variable in the BSS (wrongly) succeeded";
+    return 1;
+  }
 #else
-    if (0 == munmap(theArray, arraySize))
-    {
-        cout << "APP: ERROR: munmap of a variable in the BSS (wrongly) succeeded";
-        return 1;
-    }
+  if (0 == munmap(theArray, arraySize)) {
+    cout << "APP: ERROR: munmap of a variable in the BSS (wrongly) succeeded";
+    return 1;
+  }
 #endif
-    perror("APP: munmap failed as expected");
-    AppMarker();
-    cout << "APP: End test" << endl << flush;
-    return 0;
+  perror("APP: munmap failed as expected");
+  AppMarker();
+  cout << "APP: End test" << endl << flush;
+  return 0;
 }

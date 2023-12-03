@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -37,111 +37,90 @@ END_LEGAL */
 */
 
 /* ===================================================================== */
-#include "pin.H"
 #include <iostream>
+
+#include "pin.H"
 
 using namespace std;
 
 /* ===================================================================== */
 
-int myBlue( CONTEXT * ctxt, AFUNPTR pf_Blue, int one, int two )
-{
-    cout << " myBlue: Jitting Blue7()" << endl;
+int myBlue(CONTEXT *ctxt, AFUNPTR pf_Blue, int one, int two) {
+  cout << " myBlue: Jitting Blue7()" << endl;
 
-    int res;
-    
-    PIN_CallApplicationFunction( ctxt, PIN_ThreadId(),
-                                 CALLINGSTD_DEFAULT, pf_Blue,
-                                 PIN_PARG(int), &res,
-                                 PIN_PARG(int), one,
-                                 PIN_PARG(int), two,
-                                 PIN_PARG_END() );
-    
-    cout << " myBlue: Returned from Blue7(); res = " << res << endl;
+  int res;
 
-    return res;
+  PIN_CallApplicationFunction(ctxt, PIN_ThreadId(), CALLINGSTD_DEFAULT, pf_Blue,
+                              PIN_PARG(int), &res, PIN_PARG(int), one,
+                              PIN_PARG(int), two, PIN_PARG_END());
+
+  cout << " myBlue: Returned from Blue7(); res = " << res << endl;
+
+  return res;
 }
 
 /* ===================================================================== */
 
-int myBar( CONTEXT * ctxt, AFUNPTR pf_Bar, int one, int two, int stop )
-{
-    cout << " myBar: Jitting Bar7()" << endl;
-    
-    int res;
-    
-    PIN_CallApplicationFunction( ctxt, PIN_ThreadId(),
-                                 CALLINGSTD_DEFAULT, pf_Bar,
-                                 PIN_PARG(int), &res,
-                                 PIN_PARG(int), one,
-                                 PIN_PARG(int), two,
-                                 PIN_PARG(int), stop,
-                                 PIN_PARG_END() );
-    
-    cout << " myBar: Returned from Bar7(); res = " << res << endl;
+int myBar(CONTEXT *ctxt, AFUNPTR pf_Bar, int one, int two, int stop) {
+  cout << " myBar: Jitting Bar7()" << endl;
 
-    return res;
-}
+  int res;
 
+  PIN_CallApplicationFunction(ctxt, PIN_ThreadId(), CALLINGSTD_DEFAULT, pf_Bar,
+                              PIN_PARG(int), &res, PIN_PARG(int), one,
+                              PIN_PARG(int), two, PIN_PARG(int), stop,
+                              PIN_PARG_END());
 
-/* ===================================================================== */
-VOID ImageLoad(IMG img, VOID *v)
-{
-    PROTO protoBar = PROTO_Allocate( PIN_PARG(int), CALLINGSTD_DEFAULT,
-                                      "Bar7", PIN_PARG(int), PIN_PARG(int),
-                                      PIN_PARG(int), PIN_PARG_END() );
-    
-    PROTO protoBlue = PROTO_Allocate( PIN_PARG(int), CALLINGSTD_DEFAULT,
-                                       "Blue7", PIN_PARG(int), PIN_PARG(int),
-                                       PIN_PARG_END() );
-    
-    RTN rtn = RTN_FindByName(img, "Bar7");
-    if (RTN_Valid(rtn))
-    {
-        cout << " Replacing " << RTN_Name(rtn) << " in " << IMG_Name(img) << endl;
+  cout << " myBar: Returned from Bar7(); res = " << res << endl;
 
-        RTN_ReplaceSignature(
-            rtn, AFUNPTR(myBar),
-            IARG_PROTOTYPE, protoBar,
-            IARG_CONTEXT,
-            IARG_ORIG_FUNCPTR,
-            IARG_UINT32, 1,
-            IARG_UINT32, 2,
-            IARG_FUNCARG_ENTRYPOINT_VALUE, 2,
-            IARG_END);
-    }    
-
-    rtn = RTN_FindByName(img, "Blue7");
-    if (RTN_Valid(rtn))
-    {
-        cout << " Replacing " << RTN_Name(rtn) << " in " << IMG_Name(img) << endl;
-
-        RTN_ReplaceSignature(
-            rtn, AFUNPTR(myBlue),
-            IARG_PROTOTYPE, protoBlue,
-            IARG_CONTEXT,
-            IARG_ORIG_FUNCPTR,
-            IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
-            IARG_FUNCARG_ENTRYPOINT_VALUE, 1,
-            IARG_END);
-    }    
-
-    PROTO_Free( protoBar );
-    PROTO_Free( protoBlue );
+  return res;
 }
 
 /* ===================================================================== */
-int main(INT32 argc, CHAR *argv[])
-{
-    PIN_InitSymbols();
+VOID ImageLoad(IMG img, VOID *v) {
+  PROTO protoBar =
+      PROTO_Allocate(PIN_PARG(int), CALLINGSTD_DEFAULT, "Bar7", PIN_PARG(int),
+                     PIN_PARG(int), PIN_PARG(int), PIN_PARG_END());
 
-    PIN_Init(argc, argv);
+  PROTO protoBlue =
+      PROTO_Allocate(PIN_PARG(int), CALLINGSTD_DEFAULT, "Blue7", PIN_PARG(int),
+                     PIN_PARG(int), PIN_PARG_END());
 
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-    
-    PIN_StartProgram();
+  RTN rtn = RTN_FindByName(img, "Bar7");
+  if (RTN_Valid(rtn)) {
+    cout << " Replacing " << RTN_Name(rtn) << " in " << IMG_Name(img) << endl;
 
-    return 0;
+    RTN_ReplaceSignature(rtn, AFUNPTR(myBar), IARG_PROTOTYPE, protoBar,
+                         IARG_CONTEXT, IARG_ORIG_FUNCPTR, IARG_UINT32, 1,
+                         IARG_UINT32, 2, IARG_FUNCARG_ENTRYPOINT_VALUE, 2,
+                         IARG_END);
+  }
+
+  rtn = RTN_FindByName(img, "Blue7");
+  if (RTN_Valid(rtn)) {
+    cout << " Replacing " << RTN_Name(rtn) << " in " << IMG_Name(img) << endl;
+
+    RTN_ReplaceSignature(rtn, AFUNPTR(myBlue), IARG_PROTOTYPE, protoBlue,
+                         IARG_CONTEXT, IARG_ORIG_FUNCPTR,
+                         IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                         IARG_FUNCARG_ENTRYPOINT_VALUE, 1, IARG_END);
+  }
+
+  PROTO_Free(protoBar);
+  PROTO_Free(protoBlue);
+}
+
+/* ===================================================================== */
+int main(INT32 argc, CHAR *argv[]) {
+  PIN_InitSymbols();
+
+  PIN_Init(argc, argv);
+
+  IMG_AddInstrumentFunction(ImageLoad, 0);
+
+  PIN_StartProgram();
+
+  return 0;
 }
 
 /* ===================================================================== */

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -32,9 +32,10 @@ END_LEGAL */
 #include <windows.h>
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
+
 #include "../Utils/threadlib.h"
 #include "atomic.hpp"
 
@@ -44,47 +45,40 @@ END_LEGAL */
 volatile size_t numThreads = 0;
 size_t retval[NUM_TH + 1];
 
-void *compute(void *ptr)
-{
-    size_t th_id = (size_t) ptr;
-    size_t i = 0, newnum = 0;
+void *compute(void *ptr) {
+  size_t th_id = (size_t)ptr;
+  size_t i = 0, newnum = 0;
 
-    printf("Thread start %u\n", th_id);
-    fflush(stdout);
+  printf("Thread start %u\n", th_id);
+  fflush(stdout);
 
-    ATOMIC::OPS::Increment<size_t>(&numThreads, 1);
-    while (numThreads < NUM_TH)
-    {
-        DelayCurrentThread(1);
-    }
+  ATOMIC::OPS::Increment<size_t>(&numThreads, 1);
+  while (numThreads < NUM_TH) {
+    DelayCurrentThread(1);
+  }
 
-    for (i = 0; i < LOOPS; i++)
-    {
-        newnum += (i + newnum);
-    }
+  for (i = 0; i < LOOPS; i++) {
+    newnum += (i + newnum);
+  }
 
-    printf("Thread end %u\n", th_id);
-    fflush(stdout);
-    retval[th_id] = i;
-    return (void*) newnum;
+  printf("Thread end %u\n", th_id);
+  fflush(stdout);
+  retval[th_id] = i;
+  return (void *)newnum;
 }
 
 THREAD_HANDLE threads[NUM_TH];
 
-int main()
-{
+int main() {
+  for (size_t i = 1; i <= NUM_TH; i++) {
+    CreateOneThread(&threads[i], compute, (void *)i);
+  }
 
-    for (size_t i = 1; i <= NUM_TH; i++)
-    {
-        CreateOneThread(&threads[i], compute, (void*)i);
-    }
+  bool ok = true;
+  for (size_t i = 1; i <= NUM_TH; i++) {
+    JoinOneThread(threads[i]);
+    ok = ok && (retval[i] == LOOPS);
+  }
 
-    bool ok = true;
-    for (size_t i = 1; i <= NUM_TH; i++)
-    {
-        JoinOneThread(threads[i]);
-        ok = ok && (retval[i] == LOOPS);
-    }
-
-    exit(ok ? 0 : 1);
+  exit(ok ? 0 : 1);
 }

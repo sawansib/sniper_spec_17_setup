@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -30,97 +30,87 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 
 /*! @file
- *  Tool that tests the PIN_SafeCopy() function. 
+ *  Tool that tests the PIN_SafeCopy() function.
  */
 
-#include "pin.H"
-#include <iostream>
-#include <fstream>
 #include <string.h>
 
+#include <fstream>
+#include <iostream>
+
+#include "pin.H"
+
 #if defined(TARGET_WINDOWS)
-namespace WINDOWS
-{
+namespace WINDOWS {
 #include <windows.h>
 }
 #else
-#include <unistd.h>
 #include <sys/mman.h>
+#include <unistd.h>
 #endif
 
 /* ================================================================== */
-// Global variables 
+// Global variables
 /* ================================================================== */
-KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE,         "pintool",
-                            "o", "safecopy.out", "specify output file name");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "safecopy.out",
+                            "specify output file name");
 
 std::ofstream out;
 
-VOID * probeAddr = 0; // base address of a range overwritten by a probe 
+VOID *probeAddr = 0;  // base address of a range overwritten by a probe
 
 /* ================================================================== */
 // Utilities
 /* ================================================================== */
 #if defined(TARGET_WINDOWS)
 
-size_t GetPageSize()
-{
-    WINDOWS::SYSTEM_INFO sysInfo;
-    WINDOWS::GetSystemInfo(&sysInfo);
-    return static_cast<size_t>(sysInfo.dwPageSize);
+size_t GetPageSize() {
+  WINDOWS::SYSTEM_INFO sysInfo;
+  WINDOWS::GetSystemInfo(&sysInfo);
+  return static_cast<size_t>(sysInfo.dwPageSize);
 }
 
-VOID * MemAlloc(size_t size)
-{
-    return WINDOWS::VirtualAlloc(0, size, MEM_COMMIT, PAGE_READWRITE);
+VOID *MemAlloc(size_t size) {
+  return WINDOWS::VirtualAlloc(0, size, MEM_COMMIT, PAGE_READWRITE);
 }
 
-VOID MemFree(VOID * addr, size_t size)
-{
-    WINDOWS::VirtualFree(addr, 0, MEM_RELEASE);
+VOID MemFree(VOID *addr, size_t size) {
+  WINDOWS::VirtualFree(addr, 0, MEM_RELEASE);
 }
 
-BOOL MemProtect(VOID * addr, size_t size, BOOL enableAccess)
-{
-    WINDOWS::DWORD oldProtect;
-    return WINDOWS::VirtualProtect(addr, size, 
-                    (enableAccess? PAGE_READWRITE : PAGE_NOACCESS), &oldProtect);
+BOOL MemProtect(VOID *addr, size_t size, BOOL enableAccess) {
+  WINDOWS::DWORD oldProtect;
+  return WINDOWS::VirtualProtect(
+      addr, size, (enableAccess ? PAGE_READWRITE : PAGE_NOACCESS), &oldProtect);
 }
 
 #else
 
-size_t GetPageSize()
-{
-    return static_cast<size_t>(getpagesize());
+size_t GetPageSize() { return static_cast<size_t>(getpagesize()); }
+
+VOID MemFree(VOID *addr, size_t size) { munmap(addr, size); }
+
+BOOL MemProtect(VOID *addr, size_t size, BOOL enableAccess) {
+  return (-1 !=
+          mprotect(addr, size,
+                   (enableAccess ? (PROT_READ | PROT_WRITE) : PROT_NONE)));
 }
 
-VOID MemFree(VOID * addr, size_t size)
-{
-    munmap(addr, size);
-}
-
-BOOL MemProtect(VOID * addr, size_t size, BOOL enableAccess)
-{
-    
-    return (-1 != mprotect(addr, size, (enableAccess? (PROT_READ | PROT_WRITE) : PROT_NONE)));
-}
-
-VOID * MemAlloc(size_t size)
-{
+VOID *MemAlloc(size_t size) {
 #if defined(TARGET_MAC) || defined(TARGET_BSD)
-    VOID * addr = mmap(0, size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+  VOID *addr =
+      mmap(0, size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
 #else
-    VOID * addr = mmap(0, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
+  VOID *addr =
+      mmap(0, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
 #endif
-    if (addr != MAP_FAILED)
-    {
-        return addr;
-    }
-    return 0;
+  if (addr != MAP_FAILED) {
+    return addr;
+  }
+  return 0;
 }
 
 #endif
-
 
 /*!
  * Test the PIN_SafeCopy() function in the following scenarios:
@@ -128,156 +118,156 @@ VOID * MemAlloc(size_t size)
  * B. Partial copy of a memory region, whose tail is inaccessible
  * C. Failure to copy an inaccessible memory region
  */
-VOID SafeCopyTest()
-{
-    size_t pageSize = GetPageSize();
+VOID SafeCopyTest() {
+  size_t pageSize = GetPageSize();
 
-    CHAR * src = (CHAR *)MemAlloc(2*pageSize);
-    ASSERTX(src != 0);
-    CHAR * srcBuf = src + 1; // +1 for testing unaligned access
+  CHAR *src = (CHAR *)MemAlloc(2 * pageSize);
+  ASSERTX(src != 0);
+  CHAR *srcBuf = src + 1;  // +1 for testing unaligned access
 
+  CHAR *dst = (CHAR *)MemAlloc(2 * pageSize);
+  ASSERTX(dst != 0);
+  CHAR *dstBuf = dst + 1;  // +1 for testing unaligned access
 
-    CHAR * dst = (CHAR *)MemAlloc(2*pageSize);
-    ASSERTX(dst != 0);
-    CHAR * dstBuf = dst + 1; // +1 for testing unaligned access
+  size_t bufSize = 2 * pageSize - 1;
+  size_t halfBufSize = pageSize - 1;
+  size_t copySize;
 
-    size_t bufSize = 2*pageSize - 1;
-    size_t halfBufSize = pageSize - 1;
-    size_t copySize;
+  // A.
+  for (unsigned int i = 0; i < bufSize; ++i) {
+    src[i] = i / 256;
+    dst[i] = 0;
+  }
+  copySize = PIN_SafeCopy(dstBuf, srcBuf, bufSize);
+  ASSERT(((copySize == bufSize) && (memcmp(dstBuf, srcBuf, bufSize) == 0)),
+         "SafeCopy (A) failed.\n");
+  out << "SafeCopy (A): Entire buffer has been copied successfully." << endl
+      << flush;
 
-    //A.
-    for (unsigned int i = 0; i < bufSize; ++i)
-    {
-        src[i] = i/256;
-        dst[i] = 0;
+  // B.
+  for (unsigned int i = 0; i < pageSize; ++i) {
+    dst[i] = 0;
+  }
+  MemProtect(src + pageSize, pageSize,
+             FALSE);  // second half of src is inaccessible
+  copySize = PIN_SafeCopy(dstBuf, srcBuf, bufSize);
+  ASSERT(
+      ((copySize == halfBufSize) && (memcmp(dstBuf, srcBuf, halfBufSize) == 0)),
+      "SafeCopy (B) failed.\n");
+
+  // Check to see that all accessible bytes near the end of the first page are
+  // copied successfully
+  for (unsigned int sz = 1; sz < 16; ++sz) {
+    for (unsigned int i = 0; i < sz; ++i) {
+      dstBuf[i] = 0;
     }
-    copySize = PIN_SafeCopy(dstBuf, srcBuf, bufSize); 
-    ASSERT(((copySize == bufSize) && (memcmp(dstBuf, srcBuf, bufSize) == 0)), "SafeCopy (A) failed.\n");
-    out << "SafeCopy (A): Entire buffer has been copied successfully." << endl << flush;
+    copySize = PIN_SafeCopy(dstBuf, src + pageSize - sz, pageSize);
+    ASSERT(((copySize == sz) && (memcmp(dstBuf, src + pageSize - sz, sz) == 0)),
+           "SafeCopy (B) failed.\n");
+  }
 
-    //B.
-    for (unsigned int i = 0; i < pageSize; ++i)
-    {
-        dst[i] = 0;
-    }
-    MemProtect(src + pageSize, pageSize, FALSE); // second half of src is inaccessible
-    copySize = PIN_SafeCopy(dstBuf, srcBuf, bufSize); 
-    ASSERT(((copySize == halfBufSize) && (memcmp(dstBuf, srcBuf, halfBufSize) == 0)), "SafeCopy (B) failed.\n");
+  out << "SafeCopy (B): Accessible part of the buffer has been copied "
+         "successfully."
+      << endl
+      << flush;
 
-    // Check to see that all accessible bytes near the end of the first page are copied successfully
-    for (unsigned int sz = 1; sz < 16; ++sz)
-    {
-        for (unsigned int i = 0; i < sz; ++i)
-        {
-            dstBuf[i] = 0;
-        }
-        copySize = PIN_SafeCopy(dstBuf, src + pageSize - sz, pageSize); 
-        ASSERT(((copySize == sz) && (memcmp(dstBuf, src + pageSize - sz, sz) == 0)), "SafeCopy (B) failed.\n");
-    }
+  // C.
+  MemProtect(dst, pageSize, FALSE);  // dst is inaccessible
+  copySize = PIN_SafeCopy(dstBuf, srcBuf, bufSize);
+  ASSERT((copySize == 0), "SafeCopy (C) failed.\n");
+  out << "SafeCopy (C): Inaccessible buffer has not been copied." << endl
+      << flush;
 
-    out << "SafeCopy (B): Accessible part of the buffer has been copied successfully."  << endl << flush;
-
-    //C.
-    MemProtect(dst, pageSize, FALSE); // dst is inaccessible
-    copySize = PIN_SafeCopy(dstBuf, srcBuf, bufSize); 
-    ASSERT((copySize == 0), "SafeCopy (C) failed.\n");
-    out << "SafeCopy (C): Inaccessible buffer has not been copied."  << endl << flush;
-
-    MemFree(src, 2*pageSize);
-    MemFree(dst, 2*pageSize);
+  MemFree(src, 2 * pageSize);
+  MemFree(dst, 2 * pageSize);
 }
 
 /*!
  * Test SafeCopy in the trace analysis routine
  */
-VOID SafeCopyTestInTrace()
-{
-    static BOOL first = TRUE;
-    if (first)
-    {
-        first = FALSE;
-        out << "Test SafeCopy in the trace analysis routine." << endl << flush;
-        SafeCopyTest();
-    }
+VOID SafeCopyTestInTrace() {
+  static BOOL first = TRUE;
+  if (first) {
+    first = FALSE;
+    out << "Test SafeCopy in the trace analysis routine." << endl << flush;
+    SafeCopyTest();
+  }
 }
 
 /*!
  * Test SafeCopy in the trace instrumentation callback
  */
-VOID Trace(TRACE trace, VOID *v)
-{
-    static BOOL first = TRUE;
-    if (first)
-    {
-        first = FALSE;
-        out << "Test SafeCopy in the trace instrumentation callback." << endl << flush;
-        SafeCopyTest();
-        TRACE_InsertCall(trace, IPOINT_BEFORE, (AFUNPTR)SafeCopyTestInTrace, IARG_END);
-    }
+VOID Trace(TRACE trace, VOID *v) {
+  static BOOL first = TRUE;
+  if (first) {
+    first = FALSE;
+    out << "Test SafeCopy in the trace instrumentation callback." << endl
+        << flush;
+    SafeCopyTest();
+    TRACE_InsertCall(trace, IPOINT_BEFORE, (AFUNPTR)SafeCopyTestInTrace,
+                     IARG_END);
+  }
 
-    // Verify that pin-inserted probes are not visible through PIN_SafeCopy
-    if (probeAddr != 0)
-    {
-        out << "Test SafeCopy in a region overwritten by probe." << endl << flush;
-        CHAR buffer[8];
-        size_t copySize = PIN_SafeCopy(buffer, probeAddr, sizeof(buffer)); 
-        ASSERT((copySize == sizeof(buffer)), "SafeCopy failed in a region overwritten by probe.\n");
-        ASSERT((memcmp(buffer, probeAddr, copySize) != 0), "Pin inserted probes are visible through SafeCopy.\n");
-        probeAddr = 0;
-    }
+  // Verify that pin-inserted probes are not visible through PIN_SafeCopy
+  if (probeAddr != 0) {
+    out << "Test SafeCopy in a region overwritten by probe." << endl << flush;
+    CHAR buffer[8];
+    size_t copySize = PIN_SafeCopy(buffer, probeAddr, sizeof(buffer));
+    ASSERT((copySize == sizeof(buffer)),
+           "SafeCopy failed in a region overwritten by probe.\n");
+    ASSERT((memcmp(buffer, probeAddr, copySize) != 0),
+           "Pin inserted probes are visible through SafeCopy.\n");
+    probeAddr = 0;
+  }
 }
 
 /*!
  * Test SafeCopy in the image instrumentation callback
  */
-VOID ImageLoad(IMG img, VOID *v)
-{
+VOID ImageLoad(IMG img, VOID *v) {
 #if defined(TARGET_WINDOWS)
-    // Pin on Windows inserts a probe that intercepts APCs at KiApcUserDispatcher
-    RTN rtn = RTN_FindByName(img, "KiUserApcDispatcher");
-    if (RTN_Valid(rtn))
-    {
-        probeAddr = (VOID *)RTN_Address(rtn);
-    }
+  // Pin on Windows inserts a probe that intercepts APCs at KiApcUserDispatcher
+  RTN rtn = RTN_FindByName(img, "KiUserApcDispatcher");
+  if (RTN_Valid(rtn)) {
+    probeAddr = (VOID *)RTN_Address(rtn);
+  }
 #endif
 
-    static BOOL first = TRUE;
-    if (first)
-    {
-        first = FALSE;
-        out << "Test SafeCopy in the image instrumentation callback." << endl << flush;
-        SafeCopyTest();
-    }
+  static BOOL first = TRUE;
+  if (first) {
+    first = FALSE;
+    out << "Test SafeCopy in the image instrumentation callback." << endl
+        << flush;
+    SafeCopyTest();
+  }
 }
 
-VOID Fini(INT32 code, VOID *v)
-{
-    out <<  "SafeCopy test completed." << endl << flush;
+VOID Fini(INT32 code, VOID *v) {
+  out << "SafeCopy test completed." << endl << flush;
 }
 
 /*!
  * The main procedure of the tool.
  */
-int main(int argc, char *argv[])
-{
-    PIN_InitSymbols();
-    PIN_Init(argc,argv);
+int main(int argc, char *argv[]) {
+  PIN_InitSymbols();
+  PIN_Init(argc, argv);
 
-    out.open(KnobOutputFile.Value().c_str());
-    
-    // Register function to be called to instrument traces
-    TRACE_AddInstrumentFunction(Trace, 0);
+  out.open(KnobOutputFile.Value().c_str());
 
-    // Register function to be called to instrument images
-    IMG_AddInstrumentFunction(ImageLoad, 0);
+  // Register function to be called to instrument traces
+  TRACE_AddInstrumentFunction(Trace, 0);
 
-    // Register function to be called when the application exits
-    PIN_AddFiniFunction(Fini, 0);
+  // Register function to be called to instrument images
+  IMG_AddInstrumentFunction(ImageLoad, 0);
 
-    // Start the program, never returns
-    PIN_StartProgram();
-    
-    return 0;
+  // Register function to be called when the application exits
+  PIN_AddFiniFunction(Fini, 0);
+
+  // Start the program, never returns
+  PIN_StartProgram();
+
+  return 0;
 }
 
 /* ===================================================================== */

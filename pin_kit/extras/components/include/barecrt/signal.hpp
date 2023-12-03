@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -35,27 +35,26 @@ END_LEGAL */
 #ifndef BARECRT_SIGNAL_HPP
 #define BARECRT_SIGNAL_HPP
 
-#include "fund.hpp"
 #include "barecrt/types.hpp"
+#include "fund.hpp"
 
 #if defined(FUND_HOST_IA32_LINUX)
-#   include "barecrt/linux-ia32/signal-types.hpp"
+#include "barecrt/linux-ia32/signal-types.hpp"
 #elif defined(FUND_HOST_INTEL64_LINUX) || defined(FUND_HOST_MIC_LINUX)
-#   include "barecrt/linux-intel64/signal-types.hpp"
+#include "barecrt/linux-intel64/signal-types.hpp"
 #elif defined(FUND_HOST_IA64_LINUX)
-#   include "barecrt/linux-ia64/signal-types.hpp"
+#include "barecrt/linux-ia64/signal-types.hpp"
 #elif defined(FUND_HOST_IA32_MAC)
-#   include "barecrt/mac-ia32/signal-types.hpp"
-#   include "barecrt/signal-mac.hpp"
+#include "barecrt/mac-ia32/signal-types.hpp"
+#include "barecrt/signal-mac.hpp"
 #elif defined(FUND_HOST_INTEL64_MAC)
-#   include "barecrt/mac-intel64/signal-types.hpp"
-#   include "barecrt/signal-mac.hpp"
+#include "barecrt/mac-intel64/signal-types.hpp"
+#include "barecrt/signal-mac.hpp"
 #elif defined(FUND_HOST_INTEL64_BSD)
-#   include "barecrt/bsd-intel64/signal-types.hpp"
+#include "barecrt/bsd-intel64/signal-types.hpp"
 #else
-#   error "Must define O/S and architecture"
+#error "Must define O/S and architecture"
 #endif
-
 
 namespace BARECRT {
 
@@ -67,7 +66,6 @@ namespace BARECRT {
  * @return  0 on success, else a kernel error number.
  */
 ECODE GetPid(PID *pid);
-
 
 /*!
  * Send a signal to a process.
@@ -94,7 +92,6 @@ ECODE Tkill(PID tid, int signal);
  */
 int MaxSignalNumber();
 
-
 /*!
  * Set up a signal handler.
  *
@@ -105,7 +102,6 @@ int MaxSignalNumber();
  * @return  0 on success, else a kernel error number.
  */
 ECODE SigAction(int signal, const SIGACTION *newAction, SIGACTION *oldAction);
-
 
 /*!
  * Change the thread's signal mask.
@@ -118,7 +114,6 @@ ECODE SigAction(int signal, const SIGACTION *newAction, SIGACTION *oldAction);
  */
 ECODE SigProcMask(int how, const SIGSET *newMask, SIGSET *oldMask);
 
-
 /*!
  * Install an alternate stack for handling signals on this thread.
  *
@@ -130,7 +125,6 @@ ECODE SigProcMask(int how, const SIGSET *newMask, SIGSET *oldMask);
  */
 ECODE SigAltStack(const SIGSTACK *newStack, SIGSTACK *oldStack);
 
-
 /*!
  * Suspend the calling thread until a signal is handled.
  *
@@ -141,6 +135,5 @@ ECODE SigAltStack(const SIGSTACK *newStack, SIGSTACK *oldStack);
  */
 ECODE SigSuspend(const SIGSET *mask);
 
-
-} // namespace
-#endif // file guard
+}  // namespace BARECRT
+#endif  // file guard

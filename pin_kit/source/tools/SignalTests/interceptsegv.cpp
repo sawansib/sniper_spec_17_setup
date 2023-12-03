@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -30,42 +30,41 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 #include <signal.h>
 #include <stdlib.h>
+
 #include <fstream>
+
 #include "pin.H"
 
-KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o", "interceptsegv.out", "output file");
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o",
+                            "interceptsegv.out", "output file");
 std::ofstream Out;
 
+static BOOL SigFunc(THREADID, INT32, CONTEXT *, BOOL, const EXCEPTION_INFO *,
+                    void *);
 
-static BOOL SigFunc(THREADID, INT32, CONTEXT *, BOOL, const EXCEPTION_INFO *, void *);
+int main(int argc, char *argv[]) {
+  PIN_Init(argc, argv);
 
+  Out.open(KnobOutputFile.Value().c_str());
 
-int main(int argc, char * argv[])
-{
-    PIN_Init(argc, argv);
-
-    Out.open(KnobOutputFile.Value().c_str());
-
-    PIN_InterceptSignal(SIGSEGV, SigFunc, 0);
-    PIN_StartProgram();
-    return 0;
+  PIN_InterceptSignal(SIGSEGV, SigFunc, 0);
+  PIN_StartProgram();
+  return 0;
 }
 
-
 static BOOL SigFunc(THREADID tid, INT32 sig, CONTEXT *ctxt, BOOL hasHandler,
-    const EXCEPTION_INFO *exception, void *)
-{
-    Out << "Thread " << std::dec << tid << ": Tool got signal ";
-    if (sig == SIGSEGV)
-        Out << "SIGSEGV";
-    else
-        Out << "<signal " << std::dec << sig << ">";
-    Out << " at PC 0x" << std::hex << PIN_GetContextReg(ctxt, REG_INST_PTR) << std::endl;
+                    const EXCEPTION_INFO *exception, void *) {
+  Out << "Thread " << std::dec << tid << ": Tool got signal ";
+  if (sig == SIGSEGV)
+    Out << "SIGSEGV";
+  else
+    Out << "<signal " << std::dec << sig << ">";
+  Out << " at PC 0x" << std::hex << PIN_GetContextReg(ctxt, REG_INST_PTR)
+      << std::endl;
 
-    if (exception)
-        Out << "Signal is an exception" << std::endl;
-    if (hasHandler)
-        Out << "Application has a handler for this signal" << std::endl;
+  if (exception) Out << "Signal is an exception" << std::endl;
+  if (hasHandler)
+    Out << "Application has a handler for this signal" << std::endl;
 
-    return TRUE;
+  return TRUE;
 }

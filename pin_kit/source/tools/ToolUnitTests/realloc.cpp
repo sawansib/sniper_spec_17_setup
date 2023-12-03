@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -34,9 +34,11 @@ END_LEGAL */
  * Pin's free() function.
  */
 
+#include <stdlib.h>
+
 #include <iostream>
 #include <vector>
-#include <stdlib.h>
+
 #include "pin.H"
 
 extern "C" void *memalign(size_t, size_t);
@@ -44,105 +46,89 @@ extern "C" void *realloc(void *, size_t);
 
 static BOOL TestRealloc(void *, size_t);
 
-int main(int argc, char * argv[])
-{
-    PIN_Init(argc, argv);
+int main(int argc, char *argv[]) {
+  PIN_Init(argc, argv);
 
+  // Test realloc to larger and smaller sizes
 
-    // Test realloc to larger and smaller sizes
-    
-    void * ptr1 = malloc(20);
-    if (ptr1 == NULL) 
-    {
-        std::cerr << "Malloc failed\n";
-        exit(-1);
-    }
+  void *ptr1 = malloc(20);
+  if (ptr1 == NULL) {
+    std::cerr << "Malloc failed\n";
+    exit(-1);
+  }
 
-    std::cerr << "Malloc : " << hex << ptr1 << dec << std::endl;
-    
-    if (TestRealloc(ptr1, 20)) 
-    {
-        std::cerr << "Realloc of simple malloc failed\n";
-        return -1;
-    }
+  std::cerr << "Malloc : " << hex << ptr1 << dec << std::endl;
 
-    // Test realloc of small chunk aligned at small value
-    void * ptr2 = memalign(32, 400);
-    if (ptr2 == NULL) 
-    {
-        std::cerr << "Memalign failed\n";
-        exit(-1);
-    }
-    
-    std::cerr << "Memalign : " << hex << ptr2 << dec << std::endl;
+  if (TestRealloc(ptr1, 20)) {
+    std::cerr << "Realloc of simple malloc failed\n";
+    return -1;
+  }
 
-    if (TestRealloc(ptr2, 400)) 
-    {
-        std::cerr << "Realloc of small chunk aligned at small boundary failed\n";
-        return -1;
-    }
+  // Test realloc of small chunk aligned at small value
+  void *ptr2 = memalign(32, 400);
+  if (ptr2 == NULL) {
+    std::cerr << "Memalign failed\n";
+    exit(-1);
+  }
 
-    
-    // Test realloc of small chunk aligned at large value
-    void * ptr3 = memalign(2048, 400);
-    if (ptr3 == NULL) 
-    {
-        std::cerr << "Memalign failed\n";
-        exit(-1);
-    }
-    
-    std::cerr << "Memalign : " << hex << ptr3 << dec << std::endl;
+  std::cerr << "Memalign : " << hex << ptr2 << dec << std::endl;
 
-    if (TestRealloc(ptr3, 400)) 
-    {
-        std::cerr << "Realloc of small chunk aligned at large boundary failed\n";
-        return -1;
-    }
-    
-    // Test realloc of large chunk aligned at large value
-    void * ptr4 = memalign(2048, 400000);
-    if (ptr4 == NULL) 
-    {
-        std::cerr << "Memalign failed\n";
-        exit(-1);
-    }
-    
-    std::cerr << "Memalign : " << hex << ptr4 << dec << std::endl;
-    
-    if (TestRealloc(ptr4, 400000)) 
-    {
-        std::cerr << "Realloc of large chunk aligned at large boundary failed\n";
-        return -1;
-    }
-    
-    // Never returns
-    PIN_StartProgram();
-    
+  if (TestRealloc(ptr2, 400)) {
+    std::cerr << "Realloc of small chunk aligned at small boundary failed\n";
+    return -1;
+  }
+
+  // Test realloc of small chunk aligned at large value
+  void *ptr3 = memalign(2048, 400);
+  if (ptr3 == NULL) {
+    std::cerr << "Memalign failed\n";
+    exit(-1);
+  }
+
+  std::cerr << "Memalign : " << hex << ptr3 << dec << std::endl;
+
+  if (TestRealloc(ptr3, 400)) {
+    std::cerr << "Realloc of small chunk aligned at large boundary failed\n";
+    return -1;
+  }
+
+  // Test realloc of large chunk aligned at large value
+  void *ptr4 = memalign(2048, 400000);
+  if (ptr4 == NULL) {
+    std::cerr << "Memalign failed\n";
+    exit(-1);
+  }
+
+  std::cerr << "Memalign : " << hex << ptr4 << dec << std::endl;
+
+  if (TestRealloc(ptr4, 400000)) {
+    std::cerr << "Realloc of large chunk aligned at large boundary failed\n";
+    return -1;
+  }
+
+  // Never returns
+  PIN_StartProgram();
 }
 
-BOOL TestRealloc(void * ptr, size_t sz) 
-{
-    // Reallocate ptr to a larger size
-    void * tmp = realloc(ptr, sz+21000);
-    if (tmp == NULL) 
-    {
-        std::cerr << "Realloc to larger size failed\n";
-        return 1;
-    }
-    ptr = tmp;
-    std::cerr << "Realloc to larger size : " << hex << ptr << dec << std::endl;
+BOOL TestRealloc(void *ptr, size_t sz) {
+  // Reallocate ptr to a larger size
+  void *tmp = realloc(ptr, sz + 21000);
+  if (tmp == NULL) {
+    std::cerr << "Realloc to larger size failed\n";
+    return 1;
+  }
+  ptr = tmp;
+  std::cerr << "Realloc to larger size : " << hex << ptr << dec << std::endl;
 
-    // Reallocate ptr to a half the original size
-    tmp = realloc(ptr, sz/2);
-    if (tmp == NULL) 
-    {
-        std::cerr << "Realloc to smaller size failed\n";
-        return 1;
-    }
-    ptr = tmp;
-    std::cerr << "Realloc to smaller size : " << hex << ptr << dec << std::endl;
-    free(ptr);
-    
-    return 0;
+  // Reallocate ptr to a half the original size
+  tmp = realloc(ptr, sz / 2);
+  if (tmp == NULL) {
+    std::cerr << "Realloc to smaller size failed\n";
+    return 1;
+  }
+  ptr = tmp;
+  std::cerr << "Realloc to smaller size : " << hex << ptr << dec << std::endl;
+  free(ptr);
+
+  return 0;
 }
-

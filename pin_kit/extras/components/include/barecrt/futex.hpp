@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -36,7 +36,6 @@ END_LEGAL */
 #define BARECRT_FUTEX_HPP
 
 #include "barecrt/time.hpp"
-
 
 namespace BARECRT {
 
@@ -64,11 +63,12 @@ ECODE FutexWait(int *futex, int val, const TIMEVAL *timeout);
  *
  *  @param[in] futex            Pointer to the "futex" variable.
  *  @param[in] numberToWake     The maximum number of threads to wake up.
- *  @param[out] numberWoken     If not NULL, receives the number of woken threads.
+ *  @param[out] numberWoken     If not NULL, receives the number of woken
+ * threads.
  *
  * @return  0 on success, else a kernel error number.
  */
 ECODE FutexWake(int *futex, int numberToWake, int *numberWoken);
 
-} // namespace
-#endif // file guard
+}  // namespace BARECRT
+#endif  // file guard

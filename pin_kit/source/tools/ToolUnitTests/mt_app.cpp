@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -32,12 +32,13 @@ END_LEGAL */
  * A simple MT application.
  */
 
-#include <string>
 #include <iostream>
+#include <string>
+
 #include "../Utils/threadlib.h"
 
 #if defined(TARGET_WINDOWS)
-#define EXPORT_CSYM extern "C" __declspec( dllexport )
+#define EXPORT_CSYM extern "C" __declspec(dllexport)
 #else
 #define EXPORT_CSYM extern "C"
 #endif
@@ -45,48 +46,39 @@ END_LEGAL */
 using namespace std;
 
 /*!
- * The tool intercepts this function and flushes the Code Cache. 
+ * The tool intercepts this function and flushes the Code Cache.
  */
 volatile unsigned numFlushes = 0;
-EXPORT_CSYM void DoFlush()
-{
-    ++numFlushes;
+EXPORT_CSYM void DoFlush() { ++numFlushes; }
+
+void *ThreadProc(void *arg) {
+  DelayCurrentThread(1000);
+  return 0;
 }
 
-void * ThreadProc(void * arg)
-{
-    DelayCurrentThread(1000); 
-    return 0;
-}
+int main(int argc, char *argv[]) {
+  const int numThreads = 3;
+  THREAD_HANDLE threads[numThreads];
 
-int main(int argc, char *argv[])
-{
-    const int numThreads = 3;
-    THREAD_HANDLE threads[numThreads];
-      
-    for (int i = 0; i < numThreads; i++)
-    {
-        if (!CreateOneThread(&threads[i], ThreadProc, 0))
-        {
-            cerr << "CreateOneThread failed" << endl;
-        }
+  for (int i = 0; i < numThreads; i++) {
+    if (!CreateOneThread(&threads[i], ThreadProc, 0)) {
+      cerr << "CreateOneThread failed" << endl;
     }
+  }
 
-    for (int i = 0; i < numThreads; i++)
-    {
-        if (!JoinOneThread(threads[i]))
-        {
-            cerr << "JoinOneThread failed" << endl;
-        }
+  for (int i = 0; i < numThreads; i++) {
+    if (!JoinOneThread(threads[i])) {
+      cerr << "JoinOneThread failed" << endl;
     }
+  }
 
-    cerr << "All application's threads joined" << endl;
+  cerr << "All application's threads joined" << endl;
 
-    // Trigger the Code Cache flush
-    DoFlush();
-    DelayCurrentThread(1000); 
-    
-    cerr << "Application is exiting" << endl;
+  // Trigger the Code Cache flush
+  DoFlush();
+  DelayCurrentThread(1000);
 
-    return 0;
+  cerr << "Application is exiting" << endl;
+
+  return 0;
 }

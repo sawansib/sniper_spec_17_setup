@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -38,35 +38,36 @@ END_LEGAL */
 #define ASM_GAS_X86_H
 
 /*
- * Toolchain should define ASM_WINDOWS for Windows targets, ASM_MAC for OS X* targets.
+ * Toolchain should define ASM_WINDOWS for Windows targets, ASM_MAC for OS X*
+ * targets.
  */
 
 #define ASM_FILEBEGIN() .intel_syntax noprefix
 #define ASM_FILEEND()
 
-#define ASM_FUNCBEGIN(name, rtype, args)    \
-    .text;                                  \
-    .align 4;                               \
-    .globl ASM_NAME(name);                  \
-    ASM_NAME(name):
+#define ASM_FUNCBEGIN(name, rtype, args) \
+  .text;                                 \
+  .align 4;                              \
+  .globl ASM_NAME(name);                 \
+  ASM_NAME(name) :
 
 #define ASM_FUNCEND(name)
 
-#define ASM_HEX(val)    0x##val
+#define ASM_HEX(val) 0x##val
 
 #if defined(FUND_HOST_WINDOWS) || defined(FUND_HOST_MAC)
-#   define ASM_NAME(name)   _##name
+#define ASM_NAME(name) _##name
 #else
-#   define ASM_NAME(name)   name
+#define ASM_NAME(name) name
 #endif
 
-#define ASM_LABDEF(x)   .l##x##:
-#define ASM_LABF(x)     .l##x
-#define ASM_LABB(x)     .l##x
+#define ASM_LABDEF(x) .l##x##:
+#define ASM_LABF(x) .l##x
+#define ASM_LABB(x) .l##x
 
-#define ASM_BYTE()      BYTE PTR
-#define ASM_WORD()      WORD PTR
-#define ASM_DWORD()     DWORD PTR
+#define ASM_BYTE() BYTE PTR
+#define ASM_WORD() WORD PTR
+#define ASM_DWORD() DWORD PTR
 
 /*
  * The only legal 64-bit accesses on IA32 are implied by the instruction
@@ -75,9 +76,9 @@ END_LEGAL */
  * mnemonic, and "QWORD PTR" is required.
  */
 #if defined(FUND_HOST_IA32)
-#   define ASM_QWORD()
+#define ASM_QWORD()
 #else
-#   define ASM_QWORD()     QWORD PTR
+#define ASM_QWORD() QWORD PTR
 #endif
 
 #endif /*file guard*/

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -31,35 +31,30 @@ END_LEGAL */
 #include <signal.h>
 #include <stdio.h>
 
-
 void handle(int);
 
+int main() {
+  struct sigaction sigact;
 
-int main()
-{
-    struct sigaction sigact;
+  sigact.sa_handler = handle;
+  sigact.sa_flags = SA_RESETHAND;
+  sigemptyset(&sigact.sa_mask);
+  if (sigaction(SIGCONT, &sigact, 0) == -1) {
+    printf("Unable to handle signal\n");
+    return 1;
+  }
 
-    sigact.sa_handler = handle;
-    sigact.sa_flags = SA_RESETHAND;
-    sigemptyset(&sigact.sa_mask);
-    if (sigaction(SIGCONT, &sigact, 0) == -1)
-    {
-        printf("Unable to handle signal\n");
-        return 1;
-    }
+  raise(SIGCONT);
+  raise(SIGCONT);
 
-    raise(SIGCONT);
-    raise(SIGCONT);
-
-    printf("Exiting after second SIGCONT\n");
-    return 0;
+  printf("Exiting after second SIGCONT\n");
+  return 0;
 }
 
-void handle(int sig)
-{
-    if (sig == SIGCONT)
-        printf("Got signal CONT\n");
-    else
-        printf("Got signal %d\n", sig);
-    fflush(stdout);
+void handle(int sig) {
+  if (sig == SIGCONT)
+    printf("Got signal CONT\n");
+  else
+    printf("Got signal %d\n", sig);
+  fflush(stdout);
 }

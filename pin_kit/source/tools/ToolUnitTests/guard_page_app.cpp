@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,46 +29,41 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 /*! @file
- * This test application verifies that Pin on Windows correctly updates the 
- * TEB.NtTib.StackLimit value when the application and/or tool touches the 
+ * This test application verifies that Pin on Windows correctly updates the
+ * TEB.NtTib.StackLimit value when the application and/or tool touches the
  * guard page of the application stack.
  * This application must be run with the "guard_page" test tool.
  */
 
-#include <string>
-#include <iostream>
 #include <windows.h>
+
+#include <iostream>
+#include <string>
 using namespace std;
 
 /*!
  * Return page size in bytes.
  */
 static size_t PageSize = 0;
-size_t GetPageSize()
-{
-    if (PageSize == 0)
-    {
-        SYSTEM_INFO sysInfo;
-        GetSystemInfo(&sysInfo);
-        PageSize = static_cast<size_t>(sysInfo.dwPageSize);
-    }
-    return PageSize;
+size_t GetPageSize() {
+  if (PageSize == 0) {
+    SYSTEM_INFO sysInfo;
+    GetSystemInfo(&sysInfo);
+    PageSize = static_cast<size_t>(sysInfo.dwPageSize);
+  }
+  return PageSize;
 }
 
 /*!
-* Return pointer to the Thread Information Block of the current thread
-*/
-NT_TIB * GetCurrentTib()
-{
-    return (NT_TIB *)NtCurrentTeb();
-}
-
-/*!
- * Get starting address of the guard page in the stack of the current thread 
+ * Return pointer to the Thread Information Block of the current thread
  */
-char * GetStackGuardPage()
-{
-    return ((char *)(GetCurrentTib()->StackLimit)) - GetPageSize();
+NT_TIB *GetCurrentTib() { return (NT_TIB *)NtCurrentTeb(); }
+
+/*!
+ * Get starting address of the guard page in the stack of the current thread
+ */
+char *GetStackGuardPage() {
+  return ((char *)(GetCurrentTib()->StackLimit)) - GetPageSize();
 }
 
 //==========================================================================
@@ -76,29 +71,24 @@ char * GetStackGuardPage()
 //==========================================================================
 string UnitTestName("guard_page");
 
-static void Abort(const string & msg)
-{
-    cerr << UnitTestName << " Failure: " << msg << endl;
-    exit(1);
+static void Abort(const string &msg) {
+  cerr << UnitTestName << " Failure: " << msg << endl;
+  exit(1);
 }
-
 
 /*!
  * The main procedure of the application.
  */
-int main(int argc, char *argv[])
-{
-    char dummy;
+int main(int argc, char *argv[]) {
+  char dummy;
 
-    for (int i = 0; i < 5; i++)
-    {
-        char *  guardPage = GetStackGuardPage();
-        dummy = *guardPage;  // touch (read) the guard page
-        if (GetStackGuardPage() != (guardPage - GetPageSize()))
-        {
-            Abort("Stack limit is not updated");
-        }
+  for (int i = 0; i < 5; i++) {
+    char *guardPage = GetStackGuardPage();
+    dummy = *guardPage;  // touch (read) the guard page
+    if (GetStackGuardPage() != (guardPage - GetPageSize())) {
+      Abort("Stack limit is not updated");
     }
-    cerr << UnitTestName << " : Completed successfully" << endl;
-    return 0;
+  }
+  cerr << UnitTestName << " : Completed successfully" << endl;
+  return 0;
 }

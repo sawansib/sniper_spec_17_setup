@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -32,7 +32,6 @@ END_LEGAL */
 #define INSFAULT_INTEL64_H
 
 #include "fund.hpp"
-
 
 // The assembly file sets these to the expected values for each register.
 //
@@ -54,7 +53,6 @@ extern "C" FUND::UINT64 ExpectedRAX;
 extern "C" FUND::UINT64 ExpectedRCX;
 extern "C" FUND::UINT64 ExpectedRSP;
 extern "C" FUND::UINT64 ExpectedEFLAGS;
-
 
 // Mask of bits to check in EFLAGS:
 //

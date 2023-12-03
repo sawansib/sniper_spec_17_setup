@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,30 +29,26 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 /*! @file
- * 
+ *
  */
 #ifdef TARGET_WINDOWS
 #include <windows.h>
-#define EXPORT_CSYM extern "C" __declspec( dllexport )
+#define EXPORT_CSYM extern "C" __declspec(dllexport)
 #else
-#define EXPORT_CSYM extern "C" 
+#define EXPORT_CSYM extern "C"
 #endif
 
 int a;
 
-EXPORT_CSYM void watch_rtn(int arg)
-{
-    a = arg;
-}
+EXPORT_CSYM void watch_rtn(int arg) { a = arg; }
 
-EXPORT_CSYM int main(int argc, char *argv[])
-{
-    watch_rtn(10);
-    watch_rtn(20);
-    watch_rtn(20);
-    watch_rtn(-1);
-    watch_rtn(10);
-    watch_rtn(10);
-    watch_rtn(20);
-    return 0;
+EXPORT_CSYM int main(int argc, char *argv[]) {
+  watch_rtn(10);
+  watch_rtn(20);
+  watch_rtn(20);
+  watch_rtn(-1);
+  watch_rtn(10);
+  watch_rtn(10);
+  watch_rtn(20);
+  return 0;
 }

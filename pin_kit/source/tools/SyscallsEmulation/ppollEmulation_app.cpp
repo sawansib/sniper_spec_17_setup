@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -30,109 +30,98 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 /*
  * There are three tests that use this application:
- * 1. ppollEmulationSuccessful.test- tests the correctness of the emulation of a successful ppoll system call.
- * 2. ppollEmulationTimeOut.test- tests the correctness of the emulation of a ppoll system call
- *    which was interrupted by a time out.
- * 3. ppollEmulationSignalInterrupt.test- tests the correctness of the emulation of a ppoll system call
- *    which was interrupted by a signal.
+ * 1. ppollEmulationSuccessful.test- tests the correctness of the emulation of a
+ * successful ppoll system call.
+ * 2. ppollEmulationTimeOut.test- tests the correctness of the emulation of a
+ * ppoll system call which was interrupted by a time out.
+ * 3. ppollEmulationSignalInterrupt.test- tests the correctness of the emulation
+ * of a ppoll system call which was interrupted by a signal.
  */
 
+#include <errno.h>
+#include <fcntl.h>
+#include <poll.h>
+#include <pthread.h>
+#include <setjmp.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <signal.h>
-#include <poll.h>
-#include <setjmp.h>
-#include <errno.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #define MSG "MSG\n"
 
 volatile int istimer = 0;
 pthread_t main_th;
 volatile bool stop = false;
-const char * logFileName = NULL;
-const char * pipeName = NULL;
+const char *logFileName = NULL;
+const char *pipeName = NULL;
 int fdMainThread = -1;
 
 enum ExitType {
-    RES_SUCCESS = 0,          // 0
-    RES_OPEN_FILE_ERROR,      // 1
-    RES_MAKE_PIPE_ERROR,      // 2
-    RES_INVALID_ARGS,         // 3
-    RES_OPEN_FD_ERROR,        // 4
-    RES_WRITE_TO_FD_ERROR,    // 5
-    RES_WRONG_SIGNAL_ERROR,   // 6
-    RES_THREADCREATE_FAILED,  // 7
-    RES_SIGACTION_FAILED,     // 8
-    RES_ERROR                 // 9
+  RES_SUCCESS = 0,          // 0
+  RES_OPEN_FILE_ERROR,      // 1
+  RES_MAKE_PIPE_ERROR,      // 2
+  RES_INVALID_ARGS,         // 3
+  RES_OPEN_FD_ERROR,        // 4
+  RES_WRITE_TO_FD_ERROR,    // 5
+  RES_WRONG_SIGNAL_ERROR,   // 6
+  RES_THREADCREATE_FAILED,  // 7
+  RES_SIGACTION_FAILED,     // 8
+  RES_ERROR                 // 9
 };
 
-void * thread_handler(void *arg)
-{
-    int fdWriteThread, i;
+void *thread_handler(void *arg) {
+  int fdWriteThread, i;
 
-    fdWriteThread = open(pipeName, O_RDWR );
-    if (fdWriteThread < 0)
-    {
-        perror("Failed to open fd");
-        exit(RES_OPEN_FD_ERROR);
+  fdWriteThread = open(pipeName, O_RDWR);
+  if (fdWriteThread < 0) {
+    perror("Failed to open fd");
+    exit(RES_OPEN_FD_ERROR);
+  }
+  for (i = 0; i < 10; i++) {
+    sleep(10);
+    int ret = write(fdWriteThread, MSG, sizeof(MSG));
+    if (ret < 0) {
+      perror("Failed to write to fd");
+      close(fdWriteThread);
+      exit(RES_WRITE_TO_FD_ERROR);
     }
-    for (i = 0; i < 10; i++)
-    {
-        sleep(10);
-        int ret = write(fdWriteThread, MSG, sizeof(MSG));
-        if (ret< 0)
-        {
-            perror("Failed to write to fd");
-            close(fdWriteThread);
-            exit(RES_WRITE_TO_FD_ERROR);
-        }
-    }
-    stop = true;
-    close(fdWriteThread);
-    return NULL;
+  }
+  stop = true;
+  close(fdWriteThread);
+  return NULL;
 }
 
-void * timer_handler(void *arg)
-{
-    struct timespec tm;
-    unsigned long i;
-    for (i = 0; i < 100; i++)
-    {
-        tm.tv_sec = 0;
-        tm.tv_nsec = 250*1000*1000;
-        nanosleep(& tm, NULL);
-        pthread_kill(main_th, SIGALRM);
-    }
-    return NULL;
+void *timer_handler(void *arg) {
+  struct timespec tm;
+  unsigned long i;
+  for (i = 0; i < 100; i++) {
+    tm.tv_sec = 0;
+    tm.tv_nsec = 250 * 1000 * 1000;
+    nanosleep(&tm, NULL);
+    pthread_kill(main_th, SIGALRM);
+  }
+  return NULL;
 }
 
-void sig_handler (int signo, siginfo_t *info, void *context)
-{
-    if (signo == SIGALRM)
-    {
-       istimer = 1;
-    }
-    else
-    {
-        printf("Signal %d received\n", signo);
-        exit(RES_WRONG_SIGNAL_ERROR);
-    }
+void sig_handler(int signo, siginfo_t *info, void *context) {
+  if (signo == SIGALRM) {
+    istimer = 1;
+  } else {
+    printf("Signal %d received\n", signo);
+    exit(RES_WRONG_SIGNAL_ERROR);
+  }
 }
 
-void *do_nothing(void *)
-{
-    while(1) sleep(5);
-    return NULL;
+void *do_nothing(void *) {
+  while (1) sleep(5);
+  return NULL;
 }
 
-void poll_exit()
-{
-    close(fdMainThread);
-    remove(pipeName);
+void poll_exit() {
+  close(fdMainThread);
+  remove(pipeName);
 }
 
 /*
@@ -141,146 +130,126 @@ void poll_exit()
     [2] log file name
     [3] pipe name
 */
-int main(int argc, char* argv[] )
-{
-    if(argc != 4)
-    {
-        fprintf(stderr, "Not enough arguments\n" );
-        fflush(stderr);
-        return RES_INVALID_ARGS;
+int main(int argc, char *argv[]) {
+  if (argc != 4) {
+    fprintf(stderr, "Not enough arguments\n");
+    fflush(stderr);
+    return RES_INVALID_ARGS;
+  }
+
+  int testType = atoi(argv[1]);
+  logFileName = argv[2];
+  FILE *pFile = fopen(logFileName, "w");
+  if (pFile == NULL) {
+    perror("Error opening file");
+    return RES_OPEN_FILE_ERROR;
+  }
+
+  pipeName = argv[3];
+  int mode, i, count;
+  pthread_t th1, th2;
+  sigset_t sigs1;
+  sigset_t sigs2;
+  struct pollfd list;
+  char buf[20];
+  struct sigaction sigact;
+  struct timespec tem;
+  sigemptyset(&sigs1);
+
+  mode = S_IWGRP | S_IWOTH | S_IWUSR | S_IRGRP | S_IROTH | S_IRUSR;
+  if (mkfifo(pipeName, mode) < 0) {
+    perror("mkfifo");
+    return RES_MAKE_PIPE_ERROR;
+  }
+
+  chmod(pipeName, mode);
+  fdMainThread = open(pipeName, O_RDWR);
+
+  if (fdMainThread < 0) {
+    perror("Failed to open fd");
+    return RES_OPEN_FD_ERROR;
+  }
+  atexit(poll_exit);
+  main_th = pthread_self();
+
+  switch (testType) {
+    case 1: {
+      if (pthread_create(&th1, NULL, thread_handler, 0) != 0) {
+        printf("pthread_create error\n");
+        return RES_THREADCREATE_FAILED;
+      }
+      tem.tv_sec = 60;
+      tem.tv_nsec = 0;
+      break;
     }
-
-    int testType = atoi (argv[1]);
-    logFileName = argv[2];
-    FILE * pFile = fopen (logFileName , "w");
-    if (pFile == NULL)
-    {
-        perror ("Error opening file");
-        return RES_OPEN_FILE_ERROR;
+    case 2: {
+      if (pthread_create(&th1, NULL, timer_handler, 0) != 0) {
+        printf("pthread_create error\n");
+        return RES_THREADCREATE_FAILED;
+      }
+      tem.tv_sec = 60;
+      tem.tv_nsec = 0;
+      sigemptyset(&sigs2);
+      sigaddset(&sigs2, SIGQUIT);
+      int sig[] = {SIGINT, SIGTERM, SIGALRM};
+      for (i = 0; i < 3; i++) {
+        sigact.sa_flags = SA_SIGINFO | SA_NODEFER;
+        sigact.sa_sigaction = sig_handler;
+        sigemptyset(&sigact.sa_mask);
+        if (sigaction(sig[i], &sigact, 0) < 0) {
+          perror("sigaction failed");
+          return RES_SIGACTION_FAILED;
+        }
+        sigaddset(&sigs1, sig[i]);
+      }
+      break;
     }
-    
-    pipeName = argv[3];
-    int mode, i, count;
-    pthread_t th1, th2;
-    sigset_t sigs1;
-    sigset_t sigs2 ;
-    struct pollfd list;
-    char buf[20];
-    struct sigaction sigact;
-    struct timespec tem;
-    sigemptyset(&sigs1);
-
-    mode = S_IWGRP | S_IWOTH | S_IWUSR | S_IRGRP | S_IROTH | S_IRUSR;
-    if (mkfifo(pipeName, mode) < 0)
-    {
-        perror("mkfifo");
-        return RES_MAKE_PIPE_ERROR;
+    case 3: {
+      if (pthread_create(&th1, NULL, do_nothing, 0) != 0) {
+        printf("pthread_create error\n");
+        return RES_THREADCREATE_FAILED;
+      }
+      tem.tv_sec = 0;
+      tem.tv_nsec = 250 * 1000 * 1000;
+      break;
     }
+    default:
+      // do nothing
+      break;
+  }
 
-    chmod(pipeName, mode);
-    fdMainThread = open(pipeName, O_RDWR);
+  while (!stop) {
+    usleep(1000);
+    list.fd = fdMainThread;
+    list.events = (POLLIN | POLLHUP | POLLERR | POLLNVAL);
+    int ret = ppoll(&list, 1, &tem, &sigs2);
 
-    if (fdMainThread < 0)
-    { 
-        perror("Failed to open fd");
-        return RES_OPEN_FD_ERROR;
+    if (ret == 0) {
+      fprintf(pFile, "The call timed out and no file descriptors were ready\n");
+      stop = true;
+    } else if (ret < 0) {
+      if ((errno == EINTR) && istimer) {
+        istimer = 0;
+        fprintf(pFile, "sigalarm interrupted the ppoll system call\n");
+        stop = true;
+      } else {
+        fprintf(stderr, "received wrong signal\n");
+        return RES_WRONG_SIGNAL_ERROR;
+      }
+    } else if (list.revents & POLLIN) {
+      fprintf(pFile, "PPOLL succeeded:%d\n", (int)ret);
+      count = read(fdMainThread, buf, 20);
+      if (count < 0)
+        perror("read");
+      else
+        fprintf(pFile, "ppoll succeeded\n");
+      ;
+      stop = true;
+    } else {
+      fprintf(stderr, "other error\n");
+      return RES_ERROR;
     }
-    atexit(poll_exit);
-    main_th = pthread_self();
+  }
 
-    switch (testType)
-    {
-        case 1:
-        {
-            if (pthread_create(& th1, NULL, thread_handler, 0) != 0)
-            {
-                printf("pthread_create error\n");
-                return RES_THREADCREATE_FAILED;
-            }
-            tem.tv_sec = 60;
-            tem.tv_nsec = 0;
-            break;
-        }
-        case 2:
-        {
-            if (pthread_create(& th1, NULL, timer_handler, 0) != 0)
-            {
-                printf("pthread_create error\n");
-                return RES_THREADCREATE_FAILED;
-            }
-            tem.tv_sec = 60;
-            tem.tv_nsec = 0;
-            sigemptyset(& sigs2);
-            sigaddset(& sigs2, SIGQUIT);
-            int sig[] = {SIGINT, SIGTERM, SIGALRM};
-            for(i = 0; i < 3 ; i++)
-            {
-                sigact.sa_flags = SA_SIGINFO | SA_NODEFER;
-                sigact.sa_sigaction = sig_handler;
-                sigemptyset (&sigact.sa_mask);
-                if (sigaction (sig[i], &sigact, 0) < 0) {
-                    perror("sigaction failed");
-                    return RES_SIGACTION_FAILED;
-                }
-                sigaddset(& sigs1, sig[i]);
-            }
-            break;
-        }
-        case 3:
-        {
-            if (pthread_create(& th1, NULL, do_nothing, 0) != 0)
-            {
-                printf("pthread_create error\n");
-                return RES_THREADCREATE_FAILED;
-            }
-            tem.tv_sec = 0;
-            tem.tv_nsec = 250*1000*1000;
-            break;
-        }
-        default:
-            // do nothing
-            break;
-   }
-
-    while (!stop)
-    {
-        usleep(1000);
-        list.fd = fdMainThread;
-        list.events = (POLLIN | POLLHUP | POLLERR | POLLNVAL);
-        int ret = ppoll(&list, 1, &tem, &sigs2);
-
-        if(ret == 0)
-        {
-            fprintf(pFile, "The call timed out and no file descriptors were ready\n");
-            stop = true;
-        }
-        else if (ret < 0)
-        {
-            if ((errno == EINTR) && istimer)
-            {
-                istimer = 0;
-                fprintf(pFile,"sigalarm interrupted the ppoll system call\n");
-                stop = true;
-            }
-            else
-            {
-                fprintf(stderr,"received wrong signal\n");
-                return RES_WRONG_SIGNAL_ERROR;
-            }
-        }
-        else if (list.revents & POLLIN)
-        {
-            fprintf(pFile, "PPOLL succeeded:%d\n", (int)ret); 
-            count = read(fdMainThread, buf, 20);
-            if (count<0) perror("read"); else fprintf(pFile, "ppoll succeeded\n");;
-            stop = true;
-        }
-        else
-        {
-            fprintf(stderr, "other error\n");
-            return RES_ERROR;
-        }
-    }
-
-    return RES_SUCCESS;
+  return RES_SUCCESS;
 }

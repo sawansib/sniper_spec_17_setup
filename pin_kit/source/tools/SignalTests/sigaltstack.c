@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -37,8 +37,8 @@ END_LEGAL */
 // If __USE_GNU is defined, we don't need to do anything.
 // If we defined it ourselves, we need to undefine it later.
 #ifndef __USE_GNU
-    #define __USE_GNU
-    #define APP_UNDEF_USE_GNU
+#define __USE_GNU
+#define APP_UNDEF_USE_GNU
 #endif
 
 #ifdef TARGET_LINUX
@@ -49,17 +49,17 @@ END_LEGAL */
 
 // If we defined __USE_GNU ourselves, we need to undefine it here.
 #ifdef APP_UNDEF_USE_GNU
-    #undef __USE_GNU
-    #undef APP_UNDEF_USE_GNU
+#undef __USE_GNU
+#undef APP_UNDEF_USE_GNU
 #endif
 
-#include <stdlib.h>
-#include <signal.h>
 #include <assert.h>
-#include <setjmp.h>
-#include <string.h>
 #include <pthread.h>
+#include <setjmp.h>
+#include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_attr_t thread_attr;
@@ -74,8 +74,7 @@ void lock();
 void unlock();
 void *thread_gen_segv(void *);
 
-void printSignalMask()
-{
+void printSignalMask() {
   sigset_t maskSet;
   int maskBits;
 #ifdef TARGET_MAC
@@ -84,8 +83,8 @@ void printSignalMask()
   sigprocmask(0, NULL, &maskSet);
 #endif
   int i;
-  for (i=32; i>0; i--)
-    maskBits = (maskBits << 1) | sigismember(&maskSet, i); 
+  for (i = 32; i > 0; i--)
+    maskBits = (maskBits << 1) | sigismember(&maskSet, i);
   printf("signal mask: 0x%08x\n", maskBits);
 }
 
@@ -96,15 +95,15 @@ void setup_signal_stack() {
 
   ss.ss_sp = malloc(SIGSTKSZ);
   assert(ss.ss_sp && "malloc failure");
-  
+
   ss.ss_size = SIGSTKSZ;
   ss.ss_flags = 0;
 
-  printf("ESP of alternate stack: %p, top: %p, size: %ld\n",
-         ss.ss_sp, (unsigned char *)ss.ss_sp + ss.ss_size, ss.ss_size);
+  printf("ESP of alternate stack: %p, top: %p, size: %ld\n", ss.ss_sp,
+         (unsigned char *)ss.ss_sp + ss.ss_size, ss.ss_size);
 
   ret_val = sigaltstack(&ss, &oss);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, failed to set sigaltstack");
     exit(1);
   }
@@ -119,7 +118,7 @@ void print_signal_stack() {
   stack_t oss;
 
   ret_val = sigaltstack(NULL, &oss);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, failed to read sigaltstack");
     exit(1);
   }
@@ -142,12 +141,12 @@ void install_signal_handler() {
   sigemptyset(&p_sigaction->sa_mask);
 
   ret_val = sigaction(SIGSEGV, p_sigaction, NULL);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, sigaction failed");
     exit(1);
   }
   ret_val = sigaction(SIGBUS, p_sigaction, NULL);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, sigaction failed");
     exit(1);
   }
@@ -158,27 +157,28 @@ void generate_segv(int val) {
 
   p_safe_exit = (int)&&safe_exit;
 
-  printf("EIP of segfault: %p (only accurate with if compiled with -O)\n", &&segfault);
+  printf("EIP of segfault: %p (only accurate with if compiled with -O)\n",
+         &&segfault);
 
   /* Encourage the compiler to put val into a register so that the
      statement after the 'segfault' label is more likely to be the
      exact location of a mov to 0x0 */
   val++;
 
- segfault:
+segfault:
   *p = val;
 
   printf("ERROR!\n");
 
- safe_exit:
+safe_exit:
   printf("EIP of safe exit: 0x%x\n", p_safe_exit);
 }
 
 void lock() {
   int ret_val;
-  
+
   ret_val = pthread_mutex_lock(&mutex);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, pthread_mutex_lock failed");
   }
 
@@ -191,7 +191,7 @@ void unlock() {
   fflush(stdout);
 
   ret_val = pthread_mutex_unlock(&mutex);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, pthread_mutex_unlock failed");
   }
 }
@@ -214,11 +214,12 @@ void signal_handler(int signum, siginfo_t *siginfo, void *_uctxt) {
   uctxt->uc_mcontext->__ss.__eip = p_safe_exit;
 #else
   int ret_val = getcontext(&signal_ctxt);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, getcontext failed");
     exit(1);
   }
-  printf("signal handler stack: 0x%0.8x\n", signal_ctxt.uc_mcontext.gregs[REG_ESP]);
+  printf("signal handler stack: 0x%0.8x\n",
+         signal_ctxt.uc_mcontext.gregs[REG_ESP]);
 
   uctxt->uc_mcontext.gregs[REG_EIP] = p_safe_exit;
 #endif
@@ -231,10 +232,9 @@ void *thread_start(void *arg) {
 
   printf("thread arg = %d\n", (unsigned int)arg);
 
-  if(arg) {
+  if (arg) {
     setup_signal_stack();
-  }
-  else {
+  } else {
     print_signal_stack();
   }
 
@@ -242,12 +242,12 @@ void *thread_start(void *arg) {
 
   unlock();
 
-  if(arg == (void *)2) {
+  if (arg == (void *)2) {
     pthread_t tid;
     void *thread_ret;
 
     ret_val = pthread_create(&tid, NULL, thread_start, NULL);
-    if(ret_val) {
+    if (ret_val) {
       perror("ERROR, pthread_create failed");
       exit(1);
     }
@@ -257,13 +257,13 @@ void *thread_start(void *arg) {
     unlock();
 
     ret_val = pthread_join(tid, &thread_ret);
-    if(ret_val) {
+    if (ret_val) {
       perror("ERROR, pthread_join failed");
       exit(1);
     }
 
     ret_val = pthread_create(&tid, NULL, thread_start, (void *)1);
-    if(ret_val) {
+    if (ret_val) {
       perror("ERROR, pthread_create failed");
       exit(1);
     }
@@ -273,7 +273,7 @@ void *thread_start(void *arg) {
     unlock();
 
     ret_val = pthread_join(tid, &thread_ret);
-    if(ret_val) {
+    if (ret_val) {
       perror("ERROR, pthread_join failed");
       exit(1);
     }
@@ -290,7 +290,7 @@ int main(int argc, char **argv) {
   install_signal_handler();
 
   ret_val = pthread_create(&tid, NULL, thread_start, NULL);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, pthread_create failed");
     exit(1);
   }
@@ -300,13 +300,13 @@ int main(int argc, char **argv) {
   unlock();
 
   ret_val = pthread_join(tid, &thread_ret);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, pthread_join failed");
     exit(1);
   }
 
   ret_val = pthread_create(&tid, NULL, thread_start, (void *)1);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, pthread_create failed");
     exit(1);
   }
@@ -316,13 +316,13 @@ int main(int argc, char **argv) {
   unlock();
 
   ret_val = pthread_join(tid, &thread_ret);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, pthread_join failed");
     exit(1);
   }
 
   ret_val = pthread_create(&tid, NULL, thread_start, (void *)2);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, pthread_create failed");
     exit(1);
   }
@@ -332,7 +332,7 @@ int main(int argc, char **argv) {
   unlock();
 
   ret_val = pthread_join(tid, &thread_ret);
-  if(ret_val) {
+  if (ret_val) {
     perror("ERROR, pthread_join failed");
     exit(1);
   }

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,45 +29,41 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 #if !defined(_XED_DOT_H_)
-# define _XED_DOT_H_
+#define _XED_DOT_H_
 
-#include "xed-interface.h"
 #include <stdio.h>
 
+#include "xed-interface.h"
+
 typedef struct xed_dot_node_s {
-    char* name;
-    struct xed_dot_node_s* next;
+  char* name;
+  struct xed_dot_node_s* next;
 } xed_dot_node_t;
 
 typedef enum {
-    XED_DOT_EDGE_SOLID,
-    XED_DOT_EDGE_DASHED,
-    XED_DOT_EDGE_DOTTED
+  XED_DOT_EDGE_SOLID,
+  XED_DOT_EDGE_DASHED,
+  XED_DOT_EDGE_DOTTED
 } xed_dot_edge_style_t;
 
-
 typedef struct xed_dot_edge_s {
-    xed_dot_node_t* src;
-    xed_dot_node_t* dst;
-    xed_dot_edge_style_t style;
-    struct xed_dot_edge_s* next;
+  xed_dot_node_t* src;
+  xed_dot_node_t* dst;
+  xed_dot_edge_style_t style;
+  struct xed_dot_edge_s* next;
 } xed_dot_edge_t;
 
 typedef struct {
-    xed_dot_edge_t* edges;
-    xed_dot_node_t* nodes;
+  xed_dot_edge_t* edges;
+  xed_dot_node_t* nodes;
 } xed_dot_graph_t;
-
 
 xed_dot_graph_t* xed_dot_graph(void);
 void xed_dot_graph_deallocate(xed_dot_graph_t* gg);
 
-xed_dot_node_t* xed_dot_node(xed_dot_graph_t* g,
-                             char const* const name);
+xed_dot_node_t* xed_dot_node(xed_dot_graph_t* g, char const* const name);
 
-void xed_dot_edge(xed_dot_graph_t* g,
-                  xed_dot_node_t* src,
-                  xed_dot_node_t* dst,
+void xed_dot_edge(xed_dot_graph_t* g, xed_dot_node_t* src, xed_dot_node_t* dst,
                   xed_dot_edge_style_t style);
 
 void xed_dot_dump(FILE* f, xed_dot_graph_t* g);

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -28,7 +28,6 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
-
 
 /* ===================================================================== */
 /*
@@ -43,77 +42,63 @@ END_LEGAL */
 */
 
 /* ===================================================================== */
-#include "pin.H"
 #include <iostream>
 
-namespace WIND
-{
-    #include <windows.h>
+#include "pin.H"
+
+namespace WIND {
+#include <windows.h>
 }
 
 using namespace std;
 
-typedef VOID * (*FUNCPTR_MALLOC)(size_t);
-
+typedef VOID *(*FUNCPTR_MALLOC)(size_t);
 
 /* ===================================================================== */
-VOID * Probe_Malloc_IA32( FUNCPTR_MALLOC orgFuncptr, size_t arg0,
-                    ADDRINT returnIp,
-                    ADDRINT esp, ADDRINT ebp )
-{
-    cout << "Probe_Malloc_IA32 (" << hex << (ADDRINT) orgFuncptr << ", " 
-         << hex << arg0 << ", "		
-         << hex << returnIp << ","
-         << hex << esp << ", "
-         << hex << ebp << ")" 
-         << endl << flush;
+VOID *Probe_Malloc_IA32(FUNCPTR_MALLOC orgFuncptr, size_t arg0,
+                        ADDRINT returnIp, ADDRINT esp, ADDRINT ebp) {
+  cout << "Probe_Malloc_IA32 (" << hex << (ADDRINT)orgFuncptr << ", " << hex
+       << arg0 << ", " << hex << returnIp << "," << hex << esp << ", " << hex
+       << ebp << ")" << endl
+       << flush;
 
-    ASSERTX(esp <= 0xffffffff);
+  ASSERTX(esp <= 0xffffffff);
 
-    VOID * v = orgFuncptr(arg0);
-    return v;
+  VOID *v = orgFuncptr(arg0);
+  return v;
 }
 
 /* ===================================================================== */
-VOID ImageLoad(IMG img, VOID *v)
-{
-    const char * name = "malloc";
- 
-    RTN rtn = RTN_FindByName(img, name);
-    if (RTN_Valid(rtn) && RTN_IsSafeForProbedReplacement(rtn))
-    {
-        PROTO proto_funcptr = PROTO_Allocate(PIN_PARG(WIND::LPVOID),
-                                             CALLINGSTD_DEFAULT,  name,
-                                             PIN_PARG(size_t),
-                                             PIN_PARG_END() );
+VOID ImageLoad(IMG img, VOID *v) {
+  const char *name = "malloc";
 
-        cout << "Replacing " << name << " in " << IMG_Name(img) << endl;
+  RTN rtn = RTN_FindByName(img, name);
+  if (RTN_Valid(rtn) && RTN_IsSafeForProbedReplacement(rtn)) {
+    PROTO proto_funcptr =
+        PROTO_Allocate(PIN_PARG(WIND::LPVOID), CALLINGSTD_DEFAULT, name,
+                       PIN_PARG(size_t), PIN_PARG_END());
 
-        RTN_ReplaceSignatureProbed(
-            rtn, AFUNPTR(Probe_Malloc_IA32),
-            IARG_PROTOTYPE, proto_funcptr,
-            IARG_ORIG_FUNCPTR,
-            IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
-            IARG_RETURN_IP,
-            IARG_REG_VALUE, REG_ESP,
-            IARG_REG_VALUE, REG_EBP,
-            IARG_END);
+    cout << "Replacing " << name << " in " << IMG_Name(img) << endl;
 
-        PROTO_Free( proto_funcptr);
-    }
+    RTN_ReplaceSignatureProbed(
+        rtn, AFUNPTR(Probe_Malloc_IA32), IARG_PROTOTYPE, proto_funcptr,
+        IARG_ORIG_FUNCPTR, IARG_FUNCARG_ENTRYPOINT_VALUE, 0, IARG_RETURN_IP,
+        IARG_REG_VALUE, REG_ESP, IARG_REG_VALUE, REG_EBP, IARG_END);
+
+    PROTO_Free(proto_funcptr);
+  }
 }
 /* ===================================================================== */
-int main(INT32 argc, CHAR *argv[])
-{
-    PIN_InitSymbols();
+int main(INT32 argc, CHAR *argv[]) {
+  PIN_InitSymbols();
 
-    PIN_Init(argc, argv);
+  PIN_Init(argc, argv);
 
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-    
-    PIN_StartProgramProbed();
+  IMG_AddInstrumentFunction(ImageLoad, 0);
 
-    return 0;
+  PIN_StartProgramProbed();
+
+  return 0;
 }
 /* ===================================================================== */
 /* eof */

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -35,62 +35,43 @@ END_LEGAL */
 #include <stdlib.h>
 #include <string.h>
 
-
-static void * my_malloc( size_t size )
-{
-    void * ptr = malloc(size);
-    return ptr;
+static void *my_malloc(size_t size) {
+  void *ptr = malloc(size);
+  return ptr;
 }
 
+static void my_free(void *ptr) { free(ptr); }
 
-static void my_free( void * ptr )
-{
-    free( ptr );
+int main(int argc, char *argv[]) {
+  char *buffer1;
+  char *buffer2;
+  char *buffer3;
+  char *buffer4;
+  int success = 0;
+
+  buffer1 = (char *)my_malloc(64);
+  printf("little_malloc: 0x%lx\n", buffer1);
+
+  buffer2 = (char *)my_malloc(128);
+  printf("little_malloc: 0x%lx\n", buffer2);
+
+  buffer3 = (char *)my_malloc(256);
+  printf("little_malloc: 0x%lx\n", buffer3);
+
+  buffer4 = (char *)my_malloc(512);
+  printf("little_malloc: 0x%lx\n", buffer4);
+
+  if (buffer1 >= 0 && buffer2 >= 0 && buffer3 >= 0 && buffer4 >= 0) success = 1;
+
+  if (success) {
+    printf(" Test passed.\n");
+
+    my_free(buffer1);
+    my_free(buffer2);
+    my_free(buffer3);
+    my_free(buffer4);
+  } else
+    printf(" Test failed.\n");
+
+  return 0;
 }
-
-
-int main( int argc, char * argv[] )
-{
-    char * buffer1;
-    char * buffer2;
-    char * buffer3;
-    char * buffer4;
-    int success=0;
-
-    buffer1 = (char *)my_malloc( 64 );
-    printf("little_malloc: 0x%lx\n", buffer1 );
-
-    buffer2 = (char *)my_malloc( 128 );
-    printf("little_malloc: 0x%lx\n", buffer2 );
-
-    buffer3 = (char *)my_malloc( 256 );
-    printf("little_malloc: 0x%lx\n", buffer3 );
-
-    buffer4 = (char *)my_malloc( 512 );
-    printf("little_malloc: 0x%lx\n", buffer4 );
-
-
-    if ( buffer1 >= 0 &&
-         buffer2 >= 0 &&
-         buffer3 >= 0 &&
-         buffer4 >= 0 )
-        success = 1;
-
-    if (success)
-    {
-        printf(" Test passed.\n" );
-
-        my_free( buffer1 );
-        my_free( buffer2 );
-        my_free( buffer3 );
-        my_free( buffer4 );
-    }
-    else
-        printf(" Test failed.\n");
-
-    return 0;
-}
-
-
-    
-    

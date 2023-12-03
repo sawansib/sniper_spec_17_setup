@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -38,10 +38,10 @@ END_LEGAL */
  * 4. The main thread prints the values of each thread's variable in order
  *
  */
+#include <pthread.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
-#include <pthread.h>
 
 #define THREADS_COUNT 10
 
@@ -50,83 +50,70 @@ int barrier = THREADS_COUNT;
 pthread_mutex_t barrier_mutex;
 pthread_cond_t barrier_threshold_cv;
 
-void Fail(const char* format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    vfprintf(stderr, format, args);
-    va_end(args);
-    exit(1);
+void Fail(const char *format, ...) {
+  va_list args;
+  va_start(args, format);
+  vfprintf(stderr, format, args);
+  va_end(args);
+  exit(1);
 }
 
-void AddToThreadLocalVar(int i)
-{
-    tid_local[5] += i;
+void AddToThreadLocalVar(int i) { tid_local[5] += i; }
+
+void *thread_main(void *ptr) {
+  AddToThreadLocalVar(*(int *)ptr);
+  AddToThreadLocalVar(*(int *)ptr);
+  pthread_mutex_lock(&barrier_mutex);
+  if (--barrier <= 0) {
+    pthread_cond_signal(&barrier_threshold_cv);
+  }
+  pthread_mutex_unlock(&barrier_mutex);
+
+  *(int *)ptr = tid_local[5];
+  return NULL;
 }
 
+int main() {
+  pthread_t threads[THREADS_COUNT] = {0};
+  int results[THREADS_COUNT] = {0};
+  int res = -1;
+  int i = 0;
 
-void *thread_main(void *ptr)
-{
-    AddToThreadLocalVar(*(int*)ptr);
-    AddToThreadLocalVar(*(int*)ptr);
-    pthread_mutex_lock(&barrier_mutex);
-    if (--barrier <= 0)
-    {
-        pthread_cond_signal(&barrier_threshold_cv);
+  res = pthread_mutex_init(&barrier_mutex, NULL);
+  if (0 != res) {
+    Fail("Failed to initialize mutex (error %d)\n", res);
+  }
+  res = pthread_cond_init(&barrier_threshold_cv, NULL);
+  if (0 != res) {
+    Fail("Failed to initialize condition variable (error %d)\n", res);
+  }
+  for (i = 0; i < THREADS_COUNT; i++) {
+    results[i] = i;
+    res = pthread_create(&threads[i], NULL, thread_main, (void *)&results[i]);
+    if (0 != res) {
+      Fail("Failed to create thread number %d (error %d)\n", i, res);
     }
-    pthread_mutex_unlock(&barrier_mutex);
+  }
 
-    *(int*)ptr = tid_local[5];
-    return NULL;
-}
+  pthread_mutex_lock(&barrier_mutex);
+  /*
+   * Waits for all the threads to write to their '__thread' variables
+   */
+  while (barrier > 0) {
+    pthread_cond_wait(&barrier_threshold_cv, &barrier_mutex);
+  }
+  pthread_mutex_unlock(&barrier_mutex);
 
-int main()
-{
-    pthread_t threads[THREADS_COUNT] = {0};
-    int results[THREADS_COUNT] = {0};
-    int res = -1;
-    int i = 0;
+  /*
+   * Waits for all the threads to terminate, reading their '__thread' variables
+   * before
+   */
+  for (i = 0; i < THREADS_COUNT; i++) {
+    pthread_join(threads[i], NULL);
+    printf("TLS%d=%d\n", i, results[i]);
+  }
 
-    res = pthread_mutex_init(&barrier_mutex, NULL);
-    if (0 != res)
-    {
-        Fail("Failed to initialize mutex (error %d)\n", res);
-    }
-    res = pthread_cond_init (&barrier_threshold_cv, NULL);
-    if (0 != res)
-    {
-        Fail("Failed to initialize condition variable (error %d)\n", res);
-    }
-    for (i = 0; i < THREADS_COUNT; i++)
-    {
-        results[i] = i;
-        res = pthread_create( &threads[i], NULL, thread_main, (void*)&results[i]);
-        if (0 != res)
-        {
-            Fail("Failed to create thread number %d (error %d)\n", i, res);
-        }
-    }
-
-    pthread_mutex_lock(&barrier_mutex);
-    /*
-     * Waits for all the threads to write to their '__thread' variables
-     */
-    while (barrier > 0)
-    {
-        pthread_cond_wait(&barrier_threshold_cv, &barrier_mutex);
-    }
-    pthread_mutex_unlock(&barrier_mutex);
-
-    /*
-     * Waits for all the threads to terminate, reading their '__thread' variables before
-     */
-    for (i = 0; i < THREADS_COUNT; i++)
-    {
-        pthread_join(threads[i], NULL);
-        printf("TLS%d=%d\n", i, results[i]);
-    }
-
-    pthread_mutex_destroy(&barrier_mutex);
-    pthread_cond_destroy(&barrier_threshold_cv);
-    return 0;
+  pthread_mutex_destroy(&barrier_mutex);
+  pthread_cond_destroy(&barrier_threshold_cv);
+  return 0;
 }

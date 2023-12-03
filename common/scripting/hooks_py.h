@@ -9,47 +9,48 @@
 #include <Python.h>
 
 class HooksPy {
+ public:
+  static void init(void);
+  static void setup(void);
+  static void fini(void);
+
+  static PyObject *callPythonFunction(PyObject *pFunc, PyObject *pArgs);
+
+ private:
+  static bool pyInit;
+
+  class PyConfig {
    public:
-      static void init(void);
-      static void setup(void);
-      static void fini(void);
-
-      static PyObject * callPythonFunction(PyObject *pFunc, PyObject *pArgs);
-   private:
-      static bool pyInit;
-
-      class PyConfig {
-         public:
-            static void setup(void);
-      };
-      class PyStats {
-         public:
-            static void setup(void);
-      };
-      class PyHooks {
-         public:
-            static void setup(void);
-      };
-      class PyDvfs {
-         public:
-            static void setup(void);
-      };
-      class PyControl {
-          public:
-              static void setup(void);
-      };
-      class PyBbv {
-         public:
-            static void setup(void);
-      };
-      class PyMem {
-          public:
-              static void setup(void);
-      };
-      class PyThread {
-          public:
-              static void setup(void);
-      };
+    static void setup(void);
+  };
+  class PyStats {
+   public:
+    static void setup(void);
+  };
+  class PyHooks {
+   public:
+    static void setup(void);
+  };
+  class PyDvfs {
+   public:
+    static void setup(void);
+  };
+  class PyControl {
+   public:
+    static void setup(void);
+  };
+  class PyBbv {
+   public:
+    static void setup(void);
+  };
+  class PyMem {
+   public:
+    static void setup(void);
+  };
+  class PyThread {
+   public:
+    static void setup(void);
+  };
 };
 
-#endif // HOOKS_PY_H
+#endif  // HOOKS_PY_H

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -28,10 +28,12 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
+#include <assert.h>
+
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
-#include <assert.h>
+
 #include "pin.H"
 
 // This PIN tool shall check PIN's memory limit knob
@@ -43,77 +45,70 @@ END_LEGAL */
 /* Commandline Switches */
 /* ===================================================================== */
 
-//Output file where to write everything
-KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE,    "pintool",
-    "o", "memory_limit.out", "specify output file name");
+// Output file where to write everything
+KNOB<string> KnobOutputFile(KNOB_MODE_WRITEONCE, "pintool", "o",
+                            "memory_limit.out", "specify output file name");
 
-//have memory addresses within that region
-KNOB<ADDRINT> KnobBytesToAllocate(KNOB_MODE_WRITEONCE,    "pintool",
-    "b", "0x10000", "Number of bytes to allocate");
-
+// have memory addresses within that region
+KNOB<ADDRINT> KnobBytesToAllocate(KNOB_MODE_WRITEONCE, "pintool", "b",
+                                  "0x10000", "Number of bytes to allocate");
 
 /* ===================================================================== */
 /* Globals */
 /* ===================================================================== */
 
-//Output file
-FILE * out;
+// Output file
+FILE* out;
 
-VOID OutOfMemory(size_t sz, VOID* arg)
-{
-    fprintf(out, "Failed to allocate dynamic memory: Out of memory!\n");
-    fclose(out);
-    exit(3);
+VOID OutOfMemory(size_t sz, VOID* arg) {
+  fprintf(out, "Failed to allocate dynamic memory: Out of memory!\n");
+  fclose(out);
+  exit(3);
 }
 
-VOID* AllocateAndCheck(long size)
-{
-    void* p = malloc((size_t)size);
-    if (NULL == p)
-    {
-        fprintf(out, "Failed to allocate dynamic memory with size %lx.\n", size);
-        fclose(out);
-        exit(1);
-    }
+VOID* AllocateAndCheck(long size) {
+  void* p = malloc((size_t)size);
+  if (NULL == p) {
+    fprintf(out, "Failed to allocate dynamic memory with size %lx.\n", size);
+    fclose(out);
+    exit(1);
+  }
 
-    return p;
+  return p;
 }
 
 // This function allocates number of bytes specified by the -b knobs.
 // The bytes are allocated in chunks of size ALLOC_CHUNK.
-VOID AppStart(VOID *v)
-{
-    fprintf(out, "Allocating total %lx bytes.\n", (long)KnobBytesToAllocate.Value());
-    long count = (long)KnobBytesToAllocate.Value() / ALLOC_CHUNK;
-    long remainder = (long)KnobBytesToAllocate.Value() % ALLOC_CHUNK;
-    for (long i = 0; i < count; i++)
-    {
-        void* p = AllocateAndCheck(ALLOC_CHUNK);
-        fprintf(out, "Iteration %lx, returned: %p\n", i, p);
-    }
-    if (remainder > 0)
-    {
-        void* p = AllocateAndCheck(remainder);
-        fprintf(out, "Last iteration, returned: %p\n", p);
-    }
+VOID AppStart(VOID* v) {
+  fprintf(out, "Allocating total %lx bytes.\n",
+          (long)KnobBytesToAllocate.Value());
+  long count = (long)KnobBytesToAllocate.Value() / ALLOC_CHUNK;
+  long remainder = (long)KnobBytesToAllocate.Value() % ALLOC_CHUNK;
+  for (long i = 0; i < count; i++) {
+    void* p = AllocateAndCheck(ALLOC_CHUNK);
+    fprintf(out, "Iteration %lx, returned: %p\n", i, p);
+  }
+  if (remainder > 0) {
+    void* p = AllocateAndCheck(remainder);
+    fprintf(out, "Last iteration, returned: %p\n", p);
+  }
 
-    fprintf(out, "Test unexpectedly passed (it should fail).\n");
-    fclose(out);
+  fprintf(out, "Test unexpectedly passed (it should fail).\n");
+  fclose(out);
 }
 
-int main(int argc, char * argv[])
-{
-    PIN_InitSymbols();
-    PIN_Init(argc, argv);
+int main(int argc, char* argv[]) {
+  PIN_InitSymbols();
+  PIN_Init(argc, argv);
 
-    out = fopen(KnobOutputFile.Value().c_str(), "w");
+  out = fopen(KnobOutputFile.Value().c_str(), "w");
 
-    PIN_AddOutOfMemoryFunction(OutOfMemory, NULL);
+  PIN_AddOutOfMemoryFunction(OutOfMemory, NULL);
 
-    PIN_AddApplicationStartFunction(AppStart, 0);
+  PIN_AddApplicationStartFunction(AppStart, 0);
 
-    // Never returns
-    PIN_StartProgram();
+  // Never returns
+  PIN_StartProgram();
 
-    return 0;
+  return 0;
 }

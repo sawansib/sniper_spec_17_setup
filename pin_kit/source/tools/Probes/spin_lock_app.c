@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,41 +29,38 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
 
-volatile int lock=0;
+volatile int lock = 0;
 
-static void * child(void * v)
-{
-    printf("Child: calling pthread_spin_lock()\n");
-    sleep(3);
-    int locked = pthread_spin_lock( &lock );
-    printf("Child: acquired spinlock\n");
-    locked = pthread_spin_unlock( &lock );
-    printf("Child: released spinlock\n");
-    return 0;
+static void* child(void* v) {
+  printf("Child: calling pthread_spin_lock()\n");
+  sleep(3);
+  int locked = pthread_spin_lock(&lock);
+  printf("Child: acquired spinlock\n");
+  locked = pthread_spin_unlock(&lock);
+  printf("Child: released spinlock\n");
+  return 0;
 }
 
-int main()
-{
-    pthread_t child_thread;
-    
-    pthread_spin_init( &lock, PTHREAD_PROCESS_PRIVATE );
-    
-    printf("Main: calling pthread_spin_lock()\n");
-    int locked = pthread_spin_lock( &lock );
-    printf("Main: acquired spinlock\n");
+int main() {
+  pthread_t child_thread;
 
-    int status = pthread_create(&child_thread, 0, child, 0);
-    if (status != 0 )
-        printf("Main: could not create chikd thread\n" );
-    
-    sleep(10);
-    
-    locked = pthread_spin_unlock( &lock );
-    printf("Main: released spinlock\n");
-    
-    pthread_join(child_thread, 0);
+  pthread_spin_init(&lock, PTHREAD_PROCESS_PRIVATE);
+
+  printf("Main: calling pthread_spin_lock()\n");
+  int locked = pthread_spin_lock(&lock);
+  printf("Main: acquired spinlock\n");
+
+  int status = pthread_create(&child_thread, 0, child, 0);
+  if (status != 0) printf("Main: could not create chikd thread\n");
+
+  sleep(10);
+
+  locked = pthread_spin_unlock(&lock);
+  printf("Main: released spinlock\n");
+
+  pthread_join(child_thread, 0);
 }

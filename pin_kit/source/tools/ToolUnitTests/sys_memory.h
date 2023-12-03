@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 END_LEGAL */
 
 /*! @file
- *  Generic memory management API. 
+ *  Generic memory management API.
  */
 #ifndef SYS_MEMORY_H
 #define SYS_MEMORY_H
@@ -50,41 +50,39 @@ typedef int BOOL;
 #endif
 
 /*!
- *  Memory protection attributes. 
+ *  Memory protection attributes.
  */
-typedef enum 
-{
-    MEM_INACESSIBLE,
-    MEM_READ_EXEC,
-    MEM_READ_WRITE_EXEC
+typedef enum {
+  MEM_INACESSIBLE,
+  MEM_READ_EXEC,
+  MEM_READ_WRITE_EXEC
 } MEM_PROTECTION;
 
-
 /*!
- *  Return page size in bytes. 
+ *  Return page size in bytes.
  */
 size_t GetPageSize();
 
 /*!
- *  Allocate memory pages with the specified protection attributes. 
+ *  Allocate memory pages with the specified protection attributes.
  */
-void * MemAlloc(size_t size, MEM_PROTECTION protect);
+void* MemAlloc(size_t size, MEM_PROTECTION protect);
 
 /*!
- *  Free memory pages at the specified address. 
+ *  Free memory pages at the specified address.
  */
-void MemFree(void * addr, size_t size);
+void MemFree(void* addr, size_t size);
 
 /*!
- *  Set specified protection for memory pages at the specified address. 
+ *  Set specified protection for memory pages at the specified address.
  */
-BOOL MemProtect(void * addr, size_t size, MEM_PROTECTION protect);
+BOOL MemProtect(void* addr, size_t size, MEM_PROTECTION protect);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //SYS_MEMORY_H
+#endif  // SYS_MEMORY_H
 /* ===================================================================== */
 /* eof */
 /* ===================================================================== */

@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -32,77 +32,62 @@ END_LEGAL */
 // This tool prints a trace of image load and unload events
 //
 
-#include <stdio.h>
-#include "pin.H"
-
 #include <dlfcn.h>
-#include <iostream>
-#include <fstream>
+#include <stdio.h>
 #include <stdlib.h>
 
+#include <fstream>
+#include <iostream>
+
+#include "pin.H"
 
 BOOL inMain = FALSE;
 
-void MainBefore()
-{
-    inMain = TRUE;
-}
+void MainBefore() { inMain = TRUE; }
 
-VOID MainAfter()
-{
-    inMain = FALSE;
-}
+VOID MainAfter() { inMain = FALSE; }
 
-VOID ImageLoad(IMG img, VOID *v)
-{
-    if (inMain)
-    {
-        cout << "Loaded " << IMG_Name(img) << endl;
+VOID ImageLoad(IMG img, VOID *v) {
+  if (inMain) {
+    cout << "Loaded " << IMG_Name(img) << endl;
+  }
+
+  if (IMG_IsMainExecutable(img)) {
+    RTN mainRtn = RTN_FindByName(img, "_main");
+    if (!RTN_Valid(mainRtn)) mainRtn = RTN_FindByName(img, "main");
+
+    if (!RTN_Valid(mainRtn)) {
+      cout << "Can't find the main routine in " << IMG_Name(img) << endl;
+      exit(1);
     }
-    
-    if (IMG_IsMainExecutable(img))
-    {
-        RTN mainRtn = RTN_FindByName(img, "_main");
-        if (!RTN_Valid(mainRtn))
-            mainRtn = RTN_FindByName(img, "main");
-
-        if (!RTN_Valid(mainRtn))
-        {
-            cout << "Can't find the main routine in " << IMG_Name(img) << endl;
-            exit(1);
-        }
-        RTN_Open(mainRtn);
-        RTN_InsertCall(mainRtn, IPOINT_BEFORE, AFUNPTR(MainBefore), IARG_END);
-        RTN_InsertCall(mainRtn, IPOINT_AFTER, AFUNPTR(MainAfter), IARG_END);
-        RTN_Close(mainRtn);
-    }
+    RTN_Open(mainRtn);
+    RTN_InsertCall(mainRtn, IPOINT_BEFORE, AFUNPTR(MainBefore), IARG_END);
+    RTN_InsertCall(mainRtn, IPOINT_AFTER, AFUNPTR(MainAfter), IARG_END);
+    RTN_Close(mainRtn);
+  }
 }
 
-VOID ImageUnload(IMG img, VOID *v)
-{
-    if (inMain)
-    {
-        cout << "Unloaded " << IMG_Name(img) << endl;
-    }
+VOID ImageUnload(IMG img, VOID *v) {
+  if (inMain) {
+    cout << "Unloaded " << IMG_Name(img) << endl;
+  }
 }
-
 
 // argc, argv are the entire command line, including pin -t <toolname> -- ...
-int main(int argc, char * argv[])
-{
-    PIN_InitSymbols();
-    
-    // Initialize pin
-    PIN_Init(argc, argv);
+int main(int argc, char *argv[]) {
+  PIN_InitSymbols();
 
-    // Register ImageLoad to be called when an image is loaded
-    IMG_AddInstrumentFunction(ImageLoad, 0);
+  // Initialize pin
+  PIN_Init(argc, argv);
 
-    // Register ImageUnload to be called when an image is unloaded
-    IMG_AddUnloadFunction(ImageUnload, 0);
+  // Register ImageLoad to be called when an image is loaded
+  IMG_AddInstrumentFunction(ImageLoad, 0);
 
-    // Start the program, never returns
-    PIN_StartProgram();
-    
-    return 0;
+  // Register ImageUnload to be called when an image is unloaded
+  IMG_AddUnloadFunction(ImageUnload, 0);
+
+  // Start the program, never returns
+  PIN_StartProgram();
+
+  return 0;
 }

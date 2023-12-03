@@ -1,8 +1,8 @@
-/*BEGIN_LEGAL 
-Intel Open Source License 
+/*BEGIN_LEGAL
+Intel Open Source License
 
 Copyright (c) 2002-2014 Intel Corporation. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -15,7 +15,7 @@ other materials provided with the distribution.  Neither the name of
 the Intel Corporation nor the names of its contributors may be used to
 endorse or promote products derived from this software without
 specific prior written permission.
- 
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -37,9 +37,11 @@ END_LEGAL */
 */
 
 /* ===================================================================== */
-#include "pin.H"
 #include <stdlib.h>
+
 #include <iostream>
+
+#include "pin.H"
 
 using namespace std;
 
@@ -47,51 +49,44 @@ using namespace std;
 static void (*pf_bar)(int);
 
 /* ===================================================================== */
-VOID Boo()
-{
-    // This replacement routine does nothing
-}
-
-
-/* ===================================================================== */
-VOID ImageLoad(IMG img, VOID *v)
-{
-    cout << IMG_Name(img) << endl;
-
-    PROTO proto = PROTO_Allocate( PIN_PARG(void), CALLINGSTD_DEFAULT,
-                                  "Bar", PIN_PARG(int), PIN_PARG_END() );
-    
-    RTN rtn = RTN_FindByName(img, "Bar");
-    if (RTN_Valid(rtn))
-    {
-        if ( ! RTN_IsSafeForProbedReplacement( rtn ) )
-        {
-            cout << "Cannot replace " << RTN_Name(rtn) << " in " << IMG_Name(img) << endl;
-            exit(1);
-        }
-        
-        cout << "Replacing " << RTN_Name(rtn) << " in " << IMG_Name(img) << endl;
-
-        pf_bar = (void (*)(int))RTN_ReplaceSignatureProbed(
-            rtn, AFUNPTR(Boo),
-            IARG_PROTOTYPE, proto,
-            IARG_END);
-    }    
-    PROTO_Free( proto );
+VOID Boo() {
+  // This replacement routine does nothing
 }
 
 /* ===================================================================== */
-int main(INT32 argc, CHAR *argv[])
-{
-    PIN_InitSymbols();
+VOID ImageLoad(IMG img, VOID *v) {
+  cout << IMG_Name(img) << endl;
 
-    PIN_Init(argc, argv);
+  PROTO proto = PROTO_Allocate(PIN_PARG(void), CALLINGSTD_DEFAULT, "Bar",
+                               PIN_PARG(int), PIN_PARG_END());
 
-    IMG_AddInstrumentFunction(ImageLoad, 0);
-    
-    PIN_StartProgramProbed();
+  RTN rtn = RTN_FindByName(img, "Bar");
+  if (RTN_Valid(rtn)) {
+    if (!RTN_IsSafeForProbedReplacement(rtn)) {
+      cout << "Cannot replace " << RTN_Name(rtn) << " in " << IMG_Name(img)
+           << endl;
+      exit(1);
+    }
 
-    return 0;
+    cout << "Replacing " << RTN_Name(rtn) << " in " << IMG_Name(img) << endl;
+
+    pf_bar = (void (*)(int))RTN_ReplaceSignatureProbed(
+        rtn, AFUNPTR(Boo), IARG_PROTOTYPE, proto, IARG_END);
+  }
+  PROTO_Free(proto);
+}
+
+/* ===================================================================== */
+int main(INT32 argc, CHAR *argv[]) {
+  PIN_InitSymbols();
+
+  PIN_Init(argc, argv);
+
+  IMG_AddInstrumentFunction(ImageLoad, 0);
+
+  PIN_StartProgramProbed();
+
+  return 0;
 }
 
 /* ===================================================================== */
