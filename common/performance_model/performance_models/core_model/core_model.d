@@ -1,0 +1,25 @@
+/home/ssingh/sniper_trace_config/alberto_sniper/common/performance_model/performance_models/core_model/core_model.o /home/ssingh/sniper_trace_config/alberto_sniper/common/performance_model/performance_models/core_model/core_model.d: $(wildcard \
+ /home/ssingh/sniper_trace_config/alberto_sniper/common/performance_model/performance_models/core_model/core_model.cc \
+ /home/ssingh/sniper_trace_config/alberto_sniper/common/performance_model/performance_models/core_model/core_model.h \
+ /home/ssingh/sniper_trace_config/alberto_sniper/common/misc/fixed_types.h \
+ /home/ssingh/sniper_trace_config/alberto_sniper/common/misc/subsecond_time.h \
+ /home/ssingh/sniper_trace_config/alberto_sniper/common/misc/fixed_types.h \
+ /home/ssingh/sniper_trace_config/alberto_sniper/common/misc/lock.h \
+ /home/ssingh/sniper_trace_config/alberto_sniper/common/misc/itostr.h \
+ /home/ssingh/sniper_trace_config/alberto_sniper/common/misc/subsecond_time_c.h \
+ /home/ssingh/sniper_trace_config/alberto_sniper/common/misc/allocator.h \
+ /home/ssingh/sniper_trace_config/alberto_sniper/common/misc/FSBAllocator.hh \
+ /home/ssingh/sniper_trace_config/alberto_sniper/common/misc/log.h \
+ /home/ssingh/sniper_trace_config/alberto_sniper/common/performance_model/performance_models/micro_op/dynamic_micro_op.h \
+ /home/ssingh/sniper_trace_config/alberto_sniper/common/performance_model/performance_models/micro_op/memory_access.h \
+ /home/ssingh/sniper_trace_config/alberto_sniper/common/performance_model/performance_models/micro_op/micro_op.h \
+ /home/ssingh/sniper_trace_config/alberto_sniper/common/performance_model/performance_models/interval_performance_model/tools.h \
+ /home/ssingh/sniper_trace_config/alberto_sniper/common/performance_model/performance_models/micro_op/micro_op.h \
+ /home/ssingh/sniper_trace_config/alberto_sniper/common/misc/log.h \
+ /home/ssingh/sniper_trace_config/alberto_sniper/pin_kit/extras/xed2-intel64/include/xed-iclass-enum.h \
+ /home/ssingh/sniper_trace_config/alberto_sniper/pin_kit/extras/xed2-intel64/include/xed-common-hdrs.h \
+ /home/ssingh/sniper_trace_config/alberto_sniper/pin_kit/extras/xed2-intel64/include/xed-reg-enum.h \
+ /home/ssingh/sniper_trace_config/alberto_sniper/common/performance_model/hit_where.h \
+ /home/ssingh/sniper_trace_config/alberto_sniper/common/core/memory_subsystem/mem_component.h \
+ /home/ssingh/sniper_trace_config/alberto_sniper/common/performance_model/performance_models/core_model/core_model_nehalem.h \
+ /home/ssingh/sniper_trace_config/alberto_sniper/common/performance_model/performance_models/core_model/dynamic_micro_op_nehalem.h)
