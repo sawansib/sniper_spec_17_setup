@@ -3,6 +3,7 @@
 # encola.py OUTS_DIR_BASE ID MIN_SEED MAX_SEED
 
 from sys import argv, stdout
+import os
 from os import getenv, environ, path, makedirs, getcwd, chdir, fdopen, chmod
 import stat
 from subprocess import Popen, PIPE
@@ -31,7 +32,7 @@ else:
     raise "Demasiados argumentos"
 
 skip_set_file = None
-sniperexec = "/home/sebass/sniper/snipersim/run-sniper"
+sniperexec = "/home/ssingh/sniper_trace_config/sniper/run-sniper"
 sniperoptspre = "-cgainestown -crob -gperf_model/dram/num_controllers=1 -gperf_model/l3_cache/shared_cores="
 sniperoptspost = " -gperf_model/l2_cache/perfect=true -gperf_model/l3_cache/perfect=true -gperf_model/l1_icache/perfect=true  -gperf_model/dram/direct_access=true -ggeneral/enable_icache_modeling=false -gperf_model/branch_predictor/type=none -gperf_model/l1_dcache/perfect=true -gclock_skew_minimization/barrier/quantum=2147483647 -gperf_model/dtlb/size=0 -gperf_model/core/interval_timer/window_size=256 -gperf_model/core/rob_timer/rs_entries=256 -gperf_model/core/rob_timer/outstanding_loads=256 -gperf_model/core/rob_timer/outstanding_stores=256 -gperf_model/core/rob_timer/commit_width=4 -gperf_model/core/rob_timer/deptrace=true -gperf_model/core/rob_timer/store_to_load_forwarding=false -gperf_model/core/rob_timer/deptrace_microops=true -gperf_model/core/rob_timer/deptrace_start_active=true -gperf_model/core/rob_timer/deptrace_roi=true"
 
@@ -40,7 +41,8 @@ sniperoptspost = " -gperf_model/l2_cache/perfect=true -gperf_model/l3_cache/perf
 #benchdir = "/home/users/aros/benchmarks/original/SpecCPU2017/CPU2017_BINS_GCC_5_4_0_STATIC_NOHOOKS/"
 #benchdir = "/home/users/aros/benchmarks/original/Huawei/"
 #benchdir = "/home/users/aros/benchmarks/original/GAP-github/"
-benchdir = "/home/sebass/Benchmarks/original/SpecCPU2017/CPU2017_BINS_GCC_7_3_0_STATIC_HOOKS/"
+#benchdir = "/home/sebass/Benchmarks/original/SpecCPU2017/CPU2017_BINS_GCC_7_3_0_STATIC_HOOKS/"
+benchdir = "/home/sebass/Benchmarks/original/SpecCPU2017/CPU2017_BINS_NOHOOKS_STATIC_NOFAKE_ONELINK_MEGA/"
 
 vars = {
     "500.perlbench_1": ["500.perlbench_r", "./perlbench_r_base.GCC_7_3_0_HOOKS-m64 -I./lib checkspam_noprints.pl 2500 5 25 11 150 1 1 1 1"],
@@ -255,13 +257,19 @@ def enqueue(config):
                     " -- " + vars[config["BENCHMARK"]][1] + "\n")
 
         if just_test == 0:
-            #p = Popen(["qsub", "-cwd", "-N", id + path.basename(of), "-r", "yes", "-V", "-e", of + ".stderr", "-o", of + ".stdout"], stdin = PIPE)
-            #p = Popen(["qsub", "-cwd", "-N", id + path.basename(of), "-r", "yes", "-V", "-e", of + ".stderr", "-o", of + ".stdout", "-q", "short.q"], stdin = PIPE)
-            exec_config = sniperexec + " -n " + str(config["NUM_THREADS"]) + " -sstop-by-icount:" + str(config["INSTR_COUNT"]) + ":" + str(config["INSTR_COUNT_FAST_FWD"]) + "000000000 --roi-script " + " --insert-clear-stats-by-icount=" + str(config["INSTR_COUNT_CLEAR_STATS"]) + " " + sniperoptspre + str(config["NUM_THREADS"]) + sniperoptspost + " --no-cache-warming --save-output -d " + out_file(config) + " -- " + vars[config["BENCHMARK"]][1] + "\n"
-            p = Popen(["sbatch", "-J", id + path.basename(of), "--qos=normal", "--requeue", "-e", of + ".stderr", "-o", of + ".stdout", "--wrap", exec_config], stdin = PIPE) # -V is set by default, -r not really necessary.
-            write_script(p.stdin)
-            p.stdin.close()
-            p.wait()
+          job_file = os.path.join(outs_dir_base, "%s.job" % of)
+          with open(job_file, "w") as fh:
+            fh.writelines("#!/bin/bash\n")
+            fh.writelines("#SBATCH --job-name=" + config["BENCHMARK"] + "\n")
+            fh.writelines("#SBATCH --output=%s-R.out\n" % of)
+            fh.writelines("#SBATCH --error=%s-R.err\n" % of)
+            fh.writelines("cd " + benchdir + vars[config["BENCHMARK"]][0] + "\n")
+            fh.writelines(sniperexec + " -n " + str(config["NUM_THREADS"]) + " -sstop-by-icount:" + str(config["INSTR_COUNT"]) + ":" + str(config["INSTR_COUNT_FAST_FWD"]) + "000000000 --roi-script " +
+                    " --insert-clear-stats-by-icount=" + str(config["INSTR_COUNT_CLEAR_STATS"]) + " " +
+                    sniperoptspre + str(config["NUM_THREADS"]) + sniperoptspost + " --no-cache-warming --save-output -d " + out_file(config) + 
+                    " -- " + vars[config["BENCHMARK"]][1] + "\n")
+            fh.close()
+            os.system("sbatch %s" % job_file)
         else:
             (fdes, fname) = mkstemp()
             f = fdopen(fdes, "w")
@@ -316,7 +324,7 @@ configs = config_vary(base_config, "g_RANDOM_SEED", range(min_seed, max_seed + 1
 
 # modify if necessary
 configs = config_vary(configs, "BENCHMARK", [ 
-        #"500.perlbench_1",
+        "500.perlbench_1",
         # "500.perlbench_2",
         # "500.perlbench_3",
         # "502.gcc_1",
@@ -324,7 +332,7 @@ configs = config_vary(configs, "BENCHMARK", [
         # "502.gcc_3",
         # "502.gcc_4",
         # "502.gcc_5",
-         "503.bwaves_1",
+        # "503.bwaves_1",
         # "503.bwaves_2",
         # "503.bwaves_3",
         # "503.bwaves_4",
